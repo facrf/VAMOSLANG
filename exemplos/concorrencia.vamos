@@ -1,0 +1,83 @@
+// Exemplo 2: Concorrência em VAMOS-LANG
+// Demonstração do uso de: disparar (go), canal (chan), adiar (defer),
+// sincronizar.GrupoEspera (sync.WaitGroup) e selecionar (select).
+
+pacote principal
+
+importar (
+	"formatar"
+	"sincronizar"
+	"tempo"
+)
+
+// Estrutura para representar o resultado de um processamento
+tipo Resultado estrutura {
+	IdTrabalhador inteiro
+	Mensagem      texto
+	DuracaoMs     inteiro64
+}
+
+// Funcao trabalhadora executada concorrentemente com 'disparar'
+funcao processarTarefa(id inteiro, canalSaida canal Resultado, wg *sincronizar.GrupoEspera) {
+	// 'adiar' garante que o WaitGroup sera notificado ao sair da funcao
+	adiar wg.Concluido()
+
+	inicio := tempo.Agora()
+	formatar.ImprimirFormatado("[Trabalhador %d] Iniciou o processamento...\n", id)
+
+	// Simula carga de trabalho assincrona
+	tempo.Dormir(tempo.Milissegundo * tempo.Duracao(100*id))
+
+	tempoGasto := tempo.Desde(inicio).Milissegundos()
+
+	res := Resultado{
+		IdTrabalhador: id,
+		Mensagem:      formatar.Formatar("Tarefa #%d processada com sucesso!", id),
+		DuracaoMs:     inteiro64(tempoGasto),
+	}
+
+	// Envia o resultado atraves do canal
+	canalSaida <- res
+	formatar.ImprimirFormatado("[Trabalhador %d] Finalizou e enviou resultado.\n", id)
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("   VAMOS-LANG - Demonstração de Concorrência      ")
+	formatar.ImprimirLinha("==================================================")
+
+	constante totalTrabalhadores inteiro = 3
+	canalResultados := criar(canal Resultado, totalTrabalhadores)
+	variavel wg sincronizar.GrupoEspera
+
+	formatar.ImprimirLinha("-> Disparando rotinas concorrentes...")
+
+	para i := 1; i <= totalTrabalhadores; i++ {
+		wg.Adicionar(1)
+		// 'disparar' inicia uma goroutine
+		disparar processarTarefa(i, canalResultados, &wg)
+	}
+
+	// Goroutine auxiliar para fechar o canal quando todos concluirem
+	disparar funcao() {
+		wg.Esperar()
+		fechar(canalResultados)
+		formatar.ImprimirLinha("-> Todas as tarefas foram finalizadas no GrupoEspera.")
+	}()
+
+	formatar.ImprimirLinha("\n-> Coletando resultados dos canais:")
+
+	// Leitura dos resultados recebidos atraves do canal
+	para res := intervalo canalResultados {
+		formatar.ImprimirFormatado(
+			"   [OK] Trabalhador: %d | Duracao: %dms | Status: %s\n",
+			res.IdTrabalhador,
+			res.DuracaoMs,
+			res.Mensagem,
+		)
+	}
+
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha(" Processamento concorrente concluído com êxito!   ")
+	formatar.ImprimirLinha("==================================================")
+}

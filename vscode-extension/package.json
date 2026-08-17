@@ -1,0 +1,46 @@
+{
+  "name": "vamos-lang",
+  "displayName": "VAMOS-LANG (Go em Português)",
+  "description": "Suporte oficial à linguagem VAMOS-LANG: Realce de sintaxe, snippets e configuração para Go 100% em Português do Brasil.",
+  "version": "1.0.0",
+  "publisher": "vamos-lang",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "vamos",
+    "vamos-lang",
+    "go",
+    "golang",
+    "portugues",
+    "pt-br"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "vamos",
+        "aliases": ["VAMOS-LANG", "vamos", "VAMOS"],
+        "extensions": [".vamos"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vamos",
+        "scopeName": "source.vamos",
+        "path": "./syntaxes/vamos.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "vamos",
+        "path": "./snippets/vamos.json"
+      }
+    ]
+  }
+}

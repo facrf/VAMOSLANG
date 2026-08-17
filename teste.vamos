@@ -1,0 +1,103 @@
+// Arquivo de teste oficial do ecossistema VAMOS-LANG
+// Demonstra concorrência (disparar, canal, adiar), estruturas (tipo, estrutura) e fluxo de controle (se, para).
+
+pacote principal
+
+importar (
+	"formatar"
+	"sincronizar"
+	"tempo"
+)
+
+// Definição de estrutura de dados
+tipo MensagemProcessamento estrutura {
+	Identificador inteiro
+	Descricao     texto
+	Pontuacao     decimal64
+	Prioritaria   booleano
+}
+
+// Método com receptor de estrutura
+funcao (m MensagemProcessamento) ExibirDetalhes() {
+	tagPrioridade := "NORMAL"
+	se m.Prioritaria {
+		tagPrioridade = "ALTA"
+	}
+	formatar.ImprimirFormatado(
+		"  [Item %d] %-25s | Pontuação: %.2f | Prioridade: %s\n",
+		m.Identificador,
+		m.Descricao,
+		m.Pontuacao,
+		tagPrioridade,
+	)
+}
+
+// Função trabalhadora executada concorrentemente
+funcao executarTrabalhador(id inteiro, canalSaida canal MensagemProcessamento, wg *sincronizar.GrupoEspera) {
+	// 'adiar' garante a notificação de encerramento no WaitGroup
+	adiar wg.Concluido()
+
+	formatar.ImprimirFormatado("-> Trabalhador %d iniciando processamento...\n", id)
+	tempo.Dormir(tempo.Milissegundo * tempo.Duracao(100*id))
+
+	// Lógica condicional e estruturação
+	ehPrioritaria := falso
+	se id%2 != 0 {
+		ehPrioritaria = verdadeiro
+	}
+
+	msg := MensagemProcessamento{
+		Identificador: id,
+		Descricao:     formatar.Formatar("Payload da tarefa #%d", id),
+		Pontuacao:     decimal64(id) * 15.5,
+		Prioritaria:   ehPrioritaria,
+	}
+
+	// Envia o item estruturado através do canal
+	canalSaida <- msg
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("         VAMOS-LANG: Teste Integrado Completo     ")
+	formatar.ImprimirLinha("==================================================")
+
+	constante totalTarefas inteiro = 4
+	canalDados := criar(canal MensagemProcessamento, totalTarefas)
+	variavel wg sincronizar.GrupoEspera
+
+	// 1. Fluxo de controle com 'para' e concorrência com 'disparar'
+	formatar.ImprimirLinha("1. Disparando tarefas concorrentes:")
+	para i := 1; i <= totalTarefas; i++ {
+		wg.Adicionar(1)
+		disparar executarTrabalhador(i, canalDados, &wg)
+	}
+
+	// Rotina auxiliar para fechar o canal quando os trabalhadores finalizarem
+	disparar funcao() {
+		wg.Esperar()
+		fechar(canalDados)
+	}()
+
+	// 2. Coletando itens e populando fatia (slice) dinâmica
+	listaResultados := criar([]MensagemProcessamento, 0)
+
+	formatar.ImprimirLinha("\n2. Recebendo e exibindo dados processados:")
+	para item := intervalo canalDados {
+		item.ExibirDetalhes()
+		listaResultados = adicionar(listaResultados, item)
+	}
+
+	// 3. Validação com 'se' e 'tamanho'
+	formatar.ImprimirLinha("\n3. Relatório de Execução:")
+	totalRecebido := tamanho(listaResultados)
+	formatar.ImprimirFormatado("Total de itens processados com sucesso: %d de %d\n", totalRecebido, totalTarefas)
+
+	se totalRecebido == totalTarefas {
+		formatar.ImprimirLinha("Status: TODOS OS TESTES PASSARAM COM SUCESSO! ✓")
+	} senao {
+		formatar.ImprimirLinha("Status: FALHA NA QUANTIDADE DE PROCESSAMENTOS ✗")
+	}
+
+	formatar.ImprimirLinha("==================================================")
+}

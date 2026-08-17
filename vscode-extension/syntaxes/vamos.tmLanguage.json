@@ -1,0 +1,128 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "VAMOS-LANG",
+  "scopeName": "source.vamos",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#builtins" },
+    { "include": "#constants" },
+    { "include": "#functions" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.vamos",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.vamos",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.vamos",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.vamos",
+              "match": "\\\\([abfnrtv\\\\\"']|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.raw.vamos",
+          "begin": "`",
+          "end": "`"
+        },
+        {
+          "name": "string.quoted.single.vamos",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.vamos",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.vamos",
+          "match": "\\b(0[xX][0-9a-fA-F_]+|0[bB][01_]+|0[oO][0-7_]+|[0-9_]+(\\.[0-9_]+)?([eE][+-]?[0-9_]+)?i?)\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.vamos",
+          "match": "\\b(se|senao|para|intervalo|escolha|caso|padrao|prosseguir|interromper|continuar|ir_para|retornar|disparar|adiar|selecionar)\\b"
+        },
+        {
+          "name": "keyword.declaration.vamos",
+          "match": "\\b(pacote|principal|importar|funcao|variavel|constante|tipo|estrutura|interface|mapa|canal)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "entity.name.type.vamos",
+          "match": "\\b(texto|inteiro|inteiro8|inteiro16|inteiro32|inteiro64|uinteiro|uinteiro8|uinteiro16|uinteiro32|uinteiro64|uinteiro_ponteiro|decimal|decimal32|decimal64|complexo64|complexo128|booleano|byte|runa|caractere|qualquer|erro)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.vamos",
+          "match": "\\b(verdadeiro|falso|nulo|iota)\\b"
+        }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.vamos",
+          "match": "\\b(criar|novo|adicionar|anexar|tamanho|capacidade|fechar|copiar|deletar|excluir|panico|recuperar|imprimir|imprimirln)\\b"
+        },
+        {
+          "name": "support.class.stdlib.vamos",
+          "match": "\\b(formatar|tempo|matematica|cordas|textos|so|sistema|sincronizar|erros|io|leitor|json|servidor_http|contexto|registrador|caminho|ordenacao)\\b"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "match": "\\b([a-zA-Z_\\u0080-\\uffff][a-zA-Z0-9_\\u0080-\\uffff]*)\\s*(?=\\()",
+          "captures": {
+            "1": { "name": "entity.name.function.vamos" }
+          }
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.vamos",
+          "match": "(:=|==|!=|<=|>=|&&|\\|\\||<-|\\+\\+|--|\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|<<=|>>=|&\\^=|\\.\\.\\.|\\+|-|\\*|/|%|&|\\||\\^|<<|>>|&\\^|=|!|<|>)"
+        }
+      ]
+    }
+  }
+}

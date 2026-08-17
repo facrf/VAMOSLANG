@@ -1,0 +1,113 @@
+{
+  "Pacote Principal": {
+    "prefix": "pkgm",
+    "body": [
+      "pacote principal",
+      "",
+      "importar (",
+      "\t\"formatar\"",
+      ")",
+      "",
+      "funcao principal() {",
+      "\tformatar.ImprimirLinha(\"${1:Olá, Mundo!}\")",
+      "\t$0",
+      "}"
+    ],
+    "description": "Cria a estrutura inicial de um pacote principal executável"
+  },
+  "Função": {
+    "prefix": "funcao",
+    "body": [
+      "funcao ${1:nome}(${2:parametros}) ${3:tipoRetorno} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Declaração de função em VAMOS-LANG"
+  },
+  "Condicional Se": {
+    "prefix": "se",
+    "body": [
+      "se ${1:condicao} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Estrutura condicional se (if)"
+  },
+  "Condicional Se Senão": {
+    "prefix": "sesenao",
+    "body": [
+      "se ${1:condicao} {",
+      "\t${2:// codigo}",
+      "} senao {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Estrutura condicional se ... senao (if ... else)"
+  },
+  "Laço Para": {
+    "prefix": "para",
+    "body": [
+      "para ${1:i} := 0; ${1:i} < ${2:limite}; ${1:i}++ {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Laço de repetição para (for loop)"
+  },
+  "Laço Intervalo": {
+    "prefix": "intervalo",
+    "body": [
+      "para ${1:indice}, ${2:valor} := intervalo ${3:colecao} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Iteração de intervalo sobre coleções ou fatias"
+  },
+  "Estrutura Struct": {
+    "prefix": "estrutura",
+    "body": [
+      "tipo ${1:Nome} estrutura {",
+      "\t${2:Campo} ${3:tipo}",
+      "}"
+    ],
+    "description": "Declaração de tipo estrutura (struct)"
+  },
+  "Interface": {
+    "prefix": "interface",
+    "body": [
+      "tipo ${1:Nome} interface {",
+      "\t${2:Metodo}(${3:params}) ${4:tipoRetorno}",
+      "}"
+    ],
+    "description": "Declaração de tipo interface"
+  },
+  "Disparar Concorrência": {
+    "prefix": "disparar",
+    "body": [
+      "disparar funcao() {",
+      "\t$0",
+      "}()"
+    ],
+    "description": "Dispara uma rotina concorrente (goroutine)"
+  },
+  "Adiar Defer": {
+    "prefix": "adiar",
+    "body": [
+      "adiar ${1:funcao}()"
+    ],
+    "description": "Adia a execução de uma função para o final do escopo"
+  },
+  "Imprimir Linha": {
+    "prefix": "imp",
+    "body": [
+      "formatar.ImprimirLinha(${1:\"Mensagem\"})"
+    ],
+    "description": "Imprime texto na saída padrão (fmt.Println)"
+  },
+  "Imprimir Formatado": {
+    "prefix": "impf",
+    "body": [
+      "formatar.ImprimirFormatado(\"${1:%s}\\n\", ${2:valor})"
+    ],
+    "description": "Imprime texto formatado na saída padrão (fmt.Printf)"
+  }
+}

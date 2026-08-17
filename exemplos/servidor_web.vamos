@@ -1,0 +1,43 @@
+// Exemplo 5: Servidor Web HTTP em VAMOS-LANG
+// Demonstração da biblioteca de rede e manipulação de requisições HTTP.
+
+pacote principal
+
+importar (
+	"formatar"
+	"servidor_http"
+)
+
+funcao manipularRaiz(w servidor_http.EscritorResposta, r *servidor_http.Requisicao) {
+	formatar.FimprimirLinha(w, "<html><body>")
+	formatar.FimprimirLinha(w, "<h1>🚀 Olá do VAMOS-LANG!</h1>")
+	formatar.FimprimirLinha(w, "<p>Este servidor HTTP foi escrito inteiramente em Português do Brasil.</p>")
+	formatar.FimprimirLinha(w, "</body></html>")
+}
+
+funcao manipularStatus(w servidor_http.EscritorResposta, r *servidor_http.Requisicao) {
+	formatar.FimprimirLinha(w, `{"status": "sucesso", "linguagem": "VAMOS-LANG", "versao": "1.0.0"}`)
+}
+
+funcao principal() {
+	porta := ":8080"
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("      VAMOS-LANG - Servidor Web HTTP              ")
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirFormatado("Configurando rotas na porta %s...\n", porta)
+
+	servidor_http.Manipulador("/", manipularRaiz)
+	servidor_http.Manipulador("/status", manipularStatus)
+
+	formatar.ImprimirLinha("Rotas registradas com sucesso:")
+	formatar.ImprimirLinha("  - GET /        -> Página inicial HTML")
+	formatar.ImprimirLinha("  - GET /status  -> Resposta em JSON")
+	formatar.ImprimirLinha("Servidor pronto! (Pressione Ctrl+C para encerrar)")
+	formatar.ImprimirLinha("==================================================")
+
+	// Inicia o servidor HTTP (descomente para manter ouvindo)
+	// err := servidor_http.OuvirEServir(porta, nulo)
+	// se err != nulo {
+	//     formatar.ImprimirLinha("Erro ao iniciar servidor:", err)
+	// }
+}

@@ -1,0 +1,87 @@
+// Exemplo 4: Calculadora e Tratamento de Erros em VAMOS-LANG
+// Demonstração de controle de fluxo, tratamento de erros e mapas.
+
+pacote principal
+
+importar (
+	"erros"
+	"formatar"
+)
+
+// OperacaoAritmetica calcula a operação matemática ou retorna um erro
+funcao calcular(a decimal64, b decimal64, op texto) (decimal64, erro) {
+	escolha op {
+	caso "+":
+		retornar a + b, nulo
+	caso "-":
+		retornar a - b, nulo
+	caso "*":
+		retornar a * b, nulo
+	caso "/":
+		se b == 0 {
+			retornar 0, erros.Novo("divisão por zero não é permitida")
+		}
+		retornar a / b, nulo
+	padrao:
+		retornar 0, formatar.ErroFormatado("operador desconhecido: %s", op)
+	}
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("========================================")
+	formatar.ImprimirLinha("   VAMOS-LANG: Calculadora e Erros      ")
+	formatar.ImprimirLinha("========================================")
+
+	// Histórico de operações usando mapa e slice
+	historico := criar([]texto, 0)
+	variavel estatisticas = criar(mapa[texto]inteiro)
+
+	testes := [][]texto{
+		{"10", "+", "5"},
+		{"20", "-", "8"},
+		{"7", "*", "6"},
+		{"100", "/", "4"},
+		{"50", "/", "0"},
+		{"12", "%", "2"},
+	}
+
+	para _, teste := intervalo testes {
+		variavel valA decimal64
+		variavel valB decimal64
+
+		// Faz o parse simples
+		se teste[0] == "10" { valA = 10 }
+		se teste[0] == "20" { valA = 20 }
+		se teste[0] == "7"  { valA = 7  }
+		se teste[0] == "100"{ valA = 100}
+		se teste[0] == "50" { valA = 50 }
+		se teste[0] == "12" { valA = 12 }
+
+		se teste[2] == "5" { valB = 5 }
+		se teste[2] == "8" { valB = 8 }
+		se teste[2] == "6" { valB = 6 }
+		se teste[2] == "4" { valB = 4 }
+		se teste[2] == "0" { valB = 0 }
+		se teste[2] == "2" { valB = 2 }
+
+		op := teste[1]
+		resultado, err := calcular(valA, valB, op)
+
+		se err != nulo {
+			msgErro := formatar.Formatar("[ERRO] %.0f %s %.0f -> Falha: %v", valA, op, valB, err)
+			formatar.ImprimirLinha(msgErro)
+			estatisticas["erros"]++
+		} senao {
+			msgSucesso := formatar.Formatar("[OK]   %.0f %s %.0f = %.2f", valA, op, valB, resultado)
+			formatar.ImprimirLinha(msgSucesso)
+			historico = anexar(historico, msgSucesso)
+			estatisticas["sucessos"]++
+		}
+	}
+
+	formatar.ImprimirLinha("----------------------------------------")
+	formatar.ImprimirFormatado("Total de Operações com Sucesso: %d\n", estatisticas["sucessos"])
+	formatar.ImprimirFormatado("Total de Operações com Erro:    %d\n", estatisticas["erros"])
+	formatar.ImprimirFormatado("Histórico de Registros Válidos: %d itens\n", tamanho(historico))
+	formatar.ImprimirLinha("========================================")
+}

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VAMOS-LANG Playground | Editor e Transpilador Online</title>
+  <meta name="description" content="Experimente o VAMOS-LANG: a linguagem de programação Go (Golang) com sintaxe 100% em Português do Brasil (PT-BR). Transpilação em tempo real e simulação interativa.">
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <span class="badge-flag">🇧🇷</span>
+        <span>VAMOS<span style="color: var(--accent-primary);">-LANG</span></span>
+      </div>
+      <span class="brand-tagline">Go 100% em Português do Brasil</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="cheatSheetBtn" title="Ver tabela de equivalências PT-BR -> Go">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+        Tabela de Sintaxe
+      </button>
+      <button class="btn btn-primary" id="runBtn" title="Transpilar e simular execução">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Executar (Simular)
+      </button>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="toolbar-left">
+      <div class="select-wrapper">
+        <label for="snippetSelect">Exemplo:</label>
+        <select id="snippetSelect" class="custom-select">
+          <option value="ola_mundo">1. Olá, Mundo!</option>
+          <option value="concorrencia">2. Concorrência (disparar & canal)</option>
+          <option value="estruturas">3. Estruturas e Interfaces</option>
+          <option value="calculadora">4. Calculadora e Tratamento de Erros</option>
+          <option value="servidor_web">5. Servidor Web HTTP</option>
+        </select>
+      </div>
+
+      <button class="btn btn-secondary" id="formatBtn" title="Formatar código VAMOS (vamos fmt)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10H3"/><path d="M21 6H3"/><path d="M21 14H3"/><path d="M21 18H3"/></svg>
+        Formatar
+      </button>
+
+      <button class="btn btn-secondary" id="reverseBtn" title="Converter código Go nativo para VAMOS-LANG">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+        Go ➔ VAMOS
+      </button>
+
+      <button class="btn btn-secondary" id="clearBtn" title="Limpar código do editor">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        Limpar
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <button class="btn btn-secondary" id="shareBtn" title="Gerar link compartilhável deste código">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+        Compartilhar
+      </button>
+      <button class="btn btn-secondary" id="copyVamosBtn" title="Copiar código VAMOS">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        Copiar VAMOS
+      </button>
+      <button class="btn btn-secondary" id="copyGoBtn" title="Copiar código Go puro gerado">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        Copiar Go
+      </button>
+      <button class="btn btn-secondary" id="downloadGoBtn" title="Baixar arquivo .go transpilado">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        Baixar .go
+      </button>
+    </div>
+  </section>
+
+  <!-- Workspace: Editor & Transpiled Code Split -->
+  <main class="workspace">
+    <!-- Left Pane: VAMOS-LANG Editor -->
+    <div class="pane">
+      <div class="pane-header">
+        <span class="pane-title">
+          <span class="indicator indicator-vamos"></span>
+          Editor VAMOS-LANG (.vamos)
+        </span>
+      </div>
+      <div class="editor-container">
+        <div class="line-numbers" id="lineNumbers">1</div>
+        <textarea id="editorTextarea" class="code-textarea" spellcheck="false" placeholder="Digite seu código VAMOS-LANG aqui..."></textarea>
+      </div>
+    </div>
+
+    <!-- Right Pane: Transpiled Go Output -->
+    <div class="pane">
+      <div class="pane-header">
+        <span class="pane-title">
+          <span class="indicator indicator-go"></span>
+          Código Go Nativo Transpilado (.go)
+        </span>
+      </div>
+      <div class="editor-container">
+        <pre class="output-code" id="outputCode">// Código Go puro transpilado em tempo real...</pre>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Panel: Terminal Console & Token Inspector -->
+  <section class="bottom-panel">
+    <div class="panel-tabs">
+      <button class="tab-btn active" data-tab="tabTerminal">Terminal & Execução</button>
+      <button class="tab-btn" data-tab="tabTokens">Inspetor Léxico (Tokens)</button>
+    </div>
+
+    <div class="tab-content active" id="tabTerminal">
+      <div id="terminalOutput">
+        <div class="terminal-line info">[Pronto] Selecione um snippet ou edite o código para ver a transpilação instantânea.</div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tabTokens">
+      <table class="token-table">
+        <thead>
+          <tr>
+            <th>Posição (L:C)</th>
+            <th>Tipo do Token</th>
+            <th>Valor Léxico</th>
+          </tr>
+        </thead>
+        <tbody id="tokenTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Cheat Sheet Modal -->
+  <div class="modal-backdrop" id="cheatSheetModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Tabela de Equivalência (PT-BR ➔ Go)</h2>
+        <button class="btn btn-icon-only" id="closeModalBtn" title="Fechar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="searchKeyword" class="search-input" placeholder="Filtrar palavra-chave (ex: funcao, disparar, texto, formatar)...">
+        <div class="ref-grid" id="refGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">Notificação</div>
+
+  <!-- Scripts -->
+  <script src="transpiler.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

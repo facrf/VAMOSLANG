@@ -1,0 +1,25 @@
+// Exemplo 1: Olá Mundo em VAMOS-LANG
+// Sintaxe Go 100% traduzida para Português do Brasil
+
+pacote principal
+
+importar (
+	"formatar"
+	"tempo"
+)
+
+funcao principal() {
+	// Declaração de variáveis
+	variavel saudacao texto = "Olá, desenvolvedor VAMOS-LANG!"
+	constante versao decimal64 = 1.0
+	anoAtual := 2026
+
+	formatar.ImprimirLinha("========================================")
+	formatar.ImprimirLinha("  Bem-vindo ao Ecossistema VAMOS-LANG!  ")
+	formatar.ImprimirLinha("========================================")
+
+	formatar.ImprimirFormatado("Mensagem: %s\n", saudacao)
+	formatar.ImprimirFormatado("Versão: %.1f | Ano: %d\n", versao, anoAtual)
+	formatar.ImprimirFormatado("Executado em: %s\n", tempo.Agora().Formato("02/01/2006 15:04:05"))
+	formatar.ImprimirLinha("========================================")
+}

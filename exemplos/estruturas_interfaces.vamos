@@ -1,0 +1,78 @@
+// Exemplo 3: Estruturas, Interfaces e Métodos em VAMOS-LANG
+// Demonstração de tipos customizados, interfaces, ponteiros e polimorfismo.
+
+pacote principal
+
+importar (
+	"formatar"
+	"matematica"
+)
+
+// Interface para qualquer forma geométrica que possui área e perímetro
+tipo FormaGeometrica interface {
+	Area() decimal64
+	Perimetro() decimal64
+	Nome() texto
+}
+
+// Estrutura Retângulo
+tipo Retangulo estrutura {
+	Largura decimal64
+	Altura  decimal64
+}
+
+// Métodos do Retângulo
+funcao (r Retangulo) Area() decimal64 {
+	retornar r.Largura * r.Altura
+}
+
+funcao (r Retangulo) Perimetro() decimal64 {
+	retornar 2 * (r.Largura + r.Altura)
+}
+
+funcao (r Retangulo) Nome() texto {
+	retornar "Retângulo"
+}
+
+// Estrutura Círculo
+tipo Circulo estrutura {
+	Raio decimal64
+}
+
+// Métodos do Círculo
+funcao (c Circulo) Area() decimal64 {
+	retornar matematica.Pi * matematica.Potencia(c.Raio, 2)
+}
+
+funcao (c Circulo) Perimetro() decimal64 {
+	retornar 2 * matematica.Pi * c.Raio
+}
+
+funcao (c Circulo) Nome() texto {
+	retornar "Círculo"
+}
+
+// Função polimórfica que aceita a interface FormaGeometrica
+funcao exibirRelatorioForma(f FormaGeometrica) {
+	formatar.ImprimirLinha("----------------------------------------")
+	formatar.ImprimirFormatado("Forma:      %s\n", f.Nome())
+	formatar.ImprimirFormatado("Área:       %.2f cm²\n", f.Area())
+	formatar.ImprimirFormatado("Perímetro:  %.2f cm\n", f.Perimetro())
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("========================================")
+	formatar.ImprimirLinha("   VAMOS-LANG: Estruturas e Interfaces  ")
+	formatar.ImprimirLinha("========================================")
+
+	ret := Retangulo{Largura: 10.5, Altura: 5.0}
+	circ := Circulo{Raio: 3.5}
+
+	formas := []FormaGeometrica{ret, circ}
+
+	para _, forma := intervalo formas {
+		exibirRelatorioForma(forma)
+	}
+
+	formatar.ImprimirLinha("----------------------------------------")
+}
