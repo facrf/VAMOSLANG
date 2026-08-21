@@ -1,0 +1,23 @@
+{
+  "notas": [
+    {
+      "id": 1,
+      "titulo": "Minha Primeira Nota",
+      "conteudo": "Esta é uma nota criada no Bloco de Notas BR em VAMOSLANG!",
+      "categoria": "Estudos",
+      "criado_em": "21/08/2026 16:55:54",
+      "atualizado_em": "21/08/2026 16:56:05",
+      "favorita": true
+    },
+    {
+      "id": 2,
+      "titulo": "Compilador VAMOS",
+      "conteudo": "VAMOS-LANG é uma linguagem rápida com sintaxe 100% em Português.",
+      "categoria": "Tecnologia",
+      "criado_em": "21/08/2026 16:55:56",
+      "atualizado_em": "21/08/2026 16:55:56",
+      "favorita": false
+    }
+  ],
+  "proximo_id": 3
+}

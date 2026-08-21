@@ -1,0 +1,26 @@
+# Binários e executáveis compilados
+blocodenotas
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+bin/
+dist/
+
+# Arquivos temporários gerados na transpilação Go
+*.go
+!*.go.mod
+
+# Arquivos temporários de editores e SO
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Arquivos de log e depuração
+*.log

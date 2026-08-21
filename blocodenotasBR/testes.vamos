@@ -1,0 +1,237 @@
+// ============================================================================
+// SUÍTE DE TESTES AUTOMATIZADOS - BLOCO DE NOTAS BR (VAMOS-LANG)
+// ============================================================================
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"json"
+	"so"
+	"tempo"
+)
+
+// Constante para banco de dados temporário de testes
+constante ArquivoTesteDB texto = "teste_notas_db.json"
+
+// Estrutura espelhada para validação de testes
+tipo NotaTeste estrutura {
+	Id           inteiro  `json:"id"`
+	Titulo       texto    `json:"titulo"`
+	Conteudo     texto    `json:"conteudo"`
+	Categoria    texto    `json:"categoria"`
+	CriadoEm     texto    `json:"criado_em"`
+	AtualizadoEm texto    `json:"atualizado_em"`
+	Favorita     booleano `json:"favorita"`
+}
+
+tipo BlocoTeste estrutura {
+	Notas         []NotaTeste `json:"notas"`
+	ProximoId     inteiro     `json:"proximo_id"`
+	ArquivoOrigem texto       `json:"-"`
+}
+
+funcao NovoBlocoTeste(caminho texto) *BlocoTeste {
+	retornar &BlocoTeste{
+		Notas:         criar([]NotaTeste, 0),
+		ProximoId:     1,
+		ArquivoOrigem: caminho,
+	}
+}
+
+funcao (b *BlocoTeste) Salvar() erro {
+	bytesJson, err := json.SerializarIdentado(b, "", "  ")
+	se err != nulo {
+		retornar err
+	}
+	retornar so.EscreverArquivo(b.ArquivoOrigem, bytesJson, 0644)
+}
+
+funcao (b *BlocoTeste) Carregar() erro {
+	dados, err := so.LerArquivo(b.ArquivoOrigem)
+	se err != nulo {
+		retornar err
+	}
+	retornar json.Deserializar(dados, b)
+}
+
+funcao (b *BlocoTeste) CriarNota(titulo texto, conteudo texto, categoria texto) (NotaTeste, erro) {
+	titulo = cordas.ApararEspaco(titulo)
+	se titulo == "" {
+		retornar NotaTeste{}, formatar.CriarErro("título não pode ser vazio")
+	}
+
+	se categoria == "" {
+		categoria = "Geral"
+	}
+
+	dataHora := tempo.Agora().Formato("02/01/2006 15:04:05")
+	nota := NotaTeste{
+		Id:           b.ProximoId,
+		Titulo:       titulo,
+		Conteudo:     conteudo,
+		Categoria:    categoria,
+		CriadoEm:     dataHora,
+		AtualizadoEm: dataHora,
+		Favorita:     falso,
+	}
+
+	b.Notas = adicionar(b.Notas, nota)
+	b.ProximoId++
+	err := b.Salvar()
+	retornar nota, err
+}
+
+funcao (b *BlocoTeste) ObterPorId(id inteiro) (*NotaTeste, erro) {
+	para i := 0; i < tamanho(b.Notas); i++ {
+		se b.Notas[i].Id == id {
+			retornar &b.Notas[i], nulo
+		}
+	}
+	retornar nulo, formatar.CriarErro("nota não encontrada")
+}
+
+funcao (b *BlocoTeste) AlternarFavorita(id inteiro) erro {
+	n, err := b.ObterPorId(id)
+	se err != nulo {
+		retornar err
+	}
+	n.Favorita = !n.Favorita
+	retornar b.Salvar()
+}
+
+funcao (b *BlocoTeste) Buscar(termo texto) []NotaTeste {
+	termo = cordas.ParaMinusculas(termo)
+	resultados := criar([]NotaTeste, 0)
+	para _, n := intervalo b.Notas {
+		se cordas.Contem(cordas.ParaMinusculas(n.Titulo), termo) || cordas.Contem(cordas.ParaMinusculas(n.Conteudo), termo) {
+			resultados = adicionar(resultados, n)
+		}
+	}
+	retornar resultados
+}
+
+funcao (b *BlocoTeste) Excluir(id inteiro) erro {
+	idx := -1
+	para i := 0; i < tamanho(b.Notas); i++ {
+		se b.Notas[i].Id == id {
+			idx = i
+			interromper
+		}
+	}
+	se idx == -1 {
+		retornar formatar.CriarErro("nota não encontrada")
+	}
+	b.Notas = adicionar(b.Notas[:idx], b.Notas[idx+1:]...)
+	retornar b.Salvar()
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("  🧪 SUÍTE DE TESTES: BLOCO DE NOTAS BR (VAMOS)   ")
+	formatar.ImprimirLinha("==================================================")
+
+	// Garante limpeza de ambiente de teste
+	so.Remover(ArquivoTesteDB)
+	adiar so.Remover(ArquivoTesteDB)
+
+	totalPassos := 0
+	passosSucesso := 0
+
+	// Teste 1: Inicialização
+	totalPassos++
+	bloco := NovoBlocoTeste(ArquivoTesteDB)
+	se bloco != nulo && tamanho(bloco.Notas) == 0 {
+		formatar.ImprimirLinha("[✓ TESTE 1] Inicialização de Bloco de Notas: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 1] Falha na inicialização do bloco")
+	}
+
+	// Teste 2: Criação de Notas Válidas
+	totalPassos++
+	nota1, err1 := bloco.CriarNota("Anotação de Teste 1", "Conteúdo da anotação de teste", "Trabalho")
+	nota2, err2 := bloco.CriarNota("Segunda Anotação", "Lembrar de comprar pão e leite", "Pessoal")
+	se err1 == nulo && err2 == nulo && nota1.Id == 1 && nota2.Id == 2 && tamanho(bloco.Notas) == 2 {
+		formatar.ImprimirLinha("[✓ TESTE 2] Criação de notas com persistência: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 2] Falha ao criar notas")
+	}
+
+	// Teste 3: Validação de Título Vazio
+	totalPassos++
+	_, errVazio := bloco.CriarNota("   ", "conteudo", "Geral")
+	se errVazio != nulo {
+		formatar.ImprimirLinha("[✓ TESTE 3] Validação de título obrigatório: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 3] Falha: permitiu criação com título vazio")
+	}
+
+	// Teste 4: Consulta por ID
+	totalPassos++
+	recuperada, errRec := bloco.ObterPorId(1)
+	_, errInexistente := bloco.ObterPorId(999)
+	se errRec == nulo && recuperada.Titulo == "Anotação de Teste 1" && errInexistente != nulo {
+		formatar.ImprimirLinha("[✓ TESTE 4] Consulta por ID existente/inexistente: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 4] Falha na busca por ID")
+	}
+
+	// Teste 5: Favoritar Nota
+	totalPassos++
+	errFav := bloco.AlternarFavorita(1)
+	notaFav, _ := bloco.ObterPorId(1)
+	se errFav == nulo && notaFav.Favorita == verdadeiro {
+		formatar.ImprimirLinha("[✓ TESTE 5] Alternância de status favorito: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 5] Falha ao alternar favorito")
+	}
+
+	// Teste 6: Busca Textual
+	totalPassos++
+	buscaResult := bloco.Buscar("pão")
+	se tamanho(buscaResult) == 1 && buscaResult[0].Id == 2 {
+		formatar.ImprimirLinha("[✓ TESTE 6] Busca textual em conteúdo: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 6] Falha na busca textual")
+	}
+
+	// Teste 7: Recarga a partir do Disco (Persistência)
+	totalPassos++
+	blocoRecarregado := NovoBlocoTeste(ArquivoTesteDB)
+	errCarregar := blocoRecarregado.Carregar()
+	se errCarregar == nulo && tamanho(blocoRecarregado.Notas) == 2 {
+		formatar.ImprimirLinha("[✓ TESTE 7] Recarga de dados persistidos em JSON: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 7] Falha na recarga do JSON do disco")
+	}
+
+	// Teste 8: Exclusão de Nota
+	totalPassos++
+	errExcluir := bloco.Excluir(1)
+	_, errBuscaExcluida := bloco.ObterPorId(1)
+	se errExcluir == nulo && errBuscaExcluida != nulo && tamanho(bloco.Notas) == 1 {
+		formatar.ImprimirLinha("[✓ TESTE 8] Exclusão de nota: OK")
+		passosSucesso++
+	} senao {
+		formatar.ImprimirLinha("[✗ TESTE 8] Falha na exclusão de nota")
+	}
+
+	// Relatório Final
+	formatar.ImprimirLinha("--------------------------------------------------")
+	formatar.ImprimirFormatado("Resultado: %d de %d testes passaram com êxito!\n", passosSucesso, totalPassos)
+	se passosSucesso == totalPassos {
+		formatar.ImprimirLinha("Status: TODOS OS TESTES PASSARAM COM SUCESSO! ✓")
+	} senao {
+		formatar.ImprimirLinha("Status: ALGUNS TESTES FALHARAM! ✗")
+		so.Sair(1)
+	}
+	formatar.ImprimirLinha("==================================================")
+}

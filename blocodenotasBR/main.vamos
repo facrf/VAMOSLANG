@@ -1,0 +1,719 @@
+// ============================================================================
+// BLOCO DE NOTAS BR (BlocoDeNotasBR) - VAMOS-LANG
+// Um gerenciador moderno, robusto e elegante de notas em Português do Brasil.
+// ============================================================================
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"json"
+	"leitor"
+	"so"
+	"tempo"
+)
+
+// Constantes do Sistema
+constante (
+	ArquivoDadosPadrao texto = "notas_db.json"
+	VersaoApp          texto = "1.0.0"
+	NomeApp            texto = "Bloco de Notas BR"
+)
+
+// Estrutura que representa uma anotação individual
+tipo Nota estrutura {
+	Id           inteiro  `json:"id"`
+	Titulo       texto    `json:"titulo"`
+	Conteudo     texto    `json:"conteudo"`
+	Categoria    texto    `json:"categoria"`
+	CriadoEm     texto    `json:"criado_em"`
+	AtualizadoEm texto    `json:"atualizado_em"`
+	Favorita     booleano `json:"favorita"`
+}
+
+// Estrutura principal do Bloco de Notas
+tipo BlocoDeNotas estrutura {
+	Notas         []Nota `json:"notas"`
+	ProximoId     inteiro `json:"proximo_id"`
+	ArquivoOrigem texto   `json:"-"`
+}
+
+// NovoBlocoDeNotas instancia um novo bloco e tenta carregar os dados persistidos
+funcao NovoBlocoDeNotas(caminhoArquivo texto) *BlocoDeNotas {
+	bloco := &BlocoDeNotas{
+		Notas:         criar([]Nota, 0),
+		ProximoId:     1,
+		ArquivoOrigem: caminhoArquivo,
+	}
+
+	err := bloco.Carregar()
+	se err != nulo {
+		// Se o arquivo ainda não existir, inicia novo
+		bloco.ProximoId = 1
+	}
+
+	retornar bloco
+}
+
+// Carregar lê os dados do arquivo JSON local
+funcao (b *BlocoDeNotas) Carregar() erro {
+	dados, err := so.LerArquivo(b.ArquivoOrigem)
+	se err != nulo {
+		retornar err
+	}
+
+	err = json.Deserializar(dados, b)
+	se err != nulo {
+		retornar err
+	}
+
+	// Ajusta o próximo ID disponível
+	maiorId := 0
+	para _, n := intervalo b.Notas {
+		se n.Id > maiorId {
+			maiorId = n.Id
+		}
+	}
+	b.ProximoId = maiorId + 1
+
+	retornar nulo
+}
+
+// Salvar persiste os dados em formato JSON formatado
+funcao (b *BlocoDeNotas) Salvar() erro {
+	bytesJson, err := json.SerializarIdentado(b, "", "  ")
+	se err != nulo {
+		retornar formatar.CriarErro("falha ao serializar notas: %v", err)
+	}
+
+	err = so.EscreverArquivo(b.ArquivoOrigem, bytesJson, 0644)
+	se err != nulo {
+		retornar formatar.CriarErro("falha ao salvar arquivo '%s': %v", b.ArquivoOrigem, err)
+	}
+
+	retornar nulo
+}
+
+// CriarNota adiciona uma nova anotação ao bloco
+funcao (b *BlocoDeNotas) CriarNota(titulo texto, conteudo texto, categoria texto) (Nota, erro) {
+	tituloLimpo := cordas.ApararEspaco(titulo)
+	se tituloLimpo == "" {
+		retornar Nota{}, formatar.CriarErro("o título da nota não pode ser vazio")
+	}
+
+	categoriaLimpa := cordas.ApararEspaco(categoria)
+	se categoriaLimpa == "" {
+		categoriaLimpa = "Geral"
+	}
+
+	dataHora := tempo.Agora().Formato("02/01/2006 15:04:05")
+
+	novaNota := Nota{
+		Id:           b.ProximoId,
+		Titulo:       tituloLimpo,
+		Conteudo:     conteudo,
+		Categoria:    categoriaLimpa,
+		CriadoEm:     dataHora,
+		AtualizadoEm: dataHora,
+		Favorita:     falso,
+	}
+
+	b.Notas = adicionar(b.Notas, novaNota)
+	b.ProximoId++
+
+	err := b.Salvar()
+	se err != nulo {
+		retornar novaNota, err
+	}
+
+	retornar novaNota, nulo
+}
+
+// ObterNotaPorId busca uma nota pelo seu identificador
+funcao (b *BlocoDeNotas) ObterNotaPorId(id inteiro) (*Nota, erro) {
+	para i := 0; i < tamanho(b.Notas); i++ {
+		se b.Notas[i].Id == id {
+			retornar &b.Notas[i], nulo
+		}
+	}
+	retornar nulo, formatar.CriarErro("nota com ID %d não encontrada", id)
+}
+
+// AtualizarNota modifica os dados de uma nota existente
+funcao (b *BlocoDeNotas) AtualizarNota(id inteiro, novoTitulo texto, novoConteudo texto, novaCategoria texto) (*Nota, erro) {
+	para i := 0; i < tamanho(b.Notas); i++ {
+		se b.Notas[i].Id == id {
+			se cordas.ApararEspaco(novoTitulo) != "" {
+				b.Notas[i].Titulo = cordas.ApararEspaco(novoTitulo)
+			}
+			se novoConteudo != "" {
+				b.Notas[i].Conteudo = novoConteudo
+			}
+			se cordas.ApararEspaco(novaCategoria) != "" {
+				b.Notas[i].Categoria = cordas.ApararEspaco(novaCategoria)
+			}
+			b.Notas[i].AtualizadoEm = tempo.Agora().Formato("02/01/2006 15:04:05")
+
+			err := b.Salvar()
+			se err != nulo {
+				retornar nulo, err
+			}
+			retornar &b.Notas[i], nulo
+		}
+	}
+	retornar nulo, formatar.CriarErro("nota com ID %d não encontrada para atualização", id)
+}
+
+// AlternarFavorita marca ou desmarca a nota como favorita
+funcao (b *BlocoDeNotas) AlternarFavorita(id inteiro) (*Nota, erro) {
+	para i := 0; i < tamanho(b.Notas); i++ {
+		se b.Notas[i].Id == id {
+			b.Notas[i].Favorita = !b.Notas[i].Favorita
+			b.Notas[i].AtualizadoEm = tempo.Agora().Formato("02/01/2006 15:04:05")
+
+			err := b.Salvar()
+			se err != nulo {
+				retornar nulo, err
+			}
+			retornar &b.Notas[i], nulo
+		}
+	}
+	retornar nulo, formatar.CriarErro("nota com ID %d não encontrada", id)
+}
+
+// ExcluirNota remove uma nota da coleção
+funcao (b *BlocoDeNotas) ExcluirNota(id inteiro) (booleano, erro) {
+	indice := -1
+	para i := 0; i < tamanho(b.Notas); i++ {
+		se b.Notas[i].Id == id {
+			indice = i
+			interromper
+		}
+	}
+
+	se indice == -1 {
+		retornar falso, formatar.CriarErro("nota com ID %d não encontrada para exclusão", id)
+	}
+
+	// Remove item preservando a ordem
+	b.Notas = adicionar(b.Notas[:indice], b.Notas[indice+1:]...)
+
+	err := b.Salvar()
+	se err != nulo {
+		retornar falso, err
+	}
+
+	retornar verdadeiro, nulo
+}
+
+// BuscarNotas busca notas por palavra-chave no título, conteúdo ou categoria
+funcao (b *BlocoDeNotas) BuscarNotas(termo texto) []Nota {
+	termoMinusculo := cordas.ParaMinusculas(cordas.ApararEspaco(termo))
+	se termoMinusculo == "" {
+		retornar b.Notas
+	}
+
+	resultados := criar([]Nota, 0)
+	para _, n := intervalo b.Notas {
+		tit := cordas.ParaMinusculas(n.Titulo)
+		cnt := cordas.ParaMinusculas(n.Conteudo)
+		cat := cordas.ParaMinusculas(n.Categoria)
+
+		se cordas.Contem(tit, termoMinusculo) || cordas.Contem(cnt, termoMinusculo) || cordas.Contem(cat, termoMinusculo) {
+			resultados = adicionar(resultados, n)
+		}
+	}
+
+	retornar resultados
+}
+
+// ContarPalavras conta o número aproximado de palavras em um texto
+funcao ContarPalavras(s texto) inteiro {
+	campos := cordas.Dividir(cordas.ApararEspaco(s), " ")
+	total := 0
+	para _, c := intervalo campos {
+		se cordas.ApararEspaco(c) != "" {
+			total++
+		}
+	}
+	retornar total
+}
+
+// ObterEstatisticas calcula estatísticas detalhadas das notas
+funcao (b *BlocoDeNotas) ObterEstatisticas() (totalNotas inteiro, totalFavoritas inteiro, totalPalavras inteiro, categorias mapa[texto]inteiro) {
+	totalNotas = tamanho(b.Notas)
+	totalFavoritas = 0
+	totalPalavras = 0
+	categorias = criar(mapa[texto]inteiro)
+
+	para _, n := intervalo b.Notas {
+		se n.Favorita {
+			totalFavoritas++
+		}
+		totalPalavras = totalPalavras + ContarPalavras(n.Conteudo)
+		categorias[n.Categoria] = categorias[n.Categoria] + 1
+	}
+
+	retornar totalNotas, totalFavoritas, totalPalavras, categorias
+}
+
+// ExportarTexto exporta todas as notas para um arquivo de texto limpo
+funcao (b *BlocoDeNotas) ExportarTexto(caminhoDestino texto) erro {
+	se tamanho(b.Notas) == 0 {
+		retornar formatar.CriarErro("nenhuma nota disponível para exportar")
+	}
+
+	var sb cordas.Builder
+	formatar.FimprimirLinha(&sb, "================================================================================")
+	formatar.FimprimirLinha(&sb, "             RELATÓRIO DE NOTAS EXPORTADAS - BLOCO DE NOTAS BR                  ")
+	formatar.FimprimirLinha(&sb, "================================================================================")
+	formatar.FimprimirFormatado(&sb, "Data de Exportação: %s | Total de Notas: %d\n\n", tempo.Agora().Formato("02/01/2006 15:04:05"), tamanho(b.Notas))
+
+	para _, n := intervalo b.Notas {
+		tagFav := " "
+		se n.Favorita {
+			tagFav = "★"
+		}
+		formatar.FimprimirLinha(&sb, "--------------------------------------------------------------------------------")
+		formatar.FimprimirFormatado(&sb, "[#%03d] %s [%s] - Categoria: %s\n", n.Id, tagFav, n.Titulo, n.Categoria)
+		formatar.FimprimirFormatado(&sb, "Criado em: %s | Atualizado em: %s\n", n.CriadoEm, n.AtualizadoEm)
+		formatar.FimprimirLinha(&sb, "Conteúdo:")
+		formatar.FimprimirLinha(&sb, n.Conteudo)
+		formatar.FimprimirLinha(&sb, "")
+	}
+
+	formatar.FimprimirLinha(&sb, "================================================================================")
+
+	err := so.EscreverArquivo(caminhoDestino, []byte(sb.String()), 0644)
+	se err != nulo {
+		retornar formatar.CriarErro("falha ao exportar notas para '%s': %v", caminhoDestino, err)
+	}
+
+	retornar nulo
+}
+
+// Auxiliar para converter texto para número inteiro
+funcao textoParaInteiro(s texto) inteiro {
+	res := 0
+	s = cordas.ApararEspaco(s)
+	para i := 0; i < tamanho(s); i++ {
+		se s[i] >= '0' && s[i] <= '9' {
+			res = res*10 + inteiro(s[i]-'0')
+		}
+	}
+	retornar res
+}
+
+// ExibirBanner imprime o banner de boas-vindas do Bloco de Notas BR
+funcao ExibirBanner() {
+	formatar.ImprimirLinha("====================================================================")
+	formatar.ImprimirLinha("       📝 BLOCO DE NOTAS BR - GERENCIADOR EM VAMOS-LANG 🇧🇷          ")
+	formatar.ImprimirFormatado("           Versão %s | Alta Performance com Sintaxe PT-BR          \n", VersaoApp)
+	formatar.ImprimirLinha("====================================================================")
+}
+
+// ExibirAjuda exibe as instruções de uso dos comandos CLI
+funcao ExibirAjuda() {
+	ExibirBanner()
+	formatar.ImprimirLinha("Uso via Linha de Comando (CLI):")
+	formatar.ImprimirLinha("  vamos rodar blocodenotasBR/main.vamos <comando> [argumentos...]")
+	formatar.ImprimirLinha("")
+	formatar.ImprimirLinha("Comandos Disponíveis:")
+	formatar.ImprimirLinha("  criar <titulo> <conteudo> [categoria]  Cria uma nova nota")
+	formatar.ImprimirLinha("  listar [termo_ou_categoria]            Lista as notas cadastradas")
+	formatar.ImprimirLinha("  ver <id>                               Exibe os detalhes de uma nota")
+	formatar.ImprimirLinha("  editar <id> <novo_conteudo>            Atualiza o conteúdo de uma nota")
+	formatar.ImprimirLinha("  categoria <id> <nova_categoria>        Altera a categoria de uma nota")
+	formatar.ImprimirLinha("  favoritar <id>                         Marca ou desmarca como favorita")
+	formatar.ImprimirLinha("  excluir <id>                           Remove permanentemente uma nota")
+	formatar.ImprimirLinha("  buscar <termo>                         Pesquisa notas por palavra-chave")
+	formatar.ImprimirLinha("  estatisticas                           Exibe métricas e dados do bloco")
+	formatar.ImprimirLinha("  exportar <arquivo.txt>                 Exporta todas as notas em texto")
+	formatar.ImprimirLinha("  interativo                             Inicia o console interativo")
+	formatar.ImprimirLinha("  ajuda                                  Exibe esta ajuda")
+	formatar.ImprimirLinha("")
+	formatar.ImprimirLinha("Exemplos:")
+	formatar.ImprimirLinha("  ./vamos rodar blocodenotasBR/main.vamos criar \"Ideia VAMOS\" \"Criar uma IDE web\" Trabalho")
+	formatar.ImprimirLinha("  ./vamos rodar blocodenotasBR/main.vamos listar")
+	formatar.ImprimirLinha("  ./vamos rodar blocodenotasBR/main.vamos buscar VAMOS")
+	formatar.ImprimirLinha("  ./vamos rodar blocodenotasBR/main.vamos favoritar 1")
+	formatar.ImprimirLinha("  ./vamos rodar blocodenotasBR/main.vamos estatisticas")
+	formatar.ImprimirLinha("====================================================================")
+}
+
+// ExibirNotaDetalhada imprime os detalhes de uma nota
+funcao ExibirNotaDetalhada(n *Nota) {
+	tagFav := "NÃO"
+	se n.Favorita {
+		tagFav = "SIM ★"
+	}
+	formatar.ImprimirLinha("┌──────────────────────────────────────────────────────────────────┐")
+	formatar.ImprimirFormatado("│ NOTA #%03d - %-53s │\n", n.Id, n.Titulo)
+	formatar.ImprimirLinha("├──────────────────────────────────────────────────────────────────┤")
+	formatar.ImprimirFormatado("│ Categoria:      %-48s │\n", n.Categoria)
+	formatar.ImprimirFormatado("│ Favorita:       %-48s │\n", tagFav)
+	formatar.ImprimirFormatado("│ Criado em:      %-48s │\n", n.CriadoEm)
+	formatar.ImprimirFormatado("│ Atualizado em:  %-48s │\n", n.AtualizadoEm)
+	formatar.ImprimirLinha("├──────────────────────────────────────────────────────────────────┤")
+	formatar.ImprimirLinha("│ CONTEÚDO:                                                        │")
+	linhas := cordas.Dividir(n.Conteudo, "\n")
+	para _, l := intervalo linhas {
+		formatar.ImprimirFormatado("│ %-64s │\n", l)
+	}
+	formatar.ImprimirLinha("└──────────────────────────────────────────────────────────────────┘")
+}
+
+// ListarNotasTabela imprime uma lista elegante das notas
+funcao ListarNotasTabela(notas []Nota) {
+	se tamanho(notas) == 0 {
+		formatar.ImprimirLinha("  (Nenhuma anotação encontrada)")
+		retornar
+	}
+
+	formatar.ImprimirLinha("┌─────┬───┬──────────────────────────────┬──────────────┬─────────────────────┐")
+	formatar.ImprimirLinha("│ ID  │ ★ │ TÍTULO                       │ CATEGORIA    │ DATA DE CRIAÇÃO     │")
+	formatar.ImprimirLinha("├─────┼───┼──────────────────────────────┼──────────────┼─────────────────────┤")
+
+	para _, n := intervalo notas {
+		favIcon := " "
+		se n.Favorita {
+			favIcon = "★"
+		}
+
+		tit := n.Titulo
+		se tamanho(tit) > 28 {
+			tit = tit[:25] + "..."
+		}
+
+		cat := n.Categoria
+		se tamanho(cat) > 12 {
+			cat = cat[:9] + "..."
+		}
+
+		formatar.ImprimirFormatado(
+			"│ %-3d │ %s │ %-28s │ %-12s │ %-19s │\n",
+			n.Id,
+			favIcon,
+			tit,
+			cat,
+			n.CriadoEm,
+		)
+	}
+
+	formatar.ImprimirLinha("└─────┴───┴──────────────────────────────┴──────────────┴─────────────────────┘")
+	formatar.ImprimirFormatado("Total listado: %d nota(s)\n", tamanho(notas))
+}
+
+// ModoInterativo executa o console interativo para o usuário
+funcao ModoInterativo(bloco *BlocoDeNotas) {
+	ExibirBanner()
+	formatar.ImprimirLinha("Modo Interativo Ativado! Digite 'ajuda' para comandos ou 'sair' para encerrar.")
+	formatar.ImprimirLinha("--------------------------------------------------------------------")
+
+	scanner := leitor.NewScanner(so.EntradaPadrao)
+
+	para {
+		formatar.Imprimir("\nbloco-notas-br> ")
+		se !scanner.Scan() {
+			interromper
+		}
+
+		linha := cordas.ApararEspaco(scanner.Text())
+		se linha == "" {
+			continuar
+		}
+
+		partes := cordas.Dividir(linha, " ")
+		cmd := cordas.ParaMinusculas(partes[0])
+
+		escolha cmd {
+			caso "sair", "exit", "fechar":
+			formatar.ImprimirLinha("Encerrando Bloco de Notas BR. Até logo!")
+			retornar
+
+			caso "ajuda", "help", "?":
+			formatar.ImprimirLinha("Comandos Interativos:")
+			formatar.ImprimirLinha("  criar        - Cria uma nova anotação interativamente")
+			formatar.ImprimirLinha("  listar       - Lista todas as anotações")
+			formatar.ImprimirLinha("  ver <id>     - Exibe detalhes de uma nota")
+			formatar.ImprimirLinha("  buscar <txt> - Pesquisa notas por palavra")
+			formatar.ImprimirLinha("  favoritar <id> - Alterna favorito")
+			formatar.ImprimirLinha("  excluir <id> - Exclui uma nota")
+			formatar.ImprimirLinha("  stats        - Exibe estatísticas do bloco")
+			formatar.ImprimirLinha("  exportar <arq> - Exporta notas para arquivo de texto")
+			formatar.ImprimirLinha("  sair         - Encerra a aplicação")
+
+			caso "listar", "ls", "lista":
+			ListarNotasTabela(bloco.Notas)
+
+			caso "criar", "nova", "novo":
+			formatar.Imprimir("Título da Nota: ")
+			se !scanner.Scan() { interromper }
+			titulo := cordas.ApararEspaco(scanner.Text())
+
+			formatar.Imprimir("Categoria (ex: Pessoal, Trabalho, Estudos) [Geral]: ")
+			se !scanner.Scan() { interromper }
+			categoria := cordas.ApararEspaco(scanner.Text())
+
+			formatar.Imprimir("Conteúdo da Nota: ")
+			se !scanner.Scan() { interromper }
+			conteudo := scanner.Text()
+
+			nota, err := bloco.CriarNota(titulo, conteudo, categoria)
+			se err != nulo {
+				formatar.ImprimirLinha("❌ Erro ao criar nota:", err)
+			} senao {
+				formatar.ImprimirFormatado("✓ Nota #%d criada com sucesso com o título '%s'!\n", nota.Id, nota.Titulo)
+			}
+
+			caso "ver", "exibir", "mostrar":
+			se tamanho(partes) < 2 {
+				formatar.ImprimirLinha("Uso: ver <id>")
+				continuar
+			}
+			id := textoParaInteiro(partes[1])
+			nota, err := bloco.ObterNotaPorId(id)
+			se err != nulo {
+				formatar.ImprimirLinha("❌", err)
+			} senao {
+				ExibirNotaDetalhada(nota)
+			}
+
+			caso "buscar", "pesquisar", "procurar":
+			se tamanho(partes) < 2 {
+				formatar.ImprimirLinha("Uso: buscar <termo>")
+				continuar
+			}
+			termo := cordas.Juntar(partes[1:], " ")
+			resultados := bloco.BuscarNotas(termo)
+			formatar.ImprimirFormatado("Resultados da busca por '%s':\n", termo)
+			ListarNotasTabela(resultados)
+
+			caso "favoritar", "fav", "star":
+			se tamanho(partes) < 2 {
+				formatar.ImprimirLinha("Uso: favoritar <id>")
+				continuar
+			}
+			id := textoParaInteiro(partes[1])
+			nota, err := bloco.AlternarFavorita(id)
+			se err != nulo {
+				formatar.ImprimirLinha("❌", err)
+			} senao {
+				se nota.Favorita {
+					formatar.ImprimirFormatado("★ Nota #%d favoritada!\n", nota.Id)
+				} senao {
+					formatar.ImprimirFormatado("☆ Nota #%d desmarcada dos favoritos.\n", nota.Id)
+				}
+			}
+
+			caso "excluir", "deletar", "remover", "rm":
+			se tamanho(partes) < 2 {
+				formatar.ImprimirLinha("Uso: excluir <id>")
+				continuar
+			}
+			id := textoParaInteiro(partes[1])
+			_, err := bloco.ExcluirNota(id)
+			se err != nulo {
+				formatar.ImprimirLinha("❌", err)
+			} senao {
+				formatar.ImprimirFormatado("✓ Nota #%d excluída com sucesso.\n", id)
+			}
+
+			caso "stats", "estatisticas", "metricas":
+			total, favs, palavras, cats := bloco.ObterEstatisticas()
+			formatar.ImprimirLinha("📊 Estatísticas do Bloco de Notas:")
+			formatar.ImprimirFormatado("  • Total de Notas:     %d\n", total)
+			formatar.ImprimirFormatado("  • Notas Favoritas:    %d\n", favs)
+			formatar.ImprimirFormatado("  • Total de Palavras:  %d\n", palavras)
+			formatar.ImprimirLinha("  • Categorias:")
+			para cat, qtd := intervalo cats {
+				formatar.ImprimirFormatado("      - %-15s: %d nota(s)\n", cat, qtd)
+			}
+
+			caso "exportar":
+			destino := "notas_exportadas.txt"
+			se tamanho(partes) >= 2 {
+				destino = partes[1]
+			}
+			err := bloco.ExportarTexto(destino)
+			se err != nulo {
+				formatar.ImprimirLinha("❌ Erro na exportação:", err)
+			} senao {
+				formatar.ImprimirFormatado("✓ Notas exportadas com sucesso para '%s'!\n", destino)
+			}
+
+			padrao:
+			formatar.ImprimirFormatado("Comando desconhecido: '%s'. Digite 'ajuda' para ver a lista de comandos.\n", cmd)
+		}
+	}
+}
+
+// Ponto de entrada principal
+funcao principal() {
+	args := so.Argumentos[1:]
+	bloco := NovoBlocoDeNotas(ArquivoDadosPadrao)
+
+	// Se nenhum argumento for passado, entra no modo interativo
+	se tamanho(args) == 0 {
+		ModoInterativo(bloco)
+		retornar
+	}
+
+	comando := cordas.ParaMinusculas(args[0])
+
+	escolha comando {
+		caso "ajuda", "-h", "--help", "help":
+		ExibirAjuda()
+
+		caso "interativo", "menu", "repl":
+		ModoInterativo(bloco)
+
+		caso "criar", "adicionar", "novo", "nova":
+		se tamanho(args) < 3 {
+			formatar.ImprimirLinha("Erro: informe pelo menos título e conteúdo.")
+			formatar.ImprimirLinha("Uso: vamos rodar blocodenotasBR/main.vamos criar \"Título\" \"Conteúdo\" [Categoria]")
+			so.Sair(1)
+		}
+		titulo := args[1]
+		conteudo := args[2]
+		categoria := "Geral"
+		se tamanho(args) >= 4 {
+			categoria = args[3]
+		}
+
+		nota, err := bloco.CriarNota(titulo, conteudo, categoria)
+		se err != nulo {
+			formatar.ImprimirLinha("❌ Erro ao criar nota:", err)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("✓ Nota #%d (\"%s\") criada com sucesso na categoria [%s]!\n", nota.Id, nota.Titulo, nota.Categoria)
+
+		caso "listar", "ls", "lista":
+		se tamanho(args) >= 2 {
+			termo := args[1]
+			resultados := bloco.BuscarNotas(termo)
+			formatar.ImprimirFormatado("Listando notas filtradas por '%s':\n", termo)
+			ListarNotasTabela(resultados)
+		} senao {
+			ListarNotasTabela(bloco.Notas)
+		}
+
+		caso "ver", "exibir", "mostrar":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o ID da nota.")
+			formatar.ImprimirLinha("Uso: vamos rodar blocodenotasBR/main.vamos ver <id>")
+			so.Sair(1)
+		}
+		id := textoParaInteiro(args[1])
+		nota, err := bloco.ObterNotaPorId(id)
+		se err != nulo {
+			formatar.ImprimirLinha("❌", err)
+			so.Sair(1)
+		}
+		ExibirNotaDetalhada(nota)
+
+		caso "editar", "atualizar":
+		se tamanho(args) < 3 {
+			formatar.ImprimirLinha("Erro: informe o ID e o novo conteúdo.")
+			formatar.ImprimirLinha("Uso: vamos rodar blocodenotasBR/main.vamos editar <id> \"Novo Conteúdo\"")
+			so.Sair(1)
+		}
+		id := textoParaInteiro(args[1])
+		novoConteudo := args[2]
+		nota, err := bloco.AtualizarNota(id, "", novoConteudo, "")
+		se err != nulo {
+			formatar.ImprimirLinha("❌ Erro ao atualizar nota:", err)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("✓ Nota #%d atualizada com sucesso!\n", nota.Id)
+
+		caso "categoria":
+		se tamanho(args) < 3 {
+			formatar.ImprimirLinha("Erro: informe o ID e a nova categoria.")
+			formatar.ImprimirLinha("Uso: vamos rodar blocodenotasBR/main.vamos categoria <id> \"NovaCategoria\"")
+			so.Sair(1)
+		}
+		id := textoParaInteiro(args[1])
+		novaCat := args[2]
+		nota, err := bloco.AtualizarNota(id, "", "", novaCat)
+		se err != nulo {
+			formatar.ImprimirLinha("❌ Erro:", err)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("✓ Categoria da Nota #%d alterada para [%s]!\n", nota.Id, nota.Categoria)
+
+		caso "favoritar", "fav":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o ID da nota.")
+			formatar.ImprimirLinha("Uso: vamos rodar blocodenotasBR/main.vamos favoritar <id>")
+			so.Sair(1)
+		}
+		id := textoParaInteiro(args[1])
+		nota, err := bloco.AlternarFavorita(id)
+		se err != nulo {
+			formatar.ImprimirLinha("❌ Erro:", err)
+			so.Sair(1)
+		}
+		se nota.Favorita {
+			formatar.ImprimirFormatado("★ Nota #%d agora é FAVORITA!\n", nota.Id)
+		} senao {
+			formatar.ImprimirFormatado("☆ Nota #%d removida dos favoritos.\n", nota.Id)
+		}
+
+		caso "excluir", "deletar", "remover", "rm":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o ID da nota.")
+			formatar.ImprimirLinha("Uso: vamos rodar blocodenotasBR/main.vamos excluir <id>")
+			so.Sair(1)
+		}
+		id := textoParaInteiro(args[1])
+		_, err := bloco.ExcluirNota(id)
+		se err != nulo {
+			formatar.ImprimirLinha("❌ Erro ao excluir nota:", err)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("✓ Nota #%d excluída com sucesso!\n", id)
+
+		caso "buscar", "pesquisar", "procurar":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o termo de busca.")
+			formatar.ImprimirLinha("Uso: vamos rodar blocodenotasBR/main.vamos buscar <termo>")
+			so.Sair(1)
+		}
+		termo := cordas.Juntar(args[1:], " ")
+		resultados := bloco.BuscarNotas(termo)
+		formatar.ImprimirFormatado("Busca por '%s' (%d resultados):\n", termo, tamanho(resultados))
+		ListarNotasTabela(resultados)
+
+		caso "estatisticas", "stats", "resumo":
+		total, favs, palavras, cats := bloco.ObterEstatisticas()
+		ExibirBanner()
+		formatar.ImprimirLinha("📊 Estatísticas Gerais do Bloco de Notas:")
+		formatar.ImprimirFormatado("  • Total de Notas Cadastradas:    %d\n", total)
+		formatar.ImprimirFormatado("  • Notas Marcadas como Favoritas: %d\n", favs)
+		formatar.ImprimirFormatado("  • Estimativa Total de Palavras:  %d\n", palavras)
+		formatar.ImprimirLinha("\n  • Distribuição por Categoria:")
+		para cat, qtd := intervalo cats {
+			formatar.ImprimirFormatado("      - [%-15s]: %d nota(s)\n", cat, qtd)
+		}
+		formatar.ImprimirLinha("====================================================================")
+
+		caso "exportar":
+		destino := "notas_exportadas.txt"
+		se tamanho(args) >= 2 {
+			destino = args[1]
+		}
+		err := bloco.ExportarTexto(destino)
+		se err != nulo {
+			formatar.ImprimirLinha("❌ Falha na exportação:", err)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("✓ %d notas exportadas com sucesso para '%s'!\n", tamanho(bloco.Notas), destino)
+
+		padrao:
+		formatar.ImprimirFormatado("Comando '%s' não reconhecido.\n", comando)
+		ExibirAjuda()
+		so.Sair(1)
+	}
+}
