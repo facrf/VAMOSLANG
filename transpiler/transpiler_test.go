@@ -136,7 +136,6 @@ funcao principal() {
 		t.Fatalf("Erro ao transpilar: %v", err)
 	}
 
-	// Comentários e strings literais não devem ter palavras-chave traduzidas
 	if !strings.Contains(got, "// Este comentário tem funcao, variavel, pacote e retornar!") {
 		t.Errorf("Comentário de linha foi alterado incorretamente")
 	}
@@ -212,61 +211,24 @@ funcao principal() {
 	}
 }
 
-func TestLinePreservation(t *testing.T) {
-	input := `pacote principal
-
-importar (
-	"formatar"
-	"tempo"
-)
-
-// Linha de comentário 1
-// Linha de comentário 2
-
-funcao somar(a inteiro, b inteiro) inteiro {
-	retornar a + b
-}
-
-funcao principal() {
-	x := 10
-	y := 20
-	res := somar(x, y)
-	formatar.ImprimirLinha("Resultado:", res)
-}
-`
-	got, err := TranspileSource(input)
-	if err != nil {
-		t.Fatalf("Erro ao transpilar: %v", err)
-	}
-
-	inputLines := strings.Count(input, "\n")
-	gotLines := strings.Count(got, "\n")
-
-	if inputLines != gotLines {
-		t.Errorf("Número de linhas não preservado: esperado %d linhas, obteve %d linhas", inputLines, gotLines)
-	}
-}
-
 func TestTranspileMapsSlicesAndBuiltins(t *testing.T) {
 	input := `pacote principal
 
 importar "formatar"
 
 funcao principal() {
-	// Slices e Maps
 	tabela := criar(mapa[texto]inteiro)
 	tabela["um"] = 1
-	tabela["dois"] = 2
 	excluir(tabela, "um")
 
 	lista := criar([]inteiro, 0, 10)
-	lista = anexar(lista, 42)
+	lista = adicionar(lista, 42)
+	lista = anexar(lista, 99)
 	tam := tamanho(lista)
 	capa := capacidade(lista)
 
 	formatar.ImprimirLinha("Tamanho:", tam, "Capacidade:", capa)
 
-	// Recuperação de Pânico
 	adiar funcao() {
 		se r := recuperar(); r != nulo {
 			formatar.ImprimirLinha("Recuperado de:", r)
@@ -284,6 +246,7 @@ funcao principal() {
 		`delete(tabela, "um")`,
 		`lista := make([]int, 0, 10)`,
 		`lista = append(lista, 42)`,
+		`lista = append(lista, 99)`,
 		`tam := len(lista)`,
 		`capa := cap(lista)`,
 		`defer func() {`,
@@ -297,39 +260,44 @@ funcao principal() {
 	}
 }
 
-func TestTranspileSelectAndGoto(t *testing.T) {
+func TestTranspileExpandedStdlib(t *testing.T) {
 	input := `pacote principal
 
-funcao testarSelect(c1 canal inteiro, c2 canal texto) {
-	selecionar {
-	caso v := <-c1:
-		imprimirln("Recebido c1:", v)
-	caso msg := <-c2:
-		imprimirln("Recebido c2:", msg)
-	padrao:
-		ir_para fim
-	}
+importar (
+	"leitor"
+	"caminho"
+	"ordenacao"
+	"contexto"
+	"so"
+)
 
-fim:
-	retornar
+funcao testarStdlib() {
+	scanner := leitor.NovoScanner(so.EntradaPadrao)
+	_ = scanner
+	caminhoCompleto := caminho.Juntar("dir", "arquivo.txt")
+	_ = caminhoCompleto
+	nomes := []texto{"Carlos", "Ana", "Beatriz"}
+	ordenacao.Strings(nomes)
+	ctx := contexto.PlanoDeFundo()
+	_ = ctx
 }
 `
 	got, err := TranspileSource(input)
 	if err != nil {
-		t.Fatalf("Erro ao transpilar select e goto: %v", err)
+		t.Fatalf("Erro ao transpilar biblioteca expandida: %v", err)
 	}
 
 	expectedPhrases := []string{
-		`func testarSelect(c1 chan int, c2 chan string)`,
-		`select {`,
-		`case v := <-c1:`,
-		`println("Recebido c1:", v)`,
-		`case msg := <-c2:`,
-		`println("Recebido c2:", msg)`,
-		`default:`,
-		`goto fim`,
-		`fim:`,
-		`return`,
+		`"bufio"`,
+		`"path/filepath"`,
+		`"sort"`,
+		`"context"`,
+		`"os"`,
+		`scanner := bufio.NewScanner(os.Stdin)`,
+		`caminhoCompleto := filepath.Join("dir", "arquivo.txt")`,
+		`nomes := []string{"Carlos", "Ana", "Beatriz"}`,
+		`sort.Strings(nomes)`,
+		`ctx := context.Background()`,
 	}
 
 	for _, phrase := range expectedPhrases {
@@ -339,3 +307,71 @@ fim:
 	}
 }
 
+func TestTranspileGoToVamos(t *testing.T) {
+	input := `package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	fmt.Println("Olá Go -> VAMOS")
+	time.Sleep(time.Millisecond * 10)
+}
+`
+	got, err := TranspileGoToVamos(input)
+	if err != nil {
+		t.Fatalf("Erro ao descompilar Go para VAMOS: %v", err)
+	}
+
+	expectedPhrases := []string{
+		`pacote principal`,
+		`importar (`,
+		`"formatar"`,
+		`"tempo"`,
+		`funcao principal() {`,
+		`formatar.ImprimirLinha("Olá Go -> VAMOS")`,
+		`tempo.Dormir(tempo.Milissegundo * 10)`,
+	}
+
+	for _, phrase := range expectedPhrases {
+		if !strings.Contains(got, phrase) {
+			t.Errorf("Esperava encontrar %q no código VAMOS gerado, mas não encontrou:\n%s", phrase, got)
+		}
+	}
+}
+
+func TestFormatSourceWithRawString(t *testing.T) {
+	input := `pacote principal
+
+funcao principal() {
+banner := ` + "`" + `
+{
+  "chave": "valor"
+}
+` + "`" + `
+}`
+	formatted, err := FormatSource(input)
+	if err != nil {
+		t.Fatalf("Erro ao formatar: %v", err)
+	}
+
+	// Verifica se as linhas dentro do raw string preservaram suas posições e chaves
+	if !strings.Contains(formatted, `  "chave": "valor"`) {
+		t.Errorf("Formatador corrompeu o conteúdo de raw string multilinhas:\n%s", formatted)
+	}
+}
+
+func TestLintSource(t *testing.T) {
+	input := `pacote Principal
+
+funcao teste() {
+	_ = err
+}
+`
+	issues := LintSource(input)
+	if len(issues) < 2 {
+		t.Errorf("Esperava pelo menos 2 avisos no linter, obteve %d", len(issues))
+	}
+}

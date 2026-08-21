@@ -238,8 +238,11 @@ func (l *Lexer) NextToken() (Token, error) {
 		}
 		strVal := string(val)
 
-		// Verifica se é uma palavra-chave reservada
+		// Verifica se é uma palavra-chave reservada (VAMOS-LANG ou Go)
 		if _, ok := KeywordsMap[strVal]; ok {
+			return Token{Type: TokenKeyword, Value: strVal, Line: curLine, Column: curCol}, nil
+		}
+		if _, ok := ReverseKeywordsMap[strVal]; ok {
 			return Token{Type: TokenKeyword, Value: strVal, Line: curLine, Column: curCol}, nil
 		}
 

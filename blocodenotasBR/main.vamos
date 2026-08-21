@@ -411,7 +411,7 @@ funcao ModoInterativo(bloco *BlocoDeNotas) {
 	formatar.ImprimirLinha("Modo Interativo Ativado! Digite 'ajuda' para comandos ou 'sair' para encerrar.")
 	formatar.ImprimirLinha("--------------------------------------------------------------------")
 
-	scanner := leitor.NewScanner(so.EntradaPadrao)
+	scanner := leitor.NovoScanner(so.EntradaPadrao)
 
 	para {
 		formatar.Imprimir("\nbloco-notas-br> ")

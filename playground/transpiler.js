@@ -230,7 +230,66 @@ const VAMOS_STDLIB_METHODS = {
     "Resposta": "Response",
     "Requisicao": "Request",
     "EscritorResposta": "ResponseWriter",
-    "StatusOk": "StatusOK"
+    "StatusOk": "StatusOK",
+    "StatusCriado": "StatusCreated",
+    "StatusNaoEncontrado": "StatusNotFound",
+    "StatusErroInterno": "StatusInternalServerError",
+    "StatusRequisicaoInvalida": "StatusBadRequest",
+    "Obter": "Get",
+    "Postar": "Post"
+  },
+  "json": {
+    "Serializar": "Marshal",
+    "SerializarIdentado": "MarshalIndent",
+    "Deserializar": "Unmarshal",
+    "NovoCodificador": "NewEncoder",
+    "NovoDecodificador": "NewDecoder"
+  },
+  "bufio": {
+    "NovoScanner": "NewScanner",
+    "NovoLeitor": "NewReader",
+    "NovoEscritor": "NewWriter"
+  },
+  "filepath": {
+    "Juntar": "Join",
+    "Base": "Base",
+    "Diretorio": "Dir",
+    "Absoluto": "Abs",
+    "Extensao": "Ext",
+    "Limpar": "Clean",
+    "Caminhar": "Walk",
+    "CaminharDiretorio": "WalkDir",
+    "Corresponder": "Match",
+    "Relativo": "Rel"
+  },
+  "sort": {
+    "Strings": "Strings",
+    "Inteiros": "Ints",
+    "Decimais": "Float64s",
+    "EstaOrdenado": "StringsAreSorted",
+    "Fatia": "Slice",
+    "FatiaEstavel": "SliceStable"
+  },
+  "context": {
+    "PlanoDeFundo": "Background",
+    "TODO": "TODO",
+    "ComCancelamento": "WithCancel",
+    "ComTempoLimite": "WithTimeout",
+    "ComPrazo": "WithDeadline",
+    "ComValor": "WithValue"
+  },
+  "testing": {
+    "Erro": "Error",
+    "ErroFormatado": "Errorf",
+    "Fatal": "Fatal",
+    "FatalFormatado": "Fatalf",
+    "Falhar": "Fail",
+    "FalhaAgora": "FailNow",
+    "Log": "Log",
+    "LogFormatado": "Logf",
+    "Executar": "Run",
+    "Pular": "Skip",
+    "PularAgora": "SkipNow"
   }
 };
 
@@ -816,11 +875,36 @@ function transpileGoToVamos(goCode) {
  * Função pública para formatar código VAMOS-LANG
  */
 function formatVamosSource(source) {
+  let rawStringLines = {};
+  try {
+    const lexer = new VamosLexer(source);
+    const tokens = lexer.tokenize();
+    for (const tok of tokens) {
+      if (tok.type === TOKEN_RAW_STRING && tok.val.includes("\n")) {
+        const startLine = tok.line;
+        const lineCount = (tok.val.match(/\n/g) || []).length;
+        for (let l = startLine + 1; l <= startLine + lineCount; l++) {
+          rawStringLines[l] = true;
+        }
+      }
+    }
+  } catch (e) {
+    rawStringLines = {};
+  }
+
   const lines = source.split("\n");
   const formatted = [];
   let indent = 0;
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const lineNum = i + 1;
+    const line = lines[i];
+
+    if (rawStringLines[lineNum]) {
+      formatted.push(line);
+      continue;
+    }
+
     const trimmed = line.trim();
     if (trimmed === "") {
       if (formatted.length > 0 && formatted[formatted.length - 1] !== "") {
@@ -836,7 +920,13 @@ function formatVamosSource(source) {
     const prefix = "\t".repeat(indent);
     formatted.push(prefix + trimmed);
 
-    if (trimmed.endsWith("{") || trimmed.endsWith("(") || trimmed.endsWith("[")) {
+    let codeWithoutComment = trimmed;
+    const commentIdx = trimmed.indexOf("//");
+    if (commentIdx !== -1) {
+      codeWithoutComment = trimmed.substring(0, commentIdx).trim();
+    }
+
+    if (codeWithoutComment.endsWith("{") || codeWithoutComment.endsWith("(") || codeWithoutComment.endsWith("[")) {
       indent++;
     }
   }

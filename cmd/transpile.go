@@ -15,7 +15,7 @@ func RunTranspile(args []string) int {
 	var outFile string
 	toStdout := false
 
-	// Análise flexível de argumentos e flags (independente da ordem)
+	// Análise flexível de argumentos e flags
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		if arg == "-o" || arg == "--output" {
@@ -23,7 +23,7 @@ func RunTranspile(args []string) int {
 				outFile = args[i+1]
 				i++
 			} else {
-				fmt.Fprintf(os.Stderr, "Erro: flag '%s' requer um valor de destino.\n", arg)
+				fmt.Fprintf(os.Stderr, "Erro: flag '%s' requer um caminho de destino.\n", arg)
 				return 1
 			}
 		} else if strings.HasPrefix(arg, "-o=") {
@@ -44,7 +44,7 @@ func RunTranspile(args []string) int {
 	}
 
 	if srcPath == "" {
-		fmt.Fprintf(os.Stderr, "Erro: nenhum arquivo .vamos especificado.\n")
+		fmt.Fprintf(os.Stderr, "Erro: nenhum arquivo .vamos especificado para transpilação.\n")
 		fmt.Fprintf(os.Stderr, "Uso: vamos transpile <arquivo.vamos> [-o <destino.go>] [--stdout]\n")
 		return 1
 	}
@@ -78,7 +78,7 @@ func RunTranspile(args []string) int {
 	}
 
 	if err := os.WriteFile(target, []byte(goCode), 0644); err != nil {
-		fmt.Fprintf(os.Stderr, "Erro ao escrever arquivo gerado '%s': %v\n", target, err)
+		fmt.Fprintf(os.Stderr, "Erro ao gravar arquivo gerado '%s': %v\n", target, err)
 		return 1
 	}
 

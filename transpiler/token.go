@@ -30,6 +30,7 @@ type Token struct {
 // KeywordsMap mapeia as palavras reservadas do VAMOS-LANG para Golang.
 var KeywordsMap = map[string]string{
 	"pacote":      "package",
+	"principal":   "main",
 	"importar":    "import",
 	"funcao":      "func",
 	"variavel":    "var",
@@ -56,6 +57,36 @@ var KeywordsMap = map[string]string{
 	"selecionar":  "select",
 }
 
+// ReverseKeywordsMap mapeia palavras reservadas do Go para VAMOS-LANG.
+var ReverseKeywordsMap = map[string]string{
+	"package":     "pacote",
+	"main":        "principal",
+	"import":      "importar",
+	"func":        "funcao",
+	"var":         "variavel",
+	"const":       "constante",
+	"type":        "tipo",
+	"struct":      "estrutura",
+	"interface":   "interface",
+	"map":         "mapa",
+	"chan":        "canal",
+	"if":          "se",
+	"else":        "senao",
+	"for":         "para",
+	"range":       "intervalo",
+	"switch":      "escolha",
+	"case":        "caso",
+	"default":     "padrao",
+	"fallthrough": "prosseguir",
+	"break":       "interromper",
+	"continue":    "continuar",
+	"goto":        "ir_para",
+	"return":      "retornar",
+	"go":          "disparar",
+	"defer":       "adiar",
+	"select":      "selecionar",
+}
+
 // TypesAndBuiltinsMap mapeia tipos primitivos, valores literais e funções embutidas.
 var TypesAndBuiltinsMap = map[string]string{
 	// Tipos Primitivos
@@ -71,6 +102,7 @@ var TypesAndBuiltinsMap = map[string]string{
 	"uinteiro32":        "uint32",
 	"uinteiro64":        "uint64",
 	"uinteiro_ponteiro": "uintptr",
+	"decimal":           "float64",
 	"decimal32":         "float32",
 	"decimal64":         "float64",
 	"complexo64":        "complex64",
@@ -91,6 +123,7 @@ var TypesAndBuiltinsMap = map[string]string{
 	// Funções Nativas Embutidas (Built-ins)
 	"criar":      "make",
 	"novo":       "new",
+	"adicionar":  "append",
 	"anexar":     "append",
 	"tamanho":    "len",
 	"capacidade": "cap",
@@ -107,28 +140,44 @@ var TypesAndBuiltinsMap = map[string]string{
 	"principal": "main",
 }
 
-// MethodAliasesMap mapeia nomes de métodos de objetos e interfaces em PT-BR para Go.
-var MethodAliasesMap = map[string]string{
-	"Adicionar":      "Add",
-	"Concluido":      "Done",
-	"Feito":          "Done",
-	"Esperar":        "Wait",
-	"Bloquear":       "Lock",
-	"Desbloquear":    "Unlock",
-	"Fechar":         "Close",
-	"Ler":            "Read",
-	"Escrever":       "Write",
-	"Texto":          "String",
-	"Erro":           "Error",
-	"Formato":        "Format",
-	"Formatar":       "Format",
-	"Unix":           "Unix",
-	"Segundos":       "Seconds",
-	"Milissegundos":  "Milliseconds",
-	"Microssegundos": "Microseconds",
-	"Nanosegundos":   "Nanoseconds",
-	"Minutos":        "Minutes",
-	"Horas":          "Hours",
+// ReverseTypesAndBuiltinsMap mapeia tipos e built-ins do Go para VAMOS-LANG.
+var ReverseTypesAndBuiltinsMap = map[string]string{
+	"string":      "texto",
+	"int":         "inteiro",
+	"int8":        "inteiro8",
+	"int16":       "inteiro16",
+	"int32":       "inteiro32",
+	"int64":       "inteiro64",
+	"uint":        "uinteiro",
+	"uint8":       "uinteiro8",
+	"uint16":      "uinteiro16",
+	"uint32":      "uinteiro32",
+	"uint64":      "uinteiro64",
+	"uintptr":     "uinteiro_ponteiro",
+	"float32":     "decimal32",
+	"float64":     "decimal64",
+	"complex64":   "complexo64",
+	"complex128":  "complexo128",
+	"bool":        "booleano",
+	"byte":        "byte",
+	"rune":        "runa",
+	"any":         "qualquer",
+	"error":       "erro",
+	"true":        "verdadeiro",
+	"false":       "falso",
+	"nil":         "nulo",
+	"make":        "criar",
+	"new":         "novo",
+	"append":      "adicionar",
+	"len":         "tamanho",
+	"cap":         "capacidade",
+	"close":       "fechar",
+	"copy":        "copiar",
+	"delete":      "excluir",
+	"panic":       "panico",
+	"recover":     "recuperar",
+	"print":       "imprimir",
+	"println":     "imprimirln",
 }
 
 // StdlibImportPathsMap mapeia as strings de importação em PT-BR para caminhos Go no import ("...").
@@ -151,6 +200,27 @@ var StdlibImportPathsMap = map[string]string{
 	"registrador":   "log",
 	"caminho":       "path/filepath",
 	"ordenacao":     "sort",
+	"teste":         "testing",
+	"testing":       "testing",
+}
+
+// ReverseStdlibImportsMap mapeia import paths do Go para pacotes PT-BR.
+var ReverseStdlibImportsMap = map[string]string{
+	"fmt":           "formatar",
+	"time":          "tempo",
+	"math":          "matematica",
+	"strings":       "cordas",
+	"os":            "so",
+	"sync":          "sincronizar",
+	"errors":        "erros",
+	"bufio":         "leitor",
+	"encoding/json": "json",
+	"net/http":      "servidor_http",
+	"context":       "contexto",
+	"log":           "registrador",
+	"path/filepath": "caminho",
+	"sort":          "ordenacao",
+	"testing":       "teste",
 }
 
 // StdlibIdentMap mapeia os identificadores de pacotes em código (ex: servidor_http. -> http., formatar. -> fmt.).
@@ -185,6 +255,8 @@ var StdlibIdentMap = map[string]string{
 	"filepath":      "filepath",
 	"ordenacao":     "sort",
 	"sort":          "sort",
+	"teste":         "testing",
+	"testing":       "testing",
 }
 
 // StdlibMethodsMap mapeia métodos/funções conhecidos para o identificador do pacote Go.
@@ -196,6 +268,7 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"FormatarLinha":      "Sprintln",
 		"Formatar":           "Sprintf",
 		"FormatarSimples":    "Sprint",
+		"CriarErro":          "Errorf",
 		"ErroFormatado":      "Errorf",
 		"Escanear":           "Scan",
 		"EscanearLinha":      "Scanln",
@@ -326,4 +399,91 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"NovoCodificador":    "NewEncoder",
 		"NovoDecodificador":  "NewDecoder",
 	},
+	"bufio": {
+		"NovoScanner":  "NewScanner",
+		"NovoLeitor":   "NewReader",
+		"NovoEscritor": "NewWriter",
+	},
+	"filepath": {
+		"Juntar":            "Join",
+		"Base":              "Base",
+		"Diretorio":         "Dir",
+		"Absoluto":          "Abs",
+		"Extensao":          "Ext",
+		"Limpar":            "Clean",
+		"Caminhar":          "Walk",
+		"CaminharDiretorio": "WalkDir",
+		"Corresponder":      "Match",
+		"Relativo":          "Rel",
+	},
+	"sort": {
+		"Strings":      "Strings",
+		"Inteiros":     "Ints",
+		"Decimais":     "Float64s",
+		"EstaOrdenado": "StringsAreSorted",
+		"Fatia":        "Slice",
+		"FatiaEstavel": "SliceStable",
+	},
+	"context": {
+		"PlanoDeFundo":    "Background",
+		"TODO":            "TODO",
+		"ComCancelamento": "WithCancel",
+		"ComTempoLimite":  "WithTimeout",
+		"ComPrazo":        "WithDeadline",
+		"ComValor":        "WithValue",
+	},
+	"testing": {
+		"Erro":           "Error",
+		"ErroFormatado":  "Errorf",
+		"Fatal":          "Fatal",
+		"FatalFormatado": "Fatalf",
+		"Falhar":         "Fail",
+		"FalhaAgora":     "FailNow",
+		"Log":            "Log",
+		"LogFormatado":   "Logf",
+		"Executar":       "Run",
+		"Pular":          "Skip",
+		"PularAgora":     "SkipNow",
+	},
+}
+
+// MethodAliasesMap mapeia nomes de métodos de objetos e interfaces em PT-BR para Go.
+var MethodAliasesMap = map[string]string{
+	"Adicionar":      "Add",
+	"Concluido":      "Done",
+	"Feito":          "Done",
+	"Esperar":        "Wait",
+	"Bloquear":       "Lock",
+	"Desbloquear":    "Unlock",
+	"Fechar":         "Close",
+	"Ler":            "Read",
+	"Escrever":       "Write",
+	"Texto":          "String",
+	"Erro":           "Error",
+	"Formato":        "Format",
+	"Formatar":       "Format",
+	"Unix":           "Unix",
+	"Segundos":       "Seconds",
+	"Milissegundos":  "Milliseconds",
+	"Microssegundos": "Microseconds",
+	"Nanosegundos":   "Nanoseconds",
+	"Minutos":        "Minutes",
+	"Horas":          "Hours",
+}
+
+// ReverseMethodAliasesMap mapeia métodos Go para PT-BR.
+var ReverseMethodAliasesMap = map[string]string{
+	"Add":          "Adicionar",
+	"Done":         "Concluido",
+	"Wait":         "Esperar",
+	"Lock":         "Bloquear",
+	"Unlock":       "Desbloquear",
+	"Close":        "Fechar",
+	"Read":         "Ler",
+	"Write":        "Escrever",
+	"String":       "Texto",
+	"Error":        "Erro",
+	"Format":       "Formato",
+	"Milliseconds": "Milissegundos",
+	"Seconds":      "Segundos",
 }

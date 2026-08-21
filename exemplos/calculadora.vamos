@@ -11,18 +11,18 @@ importar (
 // OperacaoAritmetica calcula a operação matemática ou retorna um erro
 funcao calcular(a decimal64, b decimal64, op texto) (decimal64, erro) {
 	escolha op {
-	caso "+":
+		caso "+":
 		retornar a + b, nulo
-	caso "-":
+		caso "-":
 		retornar a - b, nulo
-	caso "*":
+		caso "*":
 		retornar a * b, nulo
-	caso "/":
+		caso "/":
 		se b == 0 {
 			retornar 0, erros.Novo("divisão por zero não é permitida")
 		}
 		retornar a / b, nulo
-	padrao:
+		padrao:
 		retornar 0, formatar.ErroFormatado("operador desconhecido: %s", op)
 	}
 }

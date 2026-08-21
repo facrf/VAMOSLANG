@@ -33,6 +33,165 @@ func TranspileSource(source string) (string, error) {
 	return t.Transpile()
 }
 
+// TranspileGoToVamos converte código Go nativo de volta para VAMOS-LANG (PT-BR).
+func TranspileGoToVamos(source string) (string, error) {
+	lexer := NewLexer(source)
+	tokens, err := lexer.Tokenize()
+	if err != nil {
+		return "", fmt.Errorf("erro léxico: %w", err)
+	}
+
+	var sb strings.Builder
+	pos := 0
+	length := len(tokens)
+
+	for pos < length {
+		tok := tokens[pos]
+
+		if tok.Type == TokenEOF {
+			break
+		}
+
+		if tok.Type == TokenWhitespace || tok.Type == TokenNewline || tok.Type == TokenComment || tok.Type == TokenRawString || tok.Type == TokenRune {
+			sb.WriteString(tok.Value)
+			pos++
+			continue
+		}
+
+		// Importações Go -> VAMOS
+		if tok.Type == TokenKeyword && tok.Value == "import" {
+			pos++
+			sb.WriteString("importar")
+			inParen := false
+			for pos < length {
+				t := tokens[pos]
+				if t.Type == TokenEOF {
+					break
+				}
+				if t.Type == TokenWhitespace || t.Type == TokenComment {
+					sb.WriteString(t.Value)
+					pos++
+					continue
+				}
+				if t.Type == TokenDelimiter && t.Value == "(" {
+					inParen = true
+					sb.WriteString(t.Value)
+					pos++
+					continue
+				}
+				if t.Type == TokenDelimiter && t.Value == ")" {
+					inParen = false
+					sb.WriteString(t.Value)
+					pos++
+					break
+				}
+				if t.Type == TokenNewline {
+					sb.WriteString(t.Value)
+					pos++
+					if !inParen {
+						break
+					}
+					continue
+				}
+				if t.Type == TokenString {
+					raw := t.Value
+					if len(raw) >= 2 && raw[0] == '"' && raw[len(raw)-1] == '"' {
+						unq := raw[1 : len(raw)-1]
+						if vamosPkg, ok := ReverseStdlibImportsMap[unq]; ok {
+							sb.WriteString(fmt.Sprintf("%q", vamosPkg))
+							pos++
+							if !inParen {
+								break
+							}
+							continue
+						}
+					}
+					sb.WriteString(t.Value)
+					pos++
+					if !inParen {
+						break
+					}
+					continue
+				}
+				sb.WriteString(t.Value)
+				pos++
+			}
+			continue
+		}
+
+		// Package Go -> VAMOS
+		if tok.Type == TokenKeyword && tok.Value == "package" {
+			pos++
+			sb.WriteString("pacote")
+			continue
+		}
+
+		// Palavras reservadas Go -> VAMOS
+		if tok.Type == TokenKeyword {
+			if vamosKw, ok := ReverseKeywordsMap[tok.Value]; ok {
+				sb.WriteString(vamosKw)
+			} else {
+				sb.WriteString(tok.Value)
+			}
+			pos++
+			continue
+		}
+
+		if tok.Type == TokenString || tok.Type == TokenNumber {
+			sb.WriteString(tok.Value)
+			pos++
+			continue
+		}
+
+		// Identificadores (membros como fmt.Println -> formatar.ImprimirLinha)
+		if tok.Type == TokenIdentifier {
+			if pos+2 < length && tokens[pos+1].Type == TokenDelimiter && tokens[pos+1].Value == "." && tokens[pos+2].Type == TokenIdentifier {
+				pkgName := tok.Value
+				methodName := tokens[pos+2].Value
+
+				// Mapeia pkgName se for pacote stdlib
+				mappedPkg := pkgName
+				if ptPkg, ok := ReverseStdlibImportsMap[pkgName]; ok {
+					mappedPkg = ptPkg
+				}
+
+				// Mapeia método
+				mappedMethod := methodName
+				if mmap, ok := StdlibMethodsMap[pkgName]; ok {
+					for ptMethod, goMethod := range mmap {
+						if goMethod == methodName {
+							mappedMethod = ptMethod
+							break
+						}
+					}
+				} else if alias, ok := ReverseMethodAliasesMap[methodName]; ok {
+					mappedMethod = alias
+				}
+
+				sb.WriteString(mappedPkg)
+				sb.WriteString(".")
+				sb.WriteString(mappedMethod)
+				pos += 3
+				continue
+			}
+
+			// Tipos / builtins Go -> VAMOS
+			if vamosType, ok := ReverseTypesAndBuiltinsMap[tok.Value]; ok {
+				sb.WriteString(vamosType)
+			} else {
+				sb.WriteString(tok.Value)
+			}
+			pos++
+			continue
+		}
+
+		sb.WriteString(tok.Value)
+		pos++
+	}
+
+	return sb.String(), nil
+}
+
 // peek retorna o token no deslocamento relativo offset (0 para atual, 1 para próximo, etc.)
 func (t *Transpiler) peek(offset int) *Token {
 	idx := t.pos + offset
