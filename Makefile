@@ -1,4 +1,4 @@
-.PHONY: all build test run-examples run-games wasm clean install
+.PHONY: all build test run-examples run-games check wasm clean install docker-build
 
 BINARY_NAME=vamos
 
@@ -33,6 +33,24 @@ run-examples: build
 	@echo ""
 	@echo "==> Testando exemplo 'api_rest.vamos' (Micro-framework REST):"
 	./$(BINARY_NAME) run exemplos/api_rest.vamos --demo
+	@echo ""
+	@echo "==> Testando exemplo 'uuid_externo.vamos' (Pacotes Go Externos):"
+	./$(BINARY_NAME) run exemplos/uuid_externo.vamos
+
+check: build
+	@echo "==> 1. Verificando formatação de código..."
+	./$(BINARY_NAME) fmt .
+	@echo "==> 2. Executando linter estático e validação sintática..."
+	./$(BINARY_NAME) lint --strict .
+	@echo "==> 3. Rodando suíte completa de testes..."
+	go test -v ./...
+	@echo "==> 4. Gerando documentação oficial em HTML..."
+	./$(BINARY_NAME) doc --html docs.html
+	@echo "✓ Verificação completa de qualidade aprovada com êxito!"
+
+docker-build:
+	@echo "==> Construindo imagem Docker minimalista de produção..."
+	docker build -t vamos-app .
 
 wasm:
 	@echo "==> Compilando motor WebAssembly (vamos.wasm)..."

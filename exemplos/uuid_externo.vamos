@@ -1,0 +1,32 @@
+// ============================================================================
+// INTEGRAÇÃO COM PACOTES EXTERNOS - VAMOS-LANG
+// Demonstra o uso transparente de bibliotecas Go mundiais via "vamos get".
+// ============================================================================
+
+pacote principal
+
+importar (
+	"formatar"
+	"github.com/google/uuid"
+)
+
+funcao principal() {
+	formatar.ImprimirLinha("========================================")
+	formatar.ImprimirLinha("   VAMOS-LANG: Dependência Externa      ")
+	formatar.ImprimirLinha("   Pacote: github.com/google/uuid       ")
+	formatar.ImprimirLinha("========================================")
+
+	novoId := uuid.New().String()
+	formatar.ImprimirFormatado("-> UUID v4 Gerado: %s\n", novoId)
+
+	outroId, err := uuid.NewRandom()
+	se err != nulo {
+		formatar.ImprimirLinha("Erro ao gerar UUID:", err)
+		retornar
+	}
+	formatar.ImprimirFormatado("-> UUID Aleatório: %s\n", outroId.String())
+
+	formatar.ImprimirLinha("========================================")
+	formatar.ImprimirLinha(" Integração com biblioteca externa OK! ✓")
+	formatar.ImprimirLinha("========================================")
+}

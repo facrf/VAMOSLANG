@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentação da API | VAMOS-LANG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --accent: #2ea043;
+      --accent-hover: #3fb950;
+      --keyword: #ff7b72;
+      --type: #79c0ff;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+    }
+    aside {
+      width: 280px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    main {
+      flex: 1;
+      padding: 40px 60px;
+      max-width: 1000px;
+    }
+    h1 { color: #fff; margin-top: 0; font-size: 28px; }
+    h2 { color: var(--accent-hover); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 40px; }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #238636;
+      color: #fff;
+      margin-left: 8px;
+    }
+    .badge-tipo { background: #1f6feb; }
+    .badge-metodo { background: #8957e5; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .symbol-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    pre {
+      background: #090d13;
+      padding: 12px 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      color: var(--type);
+    }
+    .file-ref { font-size: 12px; color: #8b949e; margin-top: 8px; }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul.nav-list { list-style: none; padding: 0; margin: 0; }
+    ul.nav-list li { margin: 8px 0; }
+    .search-box {
+      width: 100%;
+      padding: 8px 12px;
+      background: #090d13;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: #fff;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <div style="font-weight:700; font-size:18px; color:#fff; margin-bottom:16px;">🇧🇷 VAMOS-LANG Doc</div>
+    <input type="text" id="filterInput" class="search-box" placeholder="Filtrar símbolos..." onkeyup="filterDocs()">
+    <ul class="nav-list" id="navList">
+      <li><a href="#AlternarFavorita">AlternarFavorita</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#AlternarFavorita">AlternarFavorita</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Area">Area</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Area">Area</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#AtualizarNota">AtualizarNota</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#AvancarTurno">AvancarTurno</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#AvancarTurno">AvancarTurno</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#BlocoDeNotas">BlocoDeNotas</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#BlocoTeste">BlocoTeste</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Buscar">Buscar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#BuscarNotas">BuscarNotas</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#BuscarTermo">BuscarTermo</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Carregar">Carregar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Carregar">Carregar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Carregar">Carregar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Circulo">Circulo</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#ContarPalavras">ContarPalavras</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#ConverterCoordenada">ConverterCoordenada</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#CriarNota">CriarNota</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#CriarNota">CriarNota</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#DecidirMovimentoPacmanDemo">DecidirMovimentoPacmanDemo</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#DecidirProximoPassoDemo">DecidirProximoPassoDemo</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#EditarLinha">EditarLinha</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#EditorNano">EditorNano</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#EhAdversario">EhAdversario</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#EhMinhaPeca">EhMinhaPeca</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#EhParede">EhParede</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#EscolherMelhorMovimentoIA">EscolherMelhorMovimentoIA</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Excluir">Excluir</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ExcluirNota">ExcluirNota</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ExecutarDemonstracao">ExecutarDemonstracao</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#ExecutarMovimento">ExecutarMovimento</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ExibirAjuda">ExibirAjuda</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#ExibirBanner">ExibirBanner</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#ExibirDetalhes">ExibirDetalhes</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ExibirNotaDetalhada">ExibirNotaDetalhada</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#ExportarTexto">ExportarTexto</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Fantasma">Fantasma</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#FormaGeometrica">FormaGeometrica</a> <span style="font-size:10px; color:#8b949e;">(interface)</span></li>
+      <li><a href="#FormatarCoordenada">FormatarCoordenada</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#FormatarVez">FormatarVez</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#GerarNovaComida">GerarNovaComida</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#InserirLinha">InserirLinha</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#JogoCobrinha">JogoCobrinha</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#JogoDamas">JogoDamas</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#JogoPacman">JogoPacman</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#ListarNotasTabela">ListarNotasTabela</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#MensagemProcessamento">MensagemProcessamento</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#ModoInterativo">ModoInterativo</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#MoverFantasmas">MoverFantasmas</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#MoverPacman">MoverPacman</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#MovimentoDamas">MovimentoDamas</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#MudarDirecao">MudarDirecao</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Nome">Nome</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Nome">Nome</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Nota">Nota</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#NotaTeste">NotaTeste</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#NovoBlocoDeNotas">NovoBlocoDeNotas</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#NovoBlocoTeste">NovoBlocoTeste</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#NovoEditorNano">NovoEditorNano</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#NovoJogoCobrinha">NovoJogoCobrinha</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#NovoJogoDamas">NovoJogoDamas</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#NovoJogoPacman">NovoJogoPacman</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#ObterCabeca">ObterCabeca</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ObterEstatisticas">ObterEstatisticas</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ObterMovimentosValidosDaPeca">ObterMovimentosValidosDaPeca</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ObterNotaPorId">ObterNotaPorId</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ObterPorId">ObterPorId</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ObterTodosMovimentosPossiveis">ObterTodosMovimentosPossiveis</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Perimetro">Perimetro</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Perimetro">Perimetro</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Ponto">Ponto</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Posicao">Posicao</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#PosicaoDamas">PosicaoDamas</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#PosicaoOcupadaPelaCobra">PosicaoOcupadaPelaCobra</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#RemoverLinha">RemoverLinha</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Renderizar">Renderizar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Renderizar">Renderizar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Renderizar">Renderizar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Renderizar">Renderizar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Resultado">Resultado</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Retangulo">Retangulo</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Salvar">Salvar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Salvar">Salvar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Salvar">Salvar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#SubstituirGlobal">SubstituirGlobal</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Tarefa">Tarefa</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#VerificarColisoes">VerificarColisoes</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#aleatorioAbs">aleatorioAbs</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#calcular">calcular</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#executarTrabalhador">executarTrabalhador</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#exibirRelatorioForma">exibirRelatorioForma</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#manipularRaiz">manipularRaiz</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#manipularStatus">manipularStatus</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#processarTarefa">processarTarefa</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#textoParaInteiro">textoParaInteiro</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+    </ul>
+  </aside>
+  <main>
+    <h1>Documentação Oficial do Projeto</h1>
+    <p style="color:#8b949e;">Gerado automaticamente a partir dos fontes VAMOS-LANG em <code>.</code>.</p>
+    <div class="card doc-item" id="AlternarFavorita" data-name="alternarfavorita">
+      <div class="symbol-title">
+        <span>AlternarFavorita</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoTeste) AlternarFavorita(id inteiro) erro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:95</code></div>
+    </div>
+    <div class="card doc-item" id="AlternarFavorita" data-name="alternarfavorita">
+      <div class="symbol-title">
+        <span>AlternarFavorita</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) AlternarFavorita(id inteiro) (*Nota, erro) </code></pre>
+      <p>AlternarFavorita marca ou desmarca a nota como favorita</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:169</code></div>
+    </div>
+    <div class="card doc-item" id="Area" data-name="area">
+      <div class="symbol-title">
+        <span>Area</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (r Retangulo) Area() decimal64 </code></pre>
+      <p>Métodos do Retângulo</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:25</code></div>
+    </div>
+    <div class="card doc-item" id="Area" data-name="area">
+      <div class="symbol-title">
+        <span>Area</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c Circulo) Area() decimal64 </code></pre>
+      <p>Métodos do Círculo</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:43</code></div>
+    </div>
+    <div class="card doc-item" id="AtualizarNota" data-name="atualizarnota">
+      <div class="symbol-title">
+        <span>AtualizarNota</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) AtualizarNota(id inteiro, novoTitulo texto, novoConteudo texto, novaCategoria texto) (*Nota, erro) </code></pre>
+      <p>AtualizarNota modifica os dados de uma nota existente</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:144</code></div>
+    </div>
+    <div class="card doc-item" id="AvancarTurno" data-name="avancarturno">
+      <div class="symbol-title">
+        <span>AvancarTurno</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) AvancarTurno() </code></pre>
+      <p>AvancarTurno processa um ciclo completo de jogo</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:282</code></div>
+    </div>
+    <div class="card doc-item" id="AvancarTurno" data-name="avancarturno">
+      <div class="symbol-title">
+        <span>AvancarTurno</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoCobrinha) AvancarTurno() </code></pre>
+      <p>AvancarTurno executa um passo físico na simulação</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:171</code></div>
+    </div>
+    <div class="card doc-item" id="BlocoDeNotas" data-name="blocodenotas">
+      <div class="symbol-title">
+        <span>BlocoDeNotas</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo BlocoDeNotas estrutura {</code></pre>
+      <p>Estrutura principal do Bloco de Notas</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:36</code></div>
+    </div>
+    <div class="card doc-item" id="BlocoTeste" data-name="blocoteste">
+      <div class="symbol-title">
+        <span>BlocoTeste</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo BlocoTeste estrutura {</code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:29</code></div>
+    </div>
+    <div class="card doc-item" id="Buscar" data-name="buscar">
+      <div class="symbol-title">
+        <span>Buscar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoTeste) Buscar(termo texto) []NotaTeste </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:104</code></div>
+    </div>
+    <div class="card doc-item" id="BuscarNotas" data-name="buscarnotas">
+      <div class="symbol-title">
+        <span>BuscarNotas</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) BuscarNotas(termo texto) []Nota </code></pre>
+      <p>BuscarNotas busca notas por palavra-chave no título, conteúdo ou categoria</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:211</code></div>
+    </div>
+    <div class="card doc-item" id="BuscarTermo" data-name="buscartermo">
+      <div class="symbol-title">
+        <span>BuscarTermo</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) BuscarTermo(termo texto) </code></pre>
+      <p>BuscarTermo localiza e destaca as linhas que contêm a palavra procurada</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:170</code></div>
+    </div>
+    <div class="card doc-item" id="Carregar" data-name="carregar">
+      <div class="symbol-title">
+        <span>Carregar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) Carregar() erro </code></pre>
+      <p>Carregar lê os dados do arquivo JSON local</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:60</code></div>
+    </div>
+    <div class="card doc-item" id="Carregar" data-name="carregar">
+      <div class="symbol-title">
+        <span>Carregar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) Carregar() </code></pre>
+      <p>Carregar lê o arquivo do disco ou inicializa um buffer vazio se não existir</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:37</code></div>
+    </div>
+    <div class="card doc-item" id="Carregar" data-name="carregar">
+      <div class="symbol-title">
+        <span>Carregar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoTeste) Carregar() erro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:51</code></div>
+    </div>
+    <div class="card doc-item" id="Circulo" data-name="circulo">
+      <div class="symbol-title">
+        <span>Circulo</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Circulo estrutura {</code></pre>
+      <p>Estrutura Círculo</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:38</code></div>
+    </div>
+    <div class="card doc-item" id="ContarPalavras" data-name="contarpalavras">
+      <div class="symbol-title">
+        <span>ContarPalavras</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ContarPalavras(s texto) inteiro </code></pre>
+      <p>ContarPalavras conta o número aproximado de palavras em um texto</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:232</code></div>
+    </div>
+    <div class="card doc-item" id="ConverterCoordenada" data-name="convertercoordenada">
+      <div class="symbol-title">
+        <span>ConverterCoordenada</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ConverterCoordenada(coord texto) (PosicaoDamas, booleano) </code></pre>
+      <p>ConverterCoordenada converte notação textual (ex: &#34;c3&#34;) em coordenadas (Linha, Coluna)</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:278</code></div>
+    </div>
+    <div class="card doc-item" id="CriarNota" data-name="criarnota">
+      <div class="symbol-title">
+        <span>CriarNota</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoTeste) CriarNota(titulo texto, conteudo texto, categoria texto) (NotaTeste, erro) </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:59</code></div>
+    </div>
+    <div class="card doc-item" id="CriarNota" data-name="criarnota">
+      <div class="symbol-title">
+        <span>CriarNota</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) CriarNota(titulo texto, conteudo texto, categoria texto) (Nota, erro) </code></pre>
+      <p>CriarNota adiciona uma nova anotação ao bloco</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:99</code></div>
+    </div>
+    <div class="card doc-item" id="DecidirMovimentoPacmanDemo" data-name="decidirmovimentopacmandemo">
+      <div class="symbol-title">
+        <span>DecidirMovimentoPacmanDemo</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) DecidirMovimentoPacmanDemo() </code></pre>
+      <p>DecidirMovimentoPacmanDemo calcula autonomamente o caminho para a comida mais próxima</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:151</code></div>
+    </div>
+    <div class="card doc-item" id="DecidirProximoPassoDemo" data-name="decidirproximopassodemo">
+      <div class="symbol-title">
+        <span>DecidirProximoPassoDemo</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoCobrinha) DecidirProximoPassoDemo() </code></pre>
+      <p>DecidirProximoPassoDemo calcula movimento inteligente autônomo da cobra</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:118</code></div>
+    </div>
+    <div class="card doc-item" id="EditarLinha" data-name="editarlinha">
+      <div class="symbol-title">
+        <span>EditarLinha</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) EditarLinha(posicao inteiro, novoConteudo texto) </code></pre>
+      <p>EditarLinha altera o conteúdo de uma linha existente</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:104</code></div>
+    </div>
+    <div class="card doc-item" id="EditorNano" data-name="editornano">
+      <div class="symbol-title">
+        <span>EditorNano</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo EditorNano estrutura {</code></pre>
+      <p>EditorNano gerencia o buffer de linhas e o estado do arquivo</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:17</code></div>
+    </div>
+    <div class="card doc-item" id="EhAdversario" data-name="ehadversario">
+      <div class="symbol-title">
+        <span>EhAdversario</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoDamas) EhAdversario(peca runa) booleano </code></pre>
+      <p>EhAdversario verifica se uma peça pertence ao oponente do turno atual</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:82</code></div>
+    </div>
+    <div class="card doc-item" id="EhMinhaPeca" data-name="ehminhapeca">
+      <div class="symbol-title">
+        <span>EhMinhaPeca</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoDamas) EhMinhaPeca(peca runa) booleano </code></pre>
+      <p>EhMinhaPeca verifica se uma peça pertence ao jogador atual</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:90</code></div>
+    </div>
+    <div class="card doc-item" id="EhParede" data-name="ehparede">
+      <div class="symbol-title">
+        <span>EhParede</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) EhParede(x, y inteiro) booleano </code></pre>
+      <p>EhParede verifica se uma posição é obstáculo no labirinto</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:116</code></div>
+    </div>
+    <div class="card doc-item" id="EscolherMelhorMovimentoIA" data-name="escolhermelhormovimentoia">
+      <div class="symbol-title">
+        <span>EscolherMelhorMovimentoIA</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoDamas) EscolherMelhorMovimentoIA() (MovimentoDamas, booleano) </code></pre>
+      <p>EscolherMelhorMovimentoIA seleciona o lance da máquina priorizando capturas e avanço</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:302</code></div>
+    </div>
+    <div class="card doc-item" id="Excluir" data-name="excluir">
+      <div class="symbol-title">
+        <span>Excluir</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoTeste) Excluir(id inteiro) erro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:115</code></div>
+    </div>
+    <div class="card doc-item" id="ExcluirNota" data-name="excluirnota">
+      <div class="symbol-title">
+        <span>ExcluirNota</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) ExcluirNota(id inteiro) (booleano, erro) </code></pre>
+      <p>ExcluirNota remove uma nota da coleção</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:186</code></div>
+    </div>
+    <div class="card doc-item" id="ExecutarDemonstracao" data-name="executardemonstracao">
+      <div class="symbol-title">
+        <span>ExecutarDemonstracao</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ExecutarDemonstracao() </code></pre>
+      <p>ExecutarDemonstracao realiza uma sequência de operações simuladas</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:254</code></div>
+    </div>
+    <div class="card doc-item" id="ExecutarMovimento" data-name="executarmovimento">
+      <div class="symbol-title">
+        <span>ExecutarMovimento</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoDamas) ExecutarMovimento(m MovimentoDamas) </code></pre>
+      <p>ExecutarMovimento aplica a jogada, remove peças capturadas e promove damas</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:197</code></div>
+    </div>
+    <div class="card doc-item" id="ExibirAjuda" data-name="exibirajuda">
+      <div class="symbol-title">
+        <span>ExibirAjuda</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ExibirAjuda() </code></pre>
+      <p>ExibirAjuda exibe as instruções de uso dos comandos CLI</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:317</code></div>
+    </div>
+    <div class="card doc-item" id="ExibirBanner" data-name="exibirbanner">
+      <div class="symbol-title">
+        <span>ExibirBanner</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ExibirBanner() </code></pre>
+      <p>ExibirBanner imprime o banner de boas-vindas do Bloco de Notas BR</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:309</code></div>
+    </div>
+    <div class="card doc-item" id="ExibirDetalhes" data-name="exibirdetalhes">
+      <div class="symbol-title">
+        <span>ExibirDetalhes</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (m MensagemProcessamento) ExibirDetalhes() </code></pre>
+      <p>Método com receptor de estrutura</p>
+      <div class="file-ref">Definido em: <code>teste.vamos:21</code></div>
+    </div>
+    <div class="card doc-item" id="ExibirNotaDetalhada" data-name="exibirnotadetalhada">
+      <div class="symbol-title">
+        <span>ExibirNotaDetalhada</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ExibirNotaDetalhada(n *Nota) </code></pre>
+      <p>ExibirNotaDetalhada imprime os detalhes de uma nota</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:346</code></div>
+    </div>
+    <div class="card doc-item" id="ExportarTexto" data-name="exportartexto">
+      <div class="symbol-title">
+        <span>ExportarTexto</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) ExportarTexto(caminhoDestino texto) erro </code></pre>
+      <p>ExportarTexto exporta todas as notas para um arquivo de texto limpo</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:262</code></div>
+    </div>
+    <div class="card doc-item" id="Fantasma" data-name="fantasma">
+      <div class="symbol-title">
+        <span>Fantasma</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Fantasma estrutura {</code></pre>
+      <p>Fantasma representa um dos inimigos do Pacman</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:24</code></div>
+    </div>
+    <div class="card doc-item" id="FormaGeometrica" data-name="formageometrica">
+      <div class="symbol-title">
+        <span>FormaGeometrica</span>
+        <span class="badge badge-tipo">interface</span>
+      </div>
+      <pre><code>tipo FormaGeometrica interface {</code></pre>
+      <p>Interface para qualquer forma geométrica que possui área e perímetro</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:12</code></div>
+    </div>
+    <div class="card doc-item" id="FormatarCoordenada" data-name="formatarcoordenada">
+      <div class="symbol-title">
+        <span>FormatarCoordenada</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao FormatarCoordenada(p PosicaoDamas) texto </code></pre>
+      <p>FormatarCoordenada converte (Linha, Coluna) de volta para notação legível (ex: &#34;c3&#34;)</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:295</code></div>
+    </div>
+    <div class="card doc-item" id="FormatarVez" data-name="formatarvez">
+      <div class="symbol-title">
+        <span>FormatarVez</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao FormatarVez(brancas booleano) texto </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:480</code></div>
+    </div>
+    <div class="card doc-item" id="GerarNovaComida" data-name="gerarnovacomida">
+      <div class="symbol-title">
+        <span>GerarNovaComida</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoCobrinha) GerarNovaComida() </code></pre>
+      <p>GerarNovaComida posiciona uma fruta aleatória em casa livre</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:83</code></div>
+    </div>
+    <div class="card doc-item" id="InserirLinha" data-name="inserirlinha">
+      <div class="symbol-title">
+        <span>InserirLinha</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) InserirLinha(posicao inteiro, conteudo texto) </code></pre>
+      <p>InserirLinha adiciona uma nova linha em uma posição específica (1-baseada)</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:78</code></div>
+    </div>
+    <div class="card doc-item" id="JogoCobrinha" data-name="jogocobrinha">
+      <div class="symbol-title">
+        <span>JogoCobrinha</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo JogoCobrinha estrutura {</code></pre>
+      <p>JogoCobrinha gerencia o estado completo da partida</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:32</code></div>
+    </div>
+    <div class="card doc-item" id="JogoDamas" data-name="jogodamas">
+      <div class="symbol-title">
+        <span>JogoDamas</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo JogoDamas estrutura {</code></pre>
+      <p>JogoDamas gerencia o estado do tabuleiro e a contagem de peças</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:42</code></div>
+    </div>
+    <div class="card doc-item" id="JogoPacman" data-name="jogopacman">
+      <div class="symbol-title">
+        <span>JogoPacman</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo JogoPacman estrutura {</code></pre>
+      <p>JogoPacman gerencia o labirinto, entidades e pontuação</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:33</code></div>
+    </div>
+    <div class="card doc-item" id="ListarNotasTabela" data-name="listarnotastabela">
+      <div class="symbol-title">
+        <span>ListarNotasTabela</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ListarNotasTabela(notas []Nota) </code></pre>
+      <p>ListarNotasTabela imprime uma lista elegante das notas</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:368</code></div>
+    </div>
+    <div class="card doc-item" id="MensagemProcessamento" data-name="mensagemprocessamento">
+      <div class="symbol-title">
+        <span>MensagemProcessamento</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo MensagemProcessamento estrutura {</code></pre>
+      <p>Definição de estrutura de dados</p>
+      <div class="file-ref">Definido em: <code>teste.vamos:13</code></div>
+    </div>
+    <div class="card doc-item" id="ModoInterativo" data-name="modointerativo">
+      <div class="symbol-title">
+        <span>ModoInterativo</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao ModoInterativo(bloco *BlocoDeNotas) </code></pre>
+      <p>ModoInterativo executa o console interativo para o usuário</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:409</code></div>
+    </div>
+    <div class="card doc-item" id="MoverFantasmas" data-name="moverfantasmas">
+      <div class="symbol-title">
+        <span>MoverFantasmas</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) MoverFantasmas() </code></pre>
+      <p>MoverFantasmas desloca cada fantasma em direção ou fuga do Pacman</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:209</code></div>
+    </div>
+    <div class="card doc-item" id="MoverPacman" data-name="moverpacman">
+      <div class="symbol-title">
+        <span>MoverPacman</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) MoverPacman(dx, dy inteiro) </code></pre>
+      <p>MoverPacman tenta deslocar o Pacman na direção atual</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:124</code></div>
+    </div>
+    <div class="card doc-item" id="MovimentoDamas" data-name="movimentodamas">
+      <div class="symbol-title">
+        <span>MovimentoDamas</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo MovimentoDamas estrutura {</code></pre>
+      <p>MovimentoDamas descreve uma jogada de origem para destino</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:34</code></div>
+    </div>
+    <div class="card doc-item" id="MudarDirecao" data-name="mudardirecao">
+      <div class="symbol-title">
+        <span>MudarDirecao</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoCobrinha) MudarDirecao(novaDir inteiro) </code></pre>
+      <p>MudarDirecao altera o vetor de movimento evitando reversão de 180 graus</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:105</code></div>
+    </div>
+    <div class="card doc-item" id="Nome" data-name="nome">
+      <div class="symbol-title">
+        <span>Nome</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (r Retangulo) Nome() texto </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:33</code></div>
+    </div>
+    <div class="card doc-item" id="Nome" data-name="nome">
+      <div class="symbol-title">
+        <span>Nome</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c Circulo) Nome() texto </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:51</code></div>
+    </div>
+    <div class="card doc-item" id="Nota" data-name="nota">
+      <div class="symbol-title">
+        <span>Nota</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Nota estrutura {</code></pre>
+      <p>Estrutura que representa uma anotação individual</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:25</code></div>
+    </div>
+    <div class="card doc-item" id="NotaTeste" data-name="notateste">
+      <div class="symbol-title">
+        <span>NotaTeste</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo NotaTeste estrutura {</code></pre>
+      <p>Estrutura espelhada para validação de testes</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:19</code></div>
+    </div>
+    <div class="card doc-item" id="NovoBlocoDeNotas" data-name="novoblocodenotas">
+      <div class="symbol-title">
+        <span>NovoBlocoDeNotas</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovoBlocoDeNotas(caminhoArquivo texto) *BlocoDeNotas </code></pre>
+      <p>NovoBlocoDeNotas instancia um novo bloco e tenta carregar os dados persistidos</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:43</code></div>
+    </div>
+    <div class="card doc-item" id="NovoBlocoTeste" data-name="novoblocoteste">
+      <div class="symbol-title">
+        <span>NovoBlocoTeste</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovoBlocoTeste(caminho texto) *BlocoTeste </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:35</code></div>
+    </div>
+    <div class="card doc-item" id="NovoEditorNano" data-name="novoeditornano">
+      <div class="symbol-title">
+        <span>NovoEditorNano</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovoEditorNano(caminho texto) *EditorNano </code></pre>
+      <p>NovoEditorNano cria uma nova instância do editor</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:25</code></div>
+    </div>
+    <div class="card doc-item" id="NovoJogoCobrinha" data-name="novojogocobrinha">
+      <div class="symbol-title">
+        <span>NovoJogoCobrinha</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovoJogoCobrinha(largura inteiro, altura inteiro, modoDemo booleano) *JogoCobrinha </code></pre>
+      <p>NovoJogoCobrinha inicializa a cobrinha centralizada e a primeira maçã</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:46</code></div>
+    </div>
+    <div class="card doc-item" id="NovoJogoDamas" data-name="novojogodamas">
+      <div class="symbol-title">
+        <span>NovoJogoDamas</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovoJogoDamas() *JogoDamas </code></pre>
+      <p>NovoJogoDamas configura o tabuleiro inicial com 12 peças para cada lado</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:53</code></div>
+    </div>
+    <div class="card doc-item" id="NovoJogoPacman" data-name="novojogopacman">
+      <div class="symbol-title">
+        <span>NovoJogoPacman</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovoJogoPacman(modoDemo booleano) *JogoPacman </code></pre>
+      <p>NovoJogoPacman constrói e inicializa uma nova partida</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:66</code></div>
+    </div>
+    <div class="card doc-item" id="ObterCabeca" data-name="obtercabeca">
+      <div class="symbol-title">
+        <span>ObterCabeca</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoCobrinha) ObterCabeca() Ponto </code></pre>
+      <p>ObterCabeca retorna a coordenada atual da cabeça da cobrinha</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:100</code></div>
+    </div>
+    <div class="card doc-item" id="ObterEstatisticas" data-name="obterestatisticas">
+      <div class="symbol-title">
+        <span>ObterEstatisticas</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) ObterEstatisticas() (totalNotas inteiro, totalFavoritas inteiro, totalPalavras inteiro, categorias mapa[texto]inteiro) </code></pre>
+      <p>ObterEstatisticas calcula estatísticas detalhadas das notas</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:244</code></div>
+    </div>
+    <div class="card doc-item" id="ObterMovimentosValidosDaPeca" data-name="obtermovimentosvalidosdapeca">
+      <div class="symbol-title">
+        <span>ObterMovimentosValidosDaPeca</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoDamas) ObterMovimentosValidosDaPeca(l, c inteiro) []MovimentoDamas </code></pre>
+      <p>ObterMovimentosValidosDaPeca localiza todos os lances simples e capturas possíveis de uma casa</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:98</code></div>
+    </div>
+    <div class="card doc-item" id="ObterNotaPorId" data-name="obternotaporid">
+      <div class="symbol-title">
+        <span>ObterNotaPorId</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) ObterNotaPorId(id inteiro) (*Nota, erro) </code></pre>
+      <p>ObterNotaPorId busca uma nota pelo seu identificador</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:134</code></div>
+    </div>
+    <div class="card doc-item" id="ObterPorId" data-name="obterporid">
+      <div class="symbol-title">
+        <span>ObterPorId</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoTeste) ObterPorId(id inteiro) (*NotaTeste, erro) </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:86</code></div>
+    </div>
+    <div class="card doc-item" id="ObterTodosMovimentosPossiveis" data-name="obtertodosmovimentospossiveis">
+      <div class="symbol-title">
+        <span>ObterTodosMovimentosPossiveis</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoDamas) ObterTodosMovimentosPossiveis() []MovimentoDamas </code></pre>
+      <p>ObterTodosMovimentosPossiveis calcula todos os lances legais do jogador da vez</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:172</code></div>
+    </div>
+    <div class="card doc-item" id="Perimetro" data-name="perimetro">
+      <div class="symbol-title">
+        <span>Perimetro</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (r Retangulo) Perimetro() decimal64 </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:29</code></div>
+    </div>
+    <div class="card doc-item" id="Perimetro" data-name="perimetro">
+      <div class="symbol-title">
+        <span>Perimetro</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c Circulo) Perimetro() decimal64 </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:47</code></div>
+    </div>
+    <div class="card doc-item" id="Ponto" data-name="ponto">
+      <div class="symbol-title">
+        <span>Ponto</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Ponto estrutura {</code></pre>
+      <p>Ponto representa uma coordenada cartesiana na grade 2D</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:18</code></div>
+    </div>
+    <div class="card doc-item" id="Posicao" data-name="posicao">
+      <div class="symbol-title">
+        <span>Posicao</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Posicao estrutura {</code></pre>
+      <p>Coordenada no labirinto</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:18</code></div>
+    </div>
+    <div class="card doc-item" id="PosicaoDamas" data-name="posicaodamas">
+      <div class="symbol-title">
+        <span>PosicaoDamas</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo PosicaoDamas estrutura {</code></pre>
+      <p>PosicaoDamas representa coordenadas (Linha 0-7, Coluna 0-7)</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:28</code></div>
+    </div>
+    <div class="card doc-item" id="PosicaoOcupadaPelaCobra" data-name="posicaoocupadapelacobra">
+      <div class="symbol-title">
+        <span>PosicaoOcupadaPelaCobra</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoCobrinha) PosicaoOcupadaPelaCobra(x inteiro, y inteiro) booleano </code></pre>
+      <p>PosicaoOcupadaPelaCobra verifica se uma coordenada coincide com o corpo</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:73</code></div>
+    </div>
+    <div class="card doc-item" id="RemoverLinha" data-name="removerlinha">
+      <div class="symbol-title">
+        <span>RemoverLinha</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) RemoverLinha(posicao inteiro) </code></pre>
+      <p>RemoverLinha exclui a linha indicada do buffer</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:117</code></div>
+    </div>
+    <div class="card doc-item" id="Renderizar" data-name="renderizar">
+      <div class="symbol-title">
+        <span>Renderizar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) Renderizar() </code></pre>
+      <p>Renderizar desenha a interface visual com estilo clássico do GNU nano</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:197</code></div>
+    </div>
+    <div class="card doc-item" id="Renderizar" data-name="renderizar">
+      <div class="symbol-title">
+        <span>Renderizar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) Renderizar() </code></pre>
+      <p>Renderizar desenha o labirinto e entidades</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:314</code></div>
+    </div>
+    <div class="card doc-item" id="Renderizar" data-name="renderizar">
+      <div class="symbol-title">
+        <span>Renderizar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoCobrinha) Renderizar() </code></pre>
+      <p>Renderizar desenha o estado visual da grade no terminal</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:221</code></div>
+    </div>
+    <div class="card doc-item" id="Renderizar" data-name="renderizar">
+      <div class="symbol-title">
+        <span>Renderizar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoDamas) Renderizar() </code></pre>
+      <p>Renderizar desenha o tabuleiro formatado com coordenadas A-H e 1-8</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:233</code></div>
+    </div>
+    <div class="card doc-item" id="Resultado" data-name="resultado">
+      <div class="symbol-title">
+        <span>Resultado</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Resultado estrutura {</code></pre>
+      <p>Estrutura para representar o resultado de um processamento</p>
+      <div class="file-ref">Definido em: <code>exemplos/concorrencia.vamos:14</code></div>
+    </div>
+    <div class="card doc-item" id="Retangulo" data-name="retangulo">
+      <div class="symbol-title">
+        <span>Retangulo</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Retangulo estrutura {</code></pre>
+      <p>Estrutura Retângulo</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:19</code></div>
+    </div>
+    <div class="card doc-item" id="Salvar" data-name="salvar">
+      <div class="symbol-title">
+        <span>Salvar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoTeste) Salvar() erro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:43</code></div>
+    </div>
+    <div class="card doc-item" id="Salvar" data-name="salvar">
+      <div class="symbol-title">
+        <span>Salvar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (b *BlocoDeNotas) Salvar() erro </code></pre>
+      <p>Salvar persiste os dados em formato JSON formatado</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:84</code></div>
+    </div>
+    <div class="card doc-item" id="Salvar" data-name="salvar">
+      <div class="symbol-title">
+        <span>Salvar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) Salvar() erro </code></pre>
+      <p>Salvar grava o buffer atual no arquivo em disco</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:64</code></div>
+    </div>
+    <div class="card doc-item" id="SubstituirGlobal" data-name="substituirglobal">
+      <div class="symbol-title">
+        <span>SubstituirGlobal</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (e *EditorNano) SubstituirGlobal(antigo texto, novo texto) </code></pre>
+      <p>SubstituirGlobal substitui todas as ocorrências de um termo no documento</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:146</code></div>
+    </div>
+    <div class="card doc-item" id="Tarefa" data-name="tarefa">
+      <div class="symbol-title">
+        <span>Tarefa</span>
+        <span class="badge badge-tipo">estrutura</span>
+      </div>
+      <pre><code>tipo Tarefa estrutura {</code></pre>
+      <p>Tarefa representa uma entidade de negócio</p>
+      <div class="file-ref">Definido em: <code>exemplos/api_rest.vamos:18</code></div>
+    </div>
+    <div class="card doc-item" id="VerificarColisoes" data-name="verificarcolisoes">
+      <div class="symbol-title">
+        <span>VerificarColisoes</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) VerificarColisoes() </code></pre>
+      <p>VerificarColisoes valida encontros entre Pacman e fantasmas</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:254</code></div>
+    </div>
+    <div class="card doc-item" id="aleatorioAbs" data-name="aleatorioabs">
+      <div class="symbol-title">
+        <span>aleatorioAbs</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao aleatorioAbs(n inteiro) inteiro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:372</code></div>
+    </div>
+    <div class="card doc-item" id="calcular" data-name="calcular">
+      <div class="symbol-title">
+        <span>calcular</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao calcular(a decimal64, b decimal64, op texto) (decimal64, erro) </code></pre>
+      <p>OperacaoAritmetica calcula a operação matemática ou retorna um erro</p>
+      <div class="file-ref">Definido em: <code>exemplos/calculadora.vamos:12</code></div>
+    </div>
+    <div class="card doc-item" id="executarTrabalhador" data-name="executartrabalhador">
+      <div class="symbol-title">
+        <span>executarTrabalhador</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao executarTrabalhador(id inteiro, canalSaida canal MensagemProcessamento, wg *sincronizar.GrupoEspera) </code></pre>
+      <p>Função trabalhadora executada concorrentemente</p>
+      <div class="file-ref">Definido em: <code>teste.vamos:36</code></div>
+    </div>
+    <div class="card doc-item" id="exibirRelatorioForma" data-name="exibirrelatorioforma">
+      <div class="symbol-title">
+        <span>exibirRelatorioForma</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao exibirRelatorioForma(f FormaGeometrica) </code></pre>
+      <p>Função polimórfica que aceita a interface FormaGeometrica</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:56</code></div>
+    </div>
+    <div class="card doc-item" id="manipularRaiz" data-name="manipularraiz">
+      <div class="symbol-title">
+        <span>manipularRaiz</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao manipularRaiz(w servidor_http.EscritorResposta, r *servidor_http.Requisicao) </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:11</code></div>
+    </div>
+    <div class="card doc-item" id="manipularStatus" data-name="manipularstatus">
+      <div class="symbol-title">
+        <span>manipularStatus</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao manipularStatus(w servidor_http.EscritorResposta, r *servidor_http.Requisicao) </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:18</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo 4: Calculadora e Tratamento de Erros em VAMOS-LANG Demonstração de controle de fluxo, tratamento de erros e mapas.</p>
+      <div class="file-ref">Definido em: <code>exemplos/calculadora.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:130</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/api_rest.vamos:24</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>BLOCO DE NOTAS BR (BlocoDeNotasBR) - VAMOS-LANG Um gerenciador moderno, robusto e elegante de notas em Português do Brasil.</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:249</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>API REST COM MICRO-FRAMEWORK WEB - VAMOS-LANG Servidor HTTP moderno, elegante e idiomático em Português do Brasil.</p>
+      <div class="file-ref">Definido em: <code>exemplos/api_rest.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>SUÍTE DE TESTES AUTOMATIZADOS - BLOCO DE NOTAS BR (VAMOS-LANG)</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:5</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:293</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p>Ponto de entrada principal</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:553</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo 1: Olá Mundo em VAMOS-LANG Sintaxe Go 100% traduzida para Português do Brasil</p>
+      <div class="file-ref">Definido em: <code>exemplos/ola_mundo.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>VAMOS NANO - EDITOR DE TEXTO EM TERMINAL (VAMOS-LANG) Um editor simples e elegante inspirado no GNU nano, 100% em Português.</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:336</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>teste.vamos:60</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>PACMAN (COME-COME) - VAMOS-LANG Clássico jogo de labirinto implementado 100% em Português do Brasil.</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:63</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>JOGO DE DAMAS (CHECKERS) - VAMOS-LANG Tabuleiro 8x8 oficial com regras de captura, damas coroadas e IA heurística.</p>
+      <div class="file-ref">Definido em: <code>jogos/damas.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/calculadora.vamos:30</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo 2: Concorrência em VAMOS-LANG Demonstração do uso de: disparar (go), canal (chan), adiar (defer), sincronizar.GrupoEspera (sync.WaitGroup) e selecionar (select).</p>
+      <div class="file-ref">Definido em: <code>exemplos/concorrencia.vamos:5</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/concorrencia.vamos:44</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/ola_mundo.vamos:11</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo 5: Servidor Web HTTP em VAMOS-LANG Demonstração da biblioteca de rede e manipulação de requisições HTTP.</p>
+      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:22</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>JOGO DA COBRINHA (SNAKE GAME) - VAMOS-LANG Um clássico arcade implementado 100% com sintaxe em Português do Brasil.</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo 3: Estruturas, Interfaces e Métodos em VAMOS-LANG Demonstração de tipos customizados, interfaces, ponteiros e polimorfismo.</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/uuid_externo.vamos:13</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>INTEGRAÇÃO COM PACOTES EXTERNOS - VAMOS-LANG Demonstra o uso transparente de bibliotecas Go mundiais via &#34;vamos get&#34;.</p>
+      <div class="file-ref">Definido em: <code>exemplos/uuid_externo.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:379</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Arquivo de teste oficial do ecossistema VAMOS-LANG Demonstra concorrência (disparar, canal, adiar), estruturas (tipo, estrutura) e fluxo de controle (se, para).</p>
+      <div class="file-ref">Definido em: <code>teste.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/cripto_e_conversao.vamos:12</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo de Criptografia, Conversão e Aleatoriedade em VAMOS-LANG</p>
+      <div class="file-ref">Definido em: <code>exemplos/cripto_e_conversao.vamos:2</code></div>
+    </div>
+    <div class="card doc-item" id="processarTarefa" data-name="processartarefa">
+      <div class="symbol-title">
+        <span>processarTarefa</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao processarTarefa(id inteiro, canalSaida canal Resultado, wg *sincronizar.GrupoEspera) </code></pre>
+      <p>Funcao trabalhadora executada concorrentemente com &#39;disparar&#39;</p>
+      <div class="file-ref">Definido em: <code>exemplos/concorrencia.vamos:21</code></div>
+    </div>
+    <div class="card doc-item" id="textoParaInteiro" data-name="textoparainteiro">
+      <div class="symbol-title">
+        <span>textoParaInteiro</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao textoParaInteiro(s texto) inteiro </code></pre>
+      <p>Auxiliar para converter texto para número inteiro</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:297</code></div>
+    </div>
+  </main>
+  <script>
+    function filterDocs() {
+      const q = document.getElementById('filterInput').value.toLowerCase();
+      const items = document.querySelectorAll('.doc-item');
+      items.forEach(el => {
+        const name = el.getAttribute('data-name');
+        el.style.display = name.includes(q) ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

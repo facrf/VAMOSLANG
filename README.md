@@ -269,6 +269,44 @@ make run-games
 
 ---
 
+## 📦 Uso de Dependências Externas (Go Modules)
+
+O VAMOS-LANG possui interoperabilidade transparente com **qualquer biblioteca do ecossistema Go mundial**. Para instalar e utilizar:
+
+```bash
+# 1. Instalar qualquer pacote externo
+./vamos get github.com/google/uuid
+
+# 2. Executar exemplo de uso
+./vamos run exemplos/uuid_externo.vamos
+```
+
+---
+
+## 🐳 Deploy Minimalista com Docker (< 20MB)
+
+O projeto inclui um [`Dockerfile`](file:///storage/www/projetos/VAMOSLANG/Dockerfile) multi-stage otimizado para gerar imagens de produção estáticas sem dependências de compilação:
+
+```bash
+# Construir imagem Docker de produção
+make docker-build
+
+# Executar container expondo a API REST
+docker run -p 8080:8080 vamos-app
+```
+
+---
+
+## 🔍 Ciclo Completo de Qualidade e CI
+
+Execute a verificação completa (formatação, lint estrito, suíte de testes e geração de documentação HTML):
+
+```bash
+make check
+```
+
+---
+
 ## 🏗️ Estrutura do Projeto
 
 ```
@@ -309,10 +347,14 @@ make run-games
 │   ├── servidor_web.vamos
 │   ├── cripto_e_conversao.vamos
 │   ├── nano.vamos            # Editor de texto estilo GNU nano em terminal
-│   └── api_rest.vamos        # API REST com a micro-framework servidor
+│   ├── api_rest.vamos        # API REST com a micro-framework servidor
+│   └── uuid_externo.vamos    # Integração com pacotes Go externos
 ├── wasm/                     # Ponto de entrada para compilação WebAssembly
 ├── transpiler/               # Motor do transpilador, validador Go AST e linter
 ├── cmd/                      # Comandos modulares da CLI (run, build, lsp, get, etc.)
+├── Dockerfile                # Imagem de produção minimalista multi-stage (< 20MB)
+├── .dockerignore             # Exclusões para build de container
+├── docs.html                 # Documentação oficial gerada pelo 'vamos doc'
 ├── go.mod                    # Definição do módulo Go
 ├── Makefile                  # Automação de compilação, testes e demonstrações
 └── README.md                 # Documentação completa
