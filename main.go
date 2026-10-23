@@ -34,6 +34,10 @@ func main() {
 		os.Exit(cmd.RunLint(args))
 	case "init", "iniciar":
 		os.Exit(cmd.RunInit(args))
+	case "doc", "documentacao":
+		os.Exit(cmd.RunDoc(args))
+	case "trace", "rastrear":
+		os.Exit(cmd.RunTrace(args))
 	case "get", "obter", "instalar":
 		os.Exit(cmd.RunGet(args))
 	case "lsp", "servidor-linguagem":

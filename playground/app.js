@@ -176,8 +176,29 @@ const toast = document.getElementById("toast");
 
 let debounceTimer = null;
 
+let wasmReady = false;
+
+async function initWasm() {
+  if (typeof Go === 'undefined') return;
+  try {
+    const go = new Go();
+    const resp = await fetch('vamos.wasm');
+    if (!resp.ok) return;
+    const buffer = await resp.arrayBuffer();
+    const result = await WebAssembly.instantiate(buffer, go.importObject);
+    go.run(result.instance);
+    wasmReady = true;
+    const badge = document.getElementById('wasmBadge');
+    if (badge) badge.style.display = 'inline-flex';
+    runTranspilation();
+  } catch (err) {
+    console.warn('Wasm fallback to JS engine:', err.message);
+  }
+}
+
 // Inicialização
 document.addEventListener("DOMContentLoaded", () => {
+  initWasm();
   // Verifica se há código passado na URL via hash
   if (window.location.hash.startsWith("#code=")) {
     try {
@@ -235,7 +256,16 @@ function setupEventListeners() {
   // Formatar Código
   if (formatBtn) {
     formatBtn.addEventListener("click", () => {
-      editorTextarea.value = formatVamosSource(editorTextarea.value);
+      if (wasmReady && typeof formatVamosWasm === 'function') {
+        const res = formatVamosWasm(editorTextarea.value);
+        if (res.success) {
+          editorTextarea.value = res.output;
+        } else {
+          editorTextarea.value = formatVamosSource(editorTextarea.value);
+        }
+      } else {
+        editorTextarea.value = formatVamosSource(editorTextarea.value);
+      }
       updateLineNumbers();
       runTranspilation();
       showToast("Código formatado com sucesso!");
@@ -356,7 +386,23 @@ function updateLineNumbers() {
 
 function runTranspilation() {
   const code = editorTextarea.value;
-  const result = transpileVamos(code);
+  let result;
+
+  if (wasmReady && typeof transpileVamosWasm === 'function') {
+    const wasmRes = transpileVamosWasm(code);
+    if (wasmRes.success) {
+      result = { success: true, goCode: wasmRes.output, tokens: [] };
+      // Opcionalmente extrai tokens via lexer JS para o inspetor
+      try {
+        const lexer = new VamosLexer(code);
+        result.tokens = lexer.tokenize();
+      } catch (e) {}
+    } else {
+      result = { success: false, error: wasmRes.error };
+    }
+  } else {
+    result = transpileVamos(code);
+  }
 
   if (result.success) {
     outputCode.textContent = result.goCode;

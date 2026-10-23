@@ -1,0 +1,135 @@
+// ============================================================================
+// API REST COM MICRO-FRAMEWORK WEB - VAMOS-LANG
+// Servidor HTTP moderno, elegante e idiomático em Português do Brasil.
+// ============================================================================
+
+pacote principal
+
+importar (
+	"conversao"
+	"formatar"
+	"servidor"
+	"servidor_http"
+	"so"
+	"tempo"
+)
+
+// Tarefa representa uma entidade de negócio
+tipo Tarefa estrutura {
+	Id        inteiro `json:"id"`
+	Titulo    texto   `json:"titulo"`
+	Concluida booleano `json:"concluida"`
+}
+
+funcao principal() {
+	modoDemo := falso
+	porta := ":8080"
+
+	para i := 0; i < tamanho(so.Argumentos); i++ {
+		arg := so.Argumentos[i]
+		se arg == "--demo" || arg == "-d" || arg == "--testar" {
+			modoDemo = verdadeiro
+			porta = ":8899" // porta dedicada para o teste
+		}
+	}
+
+	app := servidor.Novo()
+
+	// 1. Middlewares Globais
+	app.Usar(servidor.MiddlewareRegistrador())
+	app.Usar(servidor.MiddlewareCORS())
+
+	// Banco de dados em memória
+	tarefas := []Tarefa{
+		{Id: 1, Titulo: "Aprender sintaxe do VAMOS-LANG", Concluida: verdadeiro},
+		{Id: 2, Titulo: "Construir API REST em Português", Concluida: verdadeiro},
+		{Id: 3, Titulo: "Publicar microsserviço em produção", Concluida: falso},
+	}
+
+	// 2. Rotas da API
+	// Rota raiz
+	app.Obter("/", funcao(ctx *servidor.Contexto) {
+		ctx.JSON(200, mapa[texto]qualquer{
+			"app":       "Micro-Framework Web VAMOS-LANG",
+			"versao":    "1.1.0",
+			"mensagem":  "Bem-vindo à API REST nativa em Português do Brasil!",
+			"documento": "/api/tarefas",
+		})
+	})
+
+	// Rota de status de saúde
+	app.Obter("/api/status", funcao(ctx *servidor.Contexto) {
+		ctx.JSON(200, mapa[texto]qualquer{
+			"status":   "operacional",
+			"servidor": "VAMOS Web Engine",
+			"horario":  tempo.Agora().Formato("02/01/2006 15:04:05"),
+		})
+	})
+
+	// Rota para listar todas as tarefas
+	app.Obter("/api/tarefas", funcao(ctx *servidor.Contexto) {
+		ctx.JSON(200, mapa[texto]qualquer{
+			"total":   tamanho(tarefas),
+			"tarefas": tarefas,
+		})
+	})
+
+	// Rota com parâmetro dinâmico: /api/tarefas/:id
+	app.Obter("/api/tarefas/:id", funcao(ctx *servidor.Contexto) {
+		idStr := ctx.Parametro("id")
+		id, err := conversao.ParaInteiro(idStr)
+		se err != nulo {
+			ctx.JSON(400, mapa[texto]texto{"erro": "ID inválido informado na URL"})
+			retornar
+		}
+
+		para i := 0; i < tamanho(tarefas); i++ {
+			se tarefas[i].Id == id {
+				ctx.JSON(200, tarefas[i])
+				retornar
+			}
+		}
+
+		ctx.JSON(404, mapa[texto]texto{"erro": "Tarefa não encontrada"})
+	})
+
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("     🚀 MICRO-FRAMEWORK WEB VAMOS-LANG 🇧🇷         ")
+	formatar.ImprimirLinha("==================================================")
+
+	se modoDemo {
+		formatar.ImprimirFormatado("Iniciando servidor de teste na porta %s...\n", porta)
+		disparar funcao() {
+			_ = app.Ouvir(porta)
+		}()
+
+		// Aguarda servidor subir
+		tempo.Dormir(tempo.Milissegundo * 200)
+
+		formatar.ImprimirLinha("\n-> Realizando requisição HTTP GET / ...")
+		resp, err := servidor_http.Obter("http://localhost" + porta + "/")
+		se err == nulo {
+			formatar.ImprimirFormatado("   Resposta HTTP Status: %s\n", resp.Status)
+			_ = resp.Body.Close()
+		}
+
+		formatar.ImprimirLinha("-> Realizando requisição HTTP GET /api/tarefas ...")
+		respTarefas, err2 := servidor_http.Obter("http://localhost" + porta + "/api/tarefas")
+		se err2 == nulo {
+			formatar.ImprimirFormatado("   Resposta HTTP Status: %s\n", respTarefas.Status)
+			_ = respTarefas.Body.Close()
+		}
+
+		formatar.ImprimirLinha("\n==================================================")
+		formatar.ImprimirLinha(" Demonstração da API REST Concluída com Sucesso! ✓")
+		formatar.ImprimirLinha("==================================================")
+		retornar
+	}
+
+	formatar.ImprimirFormatado("Servidor rodando em http://localhost%s\n", porta)
+	formatar.ImprimirLinha("Pressione Ctrl+C para encerrar o servidor.")
+	err := app.Ouvir(porta)
+	se err != nulo {
+		formatar.ImprimirFormatado("Falha ao iniciar servidor: %v\n", err)
+	}
+}

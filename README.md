@@ -22,7 +22,10 @@ O ecossistema VAMOS-LANG inclui:
 - **Gerenciador de Dependências Externas (`vamos get`)**: Instalação e resolução de pacotes de terceiros.
 - **Conversor Bidirecional (`vamos go2vamos`)**: Converte código Go nativo para VAMOS-LANG.
 - **REPL Interativo (`vamos repl`)**: Shell de linha de comando para testar expressões instantaneamente.
-- **Playground Web**: Ambiente interativo online com simulação de terminal e compartilhamento por link.
+- **Playground Web com WebAssembly (Wasm)**: Ambiente interativo online rodando o motor Go nativo diretamente no navegador (`vamos.wasm`).
+- **Gerador Automático de Documentação (`vamos doc`)**: Extração de documentação no terminal e exportação em HTML navegável.
+- **Rastreamento Didático (`vamos trace`)**: Execução passo a passo detalhando linhas, fluxo e variáveis para fins educacionais.
+- **Micro-Framework Web Integrada (`pacotes/servidor`)**: Roteamento rápido, middlewares de log/CORS e respostas JSON/Texto em Português.
 
 ---
 
@@ -39,9 +42,11 @@ A CLI oferece suporte completo com comandos e aliases em Português e Inglês:
 | `vamos go2vamos` \| `descompilar <arquivo.go> [-o]` | Converte código Go nativo de volta para `.vamos` |
 | `vamos fmt` \| `formatar [caminho...]` | Formata automaticamente os arquivos `.vamos` |
 | `vamos lint` \| `checar` \| `verificar [--strict] [caminho...]` | Validador de estilo e verificador estrito de sintaxe |
+| `vamos init` \| `iniciar <nome> [--template=<api\|cli\|jogo>]` | Gera projeto a partir de modelos prontos |
+| `vamos doc` \| `documentacao [simbolo] [--html]` | Visualizador e gerador de documentação oficial em HTML |
+| `vamos trace` \| `rastrear <arquivo.vamos>` | Executa em modo didático com rastreamento visual passo a passo |
 | `vamos get` \| `obter` \| `instalar <pacote-go>` | Instala dependências e módulos externos |
 | `vamos lsp` \| `servidor-linguagem` | Inicia o servidor oficial LSP (Language Server Protocol) |
-| `vamos init` \| `iniciar <nome-modulo>` | Gera a estrutura padrão de um novo projeto VAMOS |
 | `vamos repl` \| `interativo` | Inicia o terminal interativo (REPL) |
 | `vamos playground` \| `web [porta]` | Inicia o servidor local do Playground Web |
 | `vamos version` \| `versao` | Exibe detalhes da versão e compilador |
@@ -290,8 +295,12 @@ make run-games
 │   ├── style.css
 │   ├── transpiler.js
 │   ├── app.js
+│   ├── vamos.wasm            # Motor Wasm Go nativo compilado
+│   ├── wasm_exec.js          # Ponte de execução WebAssembly
 │   └── README.md
 ├── blocodenotasBR/           # Aplicação real completa (Bloco de Notas CLI + JSON)
+├── pacotes/                  # Pacotes e bibliotecas nativas em PT-BR
+│   └── servidor/             # Micro-framework web com roteamento e middlewares
 ├── exemplos/                 # Coleção de exemplos práticos
 │   ├── ola_mundo.vamos
 │   ├── concorrencia.vamos
@@ -299,7 +308,9 @@ make run-games
 │   ├── calculadora.vamos
 │   ├── servidor_web.vamos
 │   ├── cripto_e_conversao.vamos
-│   └── nano.vamos            # Editor de texto estilo GNU nano em terminal
+│   ├── nano.vamos            # Editor de texto estilo GNU nano em terminal
+│   └── api_rest.vamos        # API REST com a micro-framework servidor
+├── wasm/                     # Ponto de entrada para compilação WebAssembly
 ├── transpiler/               # Motor do transpilador, validador Go AST e linter
 ├── cmd/                      # Comandos modulares da CLI (run, build, lsp, get, etc.)
 ├── go.mod                    # Definição do módulo Go

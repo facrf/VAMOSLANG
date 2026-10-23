@@ -212,6 +212,7 @@ var StdlibImportPathsMap = map[string]string{
 	"md5":                 "crypto/md5",
 	"matematica/aleatorio": "math/rand",
 	"aleatorio":           "math/rand",
+	"servidor":            "vamos/pacotes/servidor",
 }
 
 // ReverseStdlibImportsMap mapeia import paths do Go para pacotes PT-BR.
@@ -281,6 +282,7 @@ var StdlibIdentMap = map[string]string{
 	"md5":                 "md5",
 	"aleatorio":           "rand",
 	"rand":                "rand",
+	"servidor":            "servidor",
 }
 
 // StdlibMethodsMap mapeia métodos/funções conhecidos para o identificador do pacote Go.
@@ -516,10 +518,26 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"NovoFonte":  "NewSource",
 		"Novo":       "New",
 	},
+	"servidor": {
+		"Novo":                  "Novo",
+		"MiddlewareRegistrador": "MiddlewareRegistrador",
+		"MiddlewareCORS":        "MiddlewareCORS",
+	},
 }
 
 // MethodAliasesMap mapeia nomes de métodos de objetos e interfaces em PT-BR para Go.
 var MethodAliasesMap = map[string]string{
+	"JSON":             "JSON",
+	"Parametro":        "Parametro",
+	"Consulta":         "Consulta",
+	"EscanearJSON":     "EscanearJSON",
+	"Status":           "Status",
+	"Usar":             "Usar",
+	"Obter":            "Obter",
+	"Postar":           "Postar",
+	"Colocar":          "Colocar",
+	"Deletar":          "Deletar",
+	"Ouvir":            "Ouvir",
 	"Adicionar":        "Add",
 	"Concluido":        "Done",
 	"Feito":            "Done",

@@ -1,4 +1,4 @@
-.PHONY: all build test run-examples run-games clean install
+.PHONY: all build test run-examples run-games wasm clean install
 
 BINARY_NAME=vamos
 
@@ -30,6 +30,13 @@ run-examples: build
 	@echo ""
 	@echo "==> Testando exemplo 'nano.vamos' (Editor de Texto):"
 	./$(BINARY_NAME) run exemplos/nano.vamos --demo
+	@echo ""
+	@echo "==> Testando exemplo 'api_rest.vamos' (Micro-framework REST):"
+	./$(BINARY_NAME) run exemplos/api_rest.vamos --demo
+
+wasm:
+	@echo "==> Compilando motor WebAssembly (vamos.wasm)..."
+	GOOS=js GOARCH=wasm go build -o playground/vamos.wasm ./wasm
 
 run-games: build
 	@echo "==> Executando demonstração do Jogo da Cobrinha:"
