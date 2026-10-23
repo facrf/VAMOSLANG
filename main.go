@@ -34,6 +34,10 @@ func main() {
 		os.Exit(cmd.RunLint(args))
 	case "init", "iniciar":
 		os.Exit(cmd.RunInit(args))
+	case "get", "obter", "instalar":
+		os.Exit(cmd.RunGet(args))
+	case "lsp", "servidor-linguagem":
+		os.Exit(cmd.RunLSP())
 	case "repl", "interativo":
 		os.Exit(cmd.RunREPL())
 	case "playground", "web":

@@ -375,3 +375,83 @@ funcao teste() {
 		t.Errorf("Esperava pelo menos 2 avisos no linter, obteve %d", len(issues))
 	}
 }
+
+func TestTranspileExpandedDatabaseAndCrypto(t *testing.T) {
+	input := `pacote principal
+
+importar (
+	"banco_dados"
+	"conversao"
+	"cripto/sha256"
+	"matematica/aleatorio"
+)
+
+funcao exemplo() {
+	num, err := conversao.ParaInteiro("42")
+	hash := sha256.Soma256([]byte("teste"))
+	sorteado := aleatorio.InteiroAte(100)
+	db, _ := banco_dados.Abrir("sqlite", ":memory:")
+	db.Fechar()
+}
+`
+	got, err := TranspileSource(input)
+	if err != nil {
+		t.Fatalf("Erro ao transpilar novos pacotes stdlib: %v", err)
+	}
+
+	expectedPhrases := []string{
+		`"database/sql"`,
+		`"strconv"`,
+		`"crypto/sha256"`,
+		`"math/rand"`,
+		`strconv.Atoi("42")`,
+		`sha256.Sum256([]byte("teste"))`,
+		`rand.Intn(100)`,
+		`sql.Open("sqlite", ":memory:")`,
+		`db.Close()`,
+	}
+
+	for _, phrase := range expectedPhrases {
+		if !strings.Contains(got, phrase) {
+			t.Errorf("Esperava encontrar %q no código gerado, mas não encontrou:\n%s", phrase, got)
+		}
+	}
+}
+
+func TestValidateSource(t *testing.T) {
+	// Código válido
+	valido := `pacote principal
+importar "formatar"
+funcao principal() {
+	formatar.ImprimirLinha("teste")
+}
+`
+	diags, err := ValidateSource(valido)
+	if err != nil {
+		t.Fatalf("Erro inesperado em ValidateSource: %v", err)
+	}
+	for _, d := range diags {
+		if d.Severity == SeverityError {
+			t.Errorf("Código válido não deveria ter erros, obteve: %v", d)
+		}
+	}
+
+	// Código inválido (chave não fechada)
+	invalido := `pacote principal
+funcao principal() {
+`
+	diagsInval, err := ValidateSource(invalido)
+	if err != nil {
+		t.Fatalf("Erro inesperado: %v", err)
+	}
+	hasSyntaxError := false
+	for _, d := range diagsInval {
+		if d.Severity == SeverityError && strings.Contains(d.Message, "bloco não encerrado") {
+			hasSyntaxError = true
+			break
+		}
+	}
+	if !hasSyntaxError {
+		t.Errorf("Esperava erro amigável de bloco não encerrado, obteve diagnósticos: %+v", diagsInval)
+	}
+}

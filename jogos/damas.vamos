@@ -1,0 +1,485 @@
+// ============================================================================
+// JOGO DE DAMAS (CHECKERS) - VAMOS-LANG
+// Tabuleiro 8x8 oficial com regras de captura, damas coroadas e IA heurística.
+// ============================================================================
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"leitor"
+	"matematica/aleatorio"
+	"so"
+	"tempo"
+)
+
+// Constantes de peças no tabuleiro
+constante (
+	Vazio       runa = '.'
+	Invalida    runa = ' '
+	Branca      runa = 'b'
+	BrancaDama  runa = 'B'
+	Preta       runa = 'p'
+	PretaDama   runa = 'P'
+)
+
+// PosicaoDamas representa coordenadas (Linha 0-7, Coluna 0-7)
+tipo PosicaoDamas estrutura {
+	Linha  inteiro
+	Coluna inteiro
+}
+
+// MovimentoDamas descreve uma jogada de origem para destino
+tipo MovimentoDamas estrutura {
+	Origem   PosicaoDamas
+	Destino  PosicaoDamas
+	EhSalto  booleano
+	Capturada PosicaoDamas
+}
+
+// JogoDamas gerencia o estado do tabuleiro e a contagem de peças
+tipo JogoDamas estrutura {
+	Tabuleiro      [8][8]runa
+	TurnoBrancas   booleano
+	BrancasRest    inteiro
+	PretasRest     inteiro
+	FimDeJogo      booleano
+	Vencedor       texto
+	TotalLances    inteiro
+}
+
+// NovoJogoDamas configura o tabuleiro inicial com 12 peças para cada lado
+funcao NovoJogoDamas() *JogoDamas {
+	j := &JogoDamas{
+		TurnoBrancas: verdadeiro,
+		BrancasRest:  12,
+		PretasRest:   12,
+		FimDeJogo:    falso,
+		TotalLances:  0,
+	}
+
+	para l := 0; l < 8; l++ {
+		para c := 0; c < 8; c++ {
+			se (l+c)%2 != 0 {
+				se l < 3 {
+					j.Tabuleiro[l][c] = Preta
+				} senao se l > 4 {
+					j.Tabuleiro[l][c] = Branca
+				} senao {
+					j.Tabuleiro[l][c] = Vazio
+				}
+			} senao {
+				j.Tabuleiro[l][c] = Invalida
+			}
+		}
+	}
+
+	retornar j
+}
+
+// EhAdversario verifica se uma peça pertence ao oponente do turno atual
+funcao (j *JogoDamas) EhAdversario(peca runa) booleano {
+	se j.TurnoBrancas {
+		retornar peca == Preta || peca == PretaDama
+	}
+	retornar peca == Branca || peca == BrancaDama
+}
+
+// EhMinhaPeca verifica se uma peça pertence ao jogador atual
+funcao (j *JogoDamas) EhMinhaPeca(peca runa) booleano {
+	se j.TurnoBrancas {
+		retornar peca == Branca || peca == BrancaDama
+	}
+	retornar peca == Preta || peca == PretaDama
+}
+
+// ObterMovimentosValidosDaPeca localiza todos os lances simples e capturas possíveis de uma casa
+funcao (j *JogoDamas) ObterMovimentosValidosDaPeca(l, c inteiro) []MovimentoDamas {
+	movs := criar([]MovimentoDamas, 0)
+	peca := j.Tabuleiro[l][c]
+
+	se !j.EhMinhaPeca(peca) {
+		retornar movs
+	}
+
+	ehDama := (peca == BrancaDama || peca == PretaDama)
+	direcoesLinha := criar([]inteiro, 0)
+
+	se ehDama {
+		direcoesLinha = adicionar(direcoesLinha, -1)
+		direcoesLinha = adicionar(direcoesLinha, 1)
+	} senao se peca == Branca {
+		direcoesLinha = adicionar(direcoesLinha, -1) // Brancas sobem (linha diminui)
+	} senao {
+		direcoesLinha = adicionar(direcoesLinha, 1)  // Pretas descem (linha aumenta)
+	}
+
+	direcoesColuna := []inteiro{-1, 1}
+
+	// 1. Verifica Movimentos Simples (passo diagonal de 1 casa)
+	para dlIdx := 0; dlIdx < tamanho(direcoesLinha); dlIdx++ {
+		dl := direcoesLinha[dlIdx]
+		para dcIdx := 0; dcIdx < tamanho(direcoesColuna); dcIdx++ {
+			dc := direcoesColuna[dcIdx]
+			nl := l + dl
+			nc := c + dc
+
+			se nl >= 0 && nl < 8 && nc >= 0 && nc < 8 {
+				se j.Tabuleiro[nl][nc] == Vazio {
+					movs = adicionar(movs, MovimentoDamas{
+						Origem:  PosicaoDamas{Linha: l, Coluna: c},
+						Destino: PosicaoDamas{Linha: nl, Coluna: nc},
+						EhSalto: falso,
+					})
+				}
+			}
+		}
+	}
+
+	// 2. Verifica Capturas por Salto (2 casas na diagonal)
+	dirsSaltoLinha := []inteiro{-1, 1}
+	para dlIdx := 0; dlIdx < tamanho(dirsSaltoLinha); dlIdx++ {
+		dl := dirsSaltoLinha[dlIdx]
+		para dcIdx := 0; dcIdx < tamanho(direcoesColuna); dcIdx++ {
+			dc := direcoesColuna[dcIdx]
+			meioL := l + dl
+			meioC := c + dc
+			saltoL := l + (dl * 2)
+			saltoC := c + (dc * 2)
+
+			se saltoL >= 0 && saltoL < 8 && saltoC >= 0 && saltoC < 8 {
+				pecaMeio := j.Tabuleiro[meioL][meioC]
+				pecaSalto := j.Tabuleiro[saltoL][saltoC]
+
+				se j.EhAdversario(pecaMeio) && pecaSalto == Vazio {
+					// Peças normais podem capturar para trás ou frente em damas modernas
+					movs = adicionar(movs, MovimentoDamas{
+						Origem:    PosicaoDamas{Linha: l, Coluna: c},
+						Destino:   PosicaoDamas{Linha: saltoL, Coluna: saltoC},
+						EhSalto:   verdadeiro,
+						Capturada: PosicaoDamas{Linha: meioL, Coluna: meioC},
+					})
+				}
+			}
+		}
+	}
+
+	retornar movs
+}
+
+// ObterTodosMovimentosPossiveis calcula todos os lances legais do jogador da vez
+funcao (j *JogoDamas) ObterTodosMovimentosPossiveis() []MovimentoDamas {
+	todos := criar([]MovimentoDamas, 0)
+	capturas := criar([]MovimentoDamas, 0)
+
+	para l := 0; l < 8; l++ {
+		para c := 0; c < 8; c++ {
+			mList := j.ObterMovimentosValidosDaPeca(l, c)
+			para i := 0; i < tamanho(mList); i++ {
+				m := mList[i]
+				se m.EhSalto {
+					capturas = adicionar(capturas, m)
+				}
+				todos = adicionar(todos, m)
+			}
+		}
+	}
+
+	// Regra clássica de damas: se há captura disponível, a captura é prioritária
+	se tamanho(capturas) > 0 {
+		retornar capturas
+	}
+	retornar todos
+}
+
+// ExecutarMovimento aplica a jogada, remove peças capturadas e promove damas
+funcao (j *JogoDamas) ExecutarMovimento(m MovimentoDamas) {
+	peca := j.Tabuleiro[m.Origem.Linha][m.Origem.Coluna]
+	j.Tabuleiro[m.Origem.Linha][m.Origem.Coluna] = Vazio
+
+	// Se for captura, remove a peça comida
+	se m.EhSalto {
+		j.Tabuleiro[m.Capturada.Linha][m.Capturada.Coluna] = Vazio
+		se j.TurnoBrancas {
+			j.PretasRest--
+		} senao {
+			j.BrancasRest--
+		}
+	}
+
+	// Promoção a Dama (coroação na última fileira)
+	se peca == Branca && m.Destino.Linha == 0 {
+		peca = BrancaDama
+	} senao se peca == Preta && m.Destino.Linha == 7 {
+		peca = PretaDama
+	}
+
+	j.Tabuleiro[m.Destino.Linha][m.Destino.Coluna] = peca
+	j.TotalLances++
+	j.TurnoBrancas = !j.TurnoBrancas
+
+	// Verifica condição de término
+	se j.PretasRest <= 0 {
+		j.FimDeJogo = verdadeiro
+		j.Vencedor = "Brancas (Jogador)"
+	} senao se j.BrancasRest <= 0 {
+		j.FimDeJogo = verdadeiro
+		j.Vencedor = "Pretas (Computador)"
+	}
+}
+
+// Renderizar desenha o tabuleiro formatado com coordenadas A-H e 1-8
+funcao (j *JogoDamas) Renderizar() {
+	formatar.ImprimirLinha("      A   B   C   D   E   F   G   H  ")
+	formatar.ImprimirLinha("    ┌───┬───┬───┬───┬───┬───┬───┬───┐")
+
+	para l := 0; l < 8; l++ {
+		linhaStr := formatar.Formatar("  %d │", 8-l)
+		para c := 0; c < 8; c++ {
+			p := j.Tabuleiro[l][c]
+			se p == Branca {
+				linhaStr += " ⛀ │"
+			} senao se p == BrancaDama {
+				linhaStr += " ⛁ │"
+			} senao se p == Preta {
+				linhaStr += " ⛂ │"
+			} senao se p == PretaDama {
+				linhaStr += " ⛃ │"
+			} senao se p == Vazio {
+				linhaStr += " · │"
+			} senao {
+				linhaStr += "   │"
+			}
+		}
+		linhaStr += formatar.Formatar(" %d", 8-l)
+		formatar.ImprimirLinha(linhaStr)
+
+		se l < 7 {
+			formatar.ImprimirLinha("    ├───┼───┼───┼───┼───┼───┼───┼───┤")
+		}
+	}
+
+	formatar.ImprimirLinha("    └───┴───┴───┴───┴───┴───┴───┴───┘")
+	formatar.ImprimirLinha("      A   B   C   D   E   F   G   H  ")
+
+	turnoStr := "Brancas (⛀)"
+	se !j.TurnoBrancas {
+		turnoStr = "Pretas (⛂)"
+	}
+
+	formatar.ImprimirFormatado(
+		"\n Turno: %s | Peças Brancas: %d | Peças Pretas: %d | Lances: %d\n",
+		turnoStr, j.BrancasRest, j.PretasRest, j.TotalLances,
+	)
+}
+
+// ConverterCoordenada converte notação textual (ex: "c3") em coordenadas (Linha, Coluna)
+funcao ConverterCoordenada(coord texto) (PosicaoDamas, booleano) {
+	c := cordas.ParaMinusculas(cordas.ApararEspaco(coord))
+	se tamanho(c) != 2 {
+		retornar PosicaoDamas{}, falso
+	}
+
+	coluna := inteiro(c[0] - 'a')
+	linha := 8 - inteiro(c[1]-'0')
+
+	se coluna < 0 || coluna >= 8 || linha < 0 || linha >= 8 {
+		retornar PosicaoDamas{}, falso
+	}
+
+	retornar PosicaoDamas{Linha: linha, Coluna: coluna}, verdadeiro
+}
+
+// FormatarCoordenada converte (Linha, Coluna) de volta para notação legível (ex: "c3")
+funcao FormatarCoordenada(p PosicaoDamas) texto {
+	col := texto(rune('a' + p.Coluna))
+	lin := texto(rune('0' + (8 - p.Linha)))
+	retornar col + lin
+}
+
+// EscolherMelhorMovimentoIA seleciona o lance da máquina priorizando capturas e avanço
+funcao (j *JogoDamas) EscolherMelhorMovimentoIA() (MovimentoDamas, booleano) {
+	movs := j.ObterTodosMovimentosPossiveis()
+	se tamanho(movs) == 0 {
+		retornar MovimentoDamas{}, falso
+	}
+
+	melhorScore := -9999
+	escolhido := movs[0]
+
+	para i := 0; i < tamanho(movs); i++ {
+		m := movs[i]
+		score := 0
+
+		se m.EhSalto {
+			score += 100 // prioridade máxima para capturar peças
+		}
+
+		// Prioriza coroação
+		se m.Destino.Linha == 7 {
+			score += 50
+		}
+
+		// Adiciona leve aleatoriedade para variedade tática
+		score += aleatorio.InteiroAte(10)
+
+		se score > melhorScore {
+			melhorScore = score
+			escolhido = m
+		}
+	}
+
+	retornar escolhido, verdadeiro
+}
+
+funcao principal() {
+	aleatorio.Semente(tempo.Agora().Unix())
+
+	modoDemo := falso
+	maxLancesDemo := 20
+
+	para i := 0; i < tamanho(so.Argumentos); i++ {
+		arg := so.Argumentos[i]
+		se arg == "--demo" || arg == "-d" || arg == "--simular" {
+			modoDemo = verdadeiro
+		}
+	}
+
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("          🏁 JOGO DE DAMAS (VAMOS-LANG) 🇧🇷        ")
+	formatar.ImprimirLinha("==================================================")
+
+	jogo := NovoJogoDamas()
+
+	se modoDemo {
+		formatar.ImprimirLinha("Modo: Demonstração Autônoma (IA vs IA)")
+		formatar.ImprimirLinha("Simulação de partidas com decisões heurísticas.")
+		formatar.ImprimirLinha("--------------------------------------------------")
+
+		para lance := 1; lance <= maxLancesDemo; lance++ {
+			se jogo.FimDeJogo {
+				interromper
+			}
+
+			mov, ok := jogo.EscolherMelhorMovimentoIA()
+			se !ok {
+				formatar.ImprimirLinha("\nNenhum lance legal restante!")
+				interromper
+			}
+
+			formatar.ImprimirFormatado(
+				"\n--- Lance %d: %s joga de [%s] para [%s] ---\n",
+				lance,
+				FormatarVez(jogo.TurnoBrancas),
+				FormatarCoordenada(mov.Origem),
+				FormatarCoordenada(mov.Destino),
+			)
+
+			jogo.ExecutarMovimento(mov)
+			jogo.Renderizar()
+
+			tempo.Dormir(tempo.Milissegundo * 120)
+		}
+
+		formatar.ImprimirLinha("\n==================================================")
+		formatar.ImprimirFormatado(" Partida de Demonstração Concluída com Sucesso! ✓\n")
+		formatar.ImprimirLinha("==================================================")
+		retornar
+	}
+
+	// Modo 1 Jogador vs Computador
+	formatar.ImprimirLinha("Você comanda as BRANCAS (⛀) | O Computador joga com as PRETAS (⛂)")
+	formatar.ImprimirLinha("Como jogar: Digite a origem e destino (ex: 'c3 d4' ou 'b6 d4')")
+	formatar.ImprimirLinha("Digite 'sair' para encerrar ou use '--demo' para ver a IA.")
+	formatar.ImprimirLinha("--------------------------------------------------")
+
+	scanner := leitor.NovoScanner(so.EntradaPadrao)
+
+	para !jogo.FimDeJogo {
+		jogo.Renderizar()
+
+		se jogo.TurnoBrancas {
+			// Turno do Jogador Humano
+			movsValidos := jogo.ObterTodosMovimentosPossiveis()
+			se tamanho(movsValidos) == 0 {
+				formatar.ImprimirLinha("Sem lances válidos para as Brancas! Fim de jogo.")
+				interromper
+			}
+
+			formatar.Imprimir("Seu lance (origem destino): ")
+			se !scanner.Escanear() {
+				interromper
+			}
+
+			linhaEntrada := cordas.ParaMinusculas(cordas.ApararEspaco(scanner.ObterTexto()))
+			se linhaEntrada == "sair" || linhaEntrada == "q" {
+				formatar.ImprimirLinha("Partida finalizada pelo jogador.")
+				retornar
+			}
+
+			partes := cordas.Dividir(linhaEntrada, " ")
+			se tamanho(partes) < 2 {
+				formatar.ImprimirLinha("❌ Formato inválido! Use: 'c3 d4'")
+				continuar
+			}
+
+			posOrigem, okO := ConverterCoordenada(partes[0])
+			posDestino, okD := ConverterCoordenada(partes[1])
+
+			se !okO || !okD {
+				formatar.ImprimirLinha("❌ Coordenada inválida! Escolha colunas A-H e linhas 1-8.")
+				continuar
+			}
+
+			// Valida se o movimento digitado é permitido pelas regras
+			lanceEncontrado := falso
+			variavel movEscolhido MovimentoDamas
+
+			para i := 0; i < tamanho(movsValidos); i++ {
+				m := movsValidos[i]
+				se m.Origem.Linha == posOrigem.Linha && m.Origem.Coluna == posOrigem.Coluna &&
+					m.Destino.Linha == posDestino.Linha && m.Destino.Coluna == posDestino.Coluna {
+					lanceEncontrado = verdadeiro
+					movEscolhido = m
+					interromper
+				}
+			}
+
+			se !lanceEncontrado {
+				formatar.ImprimirLinha("❌ Lance ilegal para esta peça ou captura obrigatória pendente!")
+				continuar
+			}
+
+			jogo.ExecutarMovimento(movEscolhido)
+		} senao {
+			// Turno do Computador
+			formatar.ImprimirLinha("\n🤖 Computador está calculando lance...")
+			tempo.Dormir(tempo.Milissegundo * 300)
+
+			movIA, ok := jogo.EscolherMelhorMovimentoIA()
+			se !ok {
+				formatar.ImprimirLinha("O Computador não possui lances legais! Você venceu!")
+				interromper
+			}
+
+			formatar.ImprimirFormatado(
+				"-> Computador moveu de [%s] para [%s]\n",
+				FormatarCoordenada(movIA.Origem),
+				FormatarCoordenada(movIA.Destino),
+			)
+			jogo.ExecutarMovimento(movIA)
+		}
+	}
+
+	formatar.ImprimirLinha("\n==================================================")
+	formatar.ImprimirFormatado(" FIM DA PARTIDA! Vencedor: %s\n", jogo.Vencedor)
+	formatar.ImprimirLinha("==================================================")
+}
+
+funcao FormatarVez(brancas booleano) texto {
+	se brancas {
+		retornar "Brancas (⛀)"
+	}
+	retornar "Pretas (⛂)"
+}

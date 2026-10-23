@@ -1,0 +1,468 @@
+// ============================================================================
+// PACMAN (COME-COME) - VAMOS-LANG
+// Clássico jogo de labirinto implementado 100% em Português do Brasil.
+// ============================================================================
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"leitor"
+	"matematica/aleatorio"
+	"so"
+	"tempo"
+)
+
+// Coordenada no labirinto
+tipo Posicao estrutura {
+	X inteiro
+	Y inteiro
+}
+
+// Fantasma representa um dos inimigos do Pacman
+tipo Fantasma estrutura {
+	Nome     texto
+	Simbolo  texto
+	Pos      Posicao
+	Original Posicao
+	Assustado booleano
+}
+
+// JogoPacman gerencia o labirinto, entidades e pontuação
+tipo JogoPacman estrutura {
+	Grade           [][]runa
+	Linhas          inteiro
+	Colunas         inteiro
+	PacmanPos       Posicao
+	PacmanDir       Posicao
+	Vidas           inteiro
+	Pontos          inteiro
+	PastilhasRest   inteiro
+	Fantasmas       []Fantasma
+	TempoPoder      inteiro
+	FimDeJogo       booleano
+	Vitoria         booleano
+	ModoDemo        booleano
+	Turno           inteiro
+}
+
+// Mapa inicial do labirinto (19 colunas x 11 linhas)
+var MapaPadrao = []texto{
+	"###################",
+	"#........#........#",
+	"#.##.###.#.###.##.#",
+	"#O#...............#",
+	"#.##.#.#####.#.##.#",
+	"#....#...#...#....#",
+	"####.### # ###.####",
+	"#........#........#",
+	"#.##.###.#.###.##.#",
+	"#O...............O#",
+	"###################",
+}
+
+// NovoJogoPacman constrói e inicializa uma nova partida
+funcao NovoJogoPacman(modoDemo booleano) *JogoPacman {
+	linhas := tamanho(MapaPadrao)
+	colunas := tamanho(MapaPadrao[0])
+
+	grade := criar([][]runa, linhas)
+	pastilhas := 0
+
+	para y := 0; y < linhas; y++ {
+		grade[y] = criar([]runa, colunas)
+		linhaStr := MapaPadrao[y]
+		para x := 0; x < colunas; x++ {
+			r := runa(linhaStr[x])
+			grade[y][x] = r
+			se r == '.' || r == 'O' {
+				pastilhas++
+			}
+		}
+	}
+
+	// Posição inicial do Pacman (centro inferior livre)
+	pacPos := Posicao{X: 9, Y: 7}
+	grade[pacPos.Y][pacPos.X] = ' ' // limpa a pastilha da casa inicial do Pacman
+	pastilhas--
+
+	// Fantasmas: Blinky (B), Pinky (P), Inky (I)
+	fantasmas := []Fantasma{
+		{Nome: "Blinky", Simbolo: "B", Pos: Posicao{X: 8, Y: 5}, Original: Posicao{X: 8, Y: 5}, Assustado: falso},
+		{Nome: "Pinky", Simbolo: "P", Pos: Posicao{X: 9, Y: 5}, Original: Posicao{X: 9, Y: 5}, Assustado: falso},
+		{Nome: "Inky", Simbolo: "I", Pos: Posicao{X: 10, Y: 5}, Original: Posicao{X: 10, Y: 5}, Assustado: falso},
+	}
+
+	retornar &JogoPacman{
+		Grade:         grade,
+		Linhas:        linhas,
+		Colunas:       colunas,
+		PacmanPos:     pacPos,
+		PacmanDir:     Posicao{X: -1, Y: 0}, // inicia movendo para a esquerda
+		Vidas:         3,
+		Pontos:        0,
+		PastilhasRest: pastilhas,
+		Fantasmas:     fantasmas,
+		TempoPoder:    0,
+		FimDeJogo:     falso,
+		Vitoria:       falso,
+		ModoDemo:      modoDemo,
+		Turno:         0,
+	}
+}
+
+// EhParede verifica se uma posição é obstáculo no labirinto
+funcao (j *JogoPacman) EhParede(x, y inteiro) booleano {
+	se x < 0 || x >= j.Colunas || y < 0 || y >= j.Linhas {
+		retornar verdadeiro
+	}
+	retornar j.Grade[y][x] == '#'
+}
+
+// MoverPacman tenta deslocar o Pacman na direção atual
+funcao (j *JogoPacman) MoverPacman(dx, dy inteiro) {
+	nx := j.PacmanPos.X + dx
+	ny := j.PacmanPos.Y + dy
+
+	se !j.EhParede(nx, ny) {
+		j.PacmanPos.X = nx
+		j.PacmanPos.Y = ny
+
+		// Coleta de itens
+		celula := j.Grade[ny][nx]
+		se celula == '.' {
+			j.Pontos += 10
+			j.PastilhasRest--
+			j.Grade[ny][nx] = ' '
+		} senao se celula == 'O' {
+			j.Pontos += 50
+			j.PastilhasRest--
+			j.Grade[ny][nx] = ' '
+			j.TempoPoder = 15 // poder dura 15 turnos
+			para i := 0; i < tamanho(j.Fantasmas); i++ {
+				j.Fantasmas[i].Assustado = verdadeiro
+			}
+		}
+	}
+}
+
+// DecidirMovimentoPacmanDemo calcula autonomamente o caminho para a comida mais próxima
+funcao (j *JogoPacman) DecidirMovimentoPacmanDemo() {
+	melhorDist := 9999
+	escolhaDx := 0
+	escolhaDy := 0
+
+	vizinhos := []Posicao{
+		{X: 1, Y: 0},
+		{X: -1, Y: 0},
+		{X: 0, Y: 1},
+		{X: 0, Y: -1},
+	}
+
+	// Avalia cada vizinho livre
+	para i := 0; i < tamanho(vizinhos); i++ {
+		v := vizinhos[i]
+		nx := j.PacmanPos.X + v.X
+		ny := j.PacmanPos.Y + v.Y
+
+		se j.EhParede(nx, ny) {
+			continuar
+		}
+
+		// Penaliza vizinho se houver fantasma não assustado por perto
+		fantasmaProximo := falso
+		se j.TempoPoder == 0 {
+			para f := 0; f < tamanho(j.Fantasmas); f++ {
+				distF := aleatorioAbs(j.Fantasmas[f].Pos.X-nx) + aleatorioAbs(j.Fantasmas[f].Pos.Y-ny)
+				se distF <= 1 {
+					fantasmaProximo = verdadeiro
+				}
+			}
+		}
+
+		se fantasmaProximo {
+			continuar
+		}
+
+		// Encontra a distância até a pastilha mais próxima
+		para y := 0; y < j.Linhas; y++ {
+			para x := 0; x < j.Colunas; x++ {
+				se j.Grade[y][x] == '.' || j.Grade[y][x] == 'O' {
+					dist := aleatorioAbs(nx-x) + aleatorioAbs(ny-y)
+					se dist < melhorDist {
+						melhorDist = dist
+						escolhaDx = v.X
+						escolhaDy = v.Y
+					}
+				}
+			}
+		}
+	}
+
+	se escolhaDx != 0 || escolhaDy != 0 {
+		j.PacmanDir = Posicao{X: escolhaDx, Y: escolhaDy}
+	}
+}
+
+// MoverFantasmas desloca cada fantasma em direção ou fuga do Pacman
+funcao (j *JogoPacman) MoverFantasmas() {
+	dirs := []Posicao{
+		{X: 1, Y: 0},
+		{X: -1, Y: 0},
+		{X: 0, Y: 1},
+		{X: 0, Y: -1},
+	}
+
+	para idx := 0; idx < tamanho(j.Fantasmas); idx++ {
+		f := &j.Fantasmas[idx]
+		melhorDist := 9999
+		se f.Assustado {
+			melhorDist = -1
+		}
+
+		escolhido := f.Pos
+
+		para d := 0; d < tamanho(dirs); d++ {
+			nx := f.Pos.X + dirs[d].X
+			ny := f.Pos.Y + dirs[d].Y
+
+			se !j.EhParede(nx, ny) {
+				dist := aleatorioAbs(nx-j.PacmanPos.X) + aleatorioAbs(ny-j.PacmanPos.Y)
+
+				se f.Assustado {
+					// Foge do Pacman
+					se dist > melhorDist {
+						melhorDist = dist
+						escolhido = Posicao{X: nx, Y: ny}
+					}
+				} senao {
+					// Persegue o Pacman com leve variação
+					se dist < melhorDist {
+						melhorDist = dist
+						escolhido = Posicao{X: nx, Y: ny}
+					}
+				}
+			}
+		}
+
+		f.Pos = escolhido
+	}
+}
+
+// VerificarColisoes valida encontros entre Pacman e fantasmas
+funcao (j *JogoPacman) VerificarColisoes() {
+	para idx := 0; idx < tamanho(j.Fantasmas); idx++ {
+		f := &j.Fantasmas[idx]
+		se f.Pos.X == j.PacmanPos.X && f.Pos.Y == j.PacmanPos.Y {
+			se f.Assustado {
+				// Pacman come o fantasma!
+				j.Pontos += 200
+				f.Pos = f.Original
+				f.Assustado = falso
+			} senao {
+				// Pacman perde uma vida
+				j.Vidas--
+				j.PacmanPos = Posicao{X: 9, Y: 7}
+				se j.Vidas <= 0 {
+					j.FimDeJogo = verdadeiro
+				}
+				retornar
+			}
+		}
+	}
+
+	se j.PastilhasRest <= 0 {
+		j.Vitoria = verdadeiro
+		j.FimDeJogo = verdadeiro
+	}
+}
+
+// AvancarTurno processa um ciclo completo de jogo
+funcao (j *JogoPacman) AvancarTurno() {
+	se j.FimDeJogo {
+		retornar
+	}
+
+	j.Turno++
+
+	se j.ModoDemo {
+		j.DecidirMovimentoPacmanDemo()
+	}
+
+	// Move Pacman
+	j.MoverPacman(j.PacmanDir.X, j.PacmanDir.Y)
+
+	// Move Fantasmas
+	j.MoverFantasmas()
+
+	// Controla duração da pílula de poder
+	se j.TempoPoder > 0 {
+		j.TempoPoder--
+		se j.TempoPoder == 0 {
+			para i := 0; i < tamanho(j.Fantasmas); i++ {
+				j.Fantasmas[i].Assustado = falso
+			}
+		}
+	}
+
+	// Checa colisões e vitórias
+	j.VerificarColisoes()
+}
+
+// Renderizar desenha o labirinto e entidades
+funcao (j *JogoPacman) Renderizar() {
+	formatar.ImprimirLinha("┌" + cordas.Repetir("──", j.Colunas) + "┐")
+
+	para y := 0; y < j.Linhas; y++ {
+		linha := "│"
+		para x := 0; x < j.Colunas; x++ {
+			// 1. Pacman
+			se x == j.PacmanPos.X && y == j.PacmanPos.Y {
+				linha += "C "
+				continuar
+			}
+
+			// 2. Fantasmas
+			ehFantasma := falso
+			para f := 0; f < tamanho(j.Fantasmas); f++ {
+				se x == j.Fantasmas[f].Pos.X && y == j.Fantasmas[f].Pos.Y {
+					se j.Fantasmas[f].Assustado {
+						linha += "? "
+					} senao {
+						linha += j.Fantasmas[f].Simbolo + " "
+					}
+					ehFantasma = verdadeiro
+					interromper
+				}
+			}
+			se ehFantasma {
+				continuar
+			}
+
+			// 3. Cenário
+			cel := j.Grade[y][x]
+			se cel == '#' {
+				linha += "██"
+			} senao se cel == '.' {
+				linha += "· "
+			} senao se cel == 'O' {
+				linha += "● "
+			} senao {
+				linha += "  "
+			}
+		}
+		linha += "│"
+		formatar.ImprimirLinha(linha)
+	}
+
+	formatar.ImprimirLinha("└" + cordas.Repetir("──", j.Colunas) + "┘")
+
+	statusPoder := "Normal"
+	se j.TempoPoder > 0 {
+		statusPoder = formatar.Formatar("PODER ATIVO (%d)", j.TempoPoder)
+	}
+
+	formatar.ImprimirFormatado(
+		" Pontos: %d | Vidas: %d | Restantes: %d | Estado: %s\n",
+		j.Pontos, j.Vidas, j.PastilhasRest, statusPoder,
+	)
+}
+
+funcao aleatorioAbs(n inteiro) inteiro {
+	se n < 0 {
+		retornar -n
+	}
+	retornar n
+}
+
+funcao principal() {
+	aleatorio.Semente(tempo.Agora().Unix())
+
+	modoDemo := falso
+	maxPassosDemo := 35
+
+	para i := 0; i < tamanho(so.Argumentos); i++ {
+		arg := so.Argumentos[i]
+		se arg == "--demo" || arg == "-d" || arg == "--simular" {
+			modoDemo = verdadeiro
+		}
+	}
+
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("          🕹️ PACMAN / COME-COME (VAMOS) 🇧🇷        ")
+	formatar.ImprimirLinha("==================================================")
+
+	se modoDemo {
+		formatar.ImprimirLinha("Modo: Demonstração Autônoma de Labirinto")
+		formatar.ImprimirLinha("Legenda: [C] Pacman | [B, P, I] Fantasmas | [?] Assustados")
+		formatar.ImprimirLinha("--------------------------------------------------")
+
+		jogo := NovoJogoPacman(verdadeiro)
+
+		para turno := 1; turno <= maxPassosDemo; turno++ {
+			jogo.AvancarTurno()
+			formatar.ImprimirFormatado("\n--- Turno %d de %d ---\n", turno, maxPassosDemo)
+			jogo.Renderizar()
+
+			se jogo.FimDeJogo {
+				se jogo.Vitoria {
+					formatar.ImprimirLinha("\n🏆 VITÓRIA! O Pacman limpou todo o labirinto!")
+				} senao {
+					formatar.ImprimirLinha("\n💀 FIM DE JOGO! O Pacman foi capturado pelos fantasmas.")
+				}
+				interromper
+			}
+
+			tempo.Dormir(tempo.Milissegundo * 100)
+		}
+
+		formatar.ImprimirLinha("\n==================================================")
+		formatar.ImprimirFormatado(" Simulação Concluída! Pontuação Acumulada: %d ✓\n", jogo.Pontos)
+		formatar.ImprimirLinha("==================================================")
+		retornar
+	}
+
+	formatar.ImprimirLinha("Comandos: [W] Cima | [S] Baixo | [A] Esquerda | [D] Direita")
+	formatar.ImprimirLinha("Digite [Q] para encerrar a partida.")
+	formatar.ImprimirLinha("Dica: Colete pílulas '●' para poder devorar os fantasmas!")
+	formatar.ImprimirLinha("--------------------------------------------------")
+
+	jogo := NovoJogoPacman(falso)
+	scanner := leitor.NovoScanner(so.EntradaPadrao)
+
+	para !jogo.FimDeJogo {
+		jogo.Renderizar()
+		formatar.Imprimir("Direção (w/a/s/d/q): ")
+
+		se !scanner.Escanear() {
+			interromper
+		}
+
+		cmd := cordas.ParaMinusculas(cordas.ApararEspaco(scanner.ObterTexto()))
+
+		se cmd == "q" || cmd == "sair" {
+			formatar.ImprimirLinha("Partida encerrada.")
+			retornar
+		} senao se cmd == "w" {
+			jogo.PacmanDir = Posicao{X: 0, Y: -1}
+		} senao se cmd == "s" {
+			jogo.PacmanDir = Posicao{X: 0, Y: 1}
+		} senao se cmd == "a" {
+			jogo.PacmanDir = Posicao{X: -1, Y: 0}
+		} senao se cmd == "d" {
+			jogo.PacmanDir = Posicao{X: 1, Y: 0}
+		}
+
+		jogo.AvancarTurno()
+		formatar.ImprimirLinha("")
+	}
+
+	formatar.ImprimirLinha("\n==================================================")
+	se jogo.Vitoria {
+		formatar.ImprimirFormatado(" Parabéns! Você venceu com %d pontos! 🎉\n", jogo.Pontos)
+	} senao {
+		formatar.ImprimirFormatado(" Fim de Jogo! Pontuação Final: %d\n", jogo.Pontos)
+	}
+	formatar.ImprimirLinha("==================================================")
+}

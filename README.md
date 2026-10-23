@@ -17,7 +17,9 @@ O ecossistema VAMOS-LANG inclui:
 - **CLI Completa (`vamos`)**: Com comandos e aliases em Português e Inglês.
 - **Extensão Oficial para VS Code**: Realce de sintaxe oficial e snippets inteligentes.
 - **Formatador Oficial de Código (`vamos fmt`)**: Padronização automática de código `.vamos`.
-- **Linter Estático (`vamos lint`)**: Validação de convenções e boas práticas em tempo de desenvolvimento.
+- **Linter Estático & Validador de Sintaxe (`vamos lint --strict`)**: Validação de convenções e diagnóstico sintático baseado no Go AST.
+- **Language Server Protocol Nativo (`vamos lsp`)**: Suporte a autocompletar inteligente, hover com documentação, formatação e diagnósticos em tempo real no VS Code/Cursor.
+- **Gerenciador de Dependências Externas (`vamos get`)**: Instalação e resolução de pacotes de terceiros.
 - **Conversor Bidirecional (`vamos go2vamos`)**: Converte código Go nativo para VAMOS-LANG.
 - **REPL Interativo (`vamos repl`)**: Shell de linha de comando para testar expressões instantaneamente.
 - **Playground Web**: Ambiente interativo online com simulação de terminal e compartilhamento por link.
@@ -36,7 +38,9 @@ A CLI oferece suporte completo com comandos e aliases em Português e Inglês:
 | `vamos transpile` \| `converter` \| `transpilar <origem> [-o]` | Converte arquivo `.vamos` para Go puro (`.go`) |
 | `vamos go2vamos` \| `descompilar <arquivo.go> [-o]` | Converte código Go nativo de volta para `.vamos` |
 | `vamos fmt` \| `formatar [caminho...]` | Formata automaticamente os arquivos `.vamos` |
-| `vamos lint` \| `checar` \| `verificar [caminho...]` | Analisador estático de boas práticas e convenções |
+| `vamos lint` \| `checar` \| `verificar [--strict] [caminho...]` | Validador de estilo e verificador estrito de sintaxe |
+| `vamos get` \| `obter` \| `instalar <pacote-go>` | Instala dependências e módulos externos |
+| `vamos lsp` \| `servidor-linguagem` | Inicia o servidor oficial LSP (Language Server Protocol) |
 | `vamos init` \| `iniciar <nome-modulo>` | Gera a estrutura padrão de um novo projeto VAMOS |
 | `vamos repl` \| `interativo` | Inicia o terminal interativo (REPL) |
 | `vamos playground` \| `web [porta]` | Inicia o servidor local do Playground Web |
@@ -151,6 +155,10 @@ Acesse em: `http://localhost:8080`
 | `sincronizar.GrupoEspera` | `sync.WaitGroup` | `variavel wg sincronizar.GrupoEspera` |
 | `erros.Novo(...)` | `errors.New(...)` | `retornar erros.Novo("falha")` |
 | `so.Sair(...)` | `os.Exit(...)` | `so.Sair(0)` |
+| `conversao.ParaInteiro(...)` | `strconv.Atoi(...)` | `num, _ := conversao.ParaInteiro("42")` |
+| `cripto/sha256.Soma256(...)` | `crypto/sha256.Sum256(...)` | `hash := sha256.Soma256([]byte("msg"))` |
+| `matematica/aleatorio.InteiroAte(...)` | `math/rand.Intn(...)` | `sorte := aleatorio.InteiroAte(100)` |
+| `banco_dados.Abrir(...)` | `database/sql.Open(...)` | `db, _ := banco_dados.Abrir("sqlite", "db.sqlite")` |
 
 ---
 
@@ -235,14 +243,42 @@ funcao principal() {
 
 ---
 
+## 🎮 Jogos Clássicos Implementados em VAMOS-LANG
+
+O repositório inclui implementações completas de jogos clássicos na pasta [`jogos/`](file:///storage/www/projetos/VAMOSLANG/jogos):
+- 🐍 **Jogo da Cobrinha** ([`jogos/cobrinha.vamos`](file:///storage/www/projetos/VAMOSLANG/jogos/cobrinha.vamos)): Grade 2D, crescimento dinâmico e IA com busca autônoma de alimentos.
+- 👾 **Pacman / Come-Come** ([`jogos/pacman.vamos`](file:///storage/www/projetos/VAMOSLANG/jogos/pacman.vamos)): Labirinto clássico, pastilhas, pílulas de poder temporárias e 3 fantasmas com perseguição vetorial e fuga.
+- 🏁 **Jogo de Damas** ([`jogos/damas.vamos`](file:///storage/www/projetos/VAMOSLANG/jogos/damas.vamos)): Tabuleiro 8x8 oficial, capturas obrigatórias por salto, promoção a Damas coroadas e IA heurística (1P vs CPU ou Demo).
+
+Consulte [`jogos/README.md`](file:///storage/www/projetos/VAMOSLANG/jogos/README.md) para regras completas e modos de execução.
+
+```bash
+# Executar demonstrações com IA autônoma:
+./vamos run jogos/cobrinha.vamos --demo
+./vamos run jogos/pacman.vamos --demo
+./vamos run jogos/damas.vamos --demo
+
+# Ou rodar via make:
+make run-games
+```
+
+---
+
 ## 🏗️ Estrutura do Projeto
 
 ```
 /storage/www/projetos/VAMOSLANG/
-├── main.go                   # CLI oficial, Lexer, Transpiler, Formatter, Linter e REPL
+├── main.go                   # Ponto de entrada da CLI oficial
 ├── teste.vamos               # Exemplo de teste integrado oficial
+├── lsp/                      # Language Server Protocol (LSP JSON-RPC 2.0 nativo)
+├── jogos/                    # Jogos clássicos desenvolvidos em VAMOS-LANG
+│   ├── cobrinha.vamos        # Jogo da Cobrinha (Snake) com IA e interativo
+│   ├── pacman.vamos          # Pacman com labirinto e fantasmas
+│   ├── damas.vamos           # Jogo de Damas 8x8 com IA tática
+│   └── README.md             # Guia completo dos jogos
 ├── vscode-extension/         # Extensão oficial para VS Code / Cursor
 │   ├── package.json
+│   ├── extension.js          # Cliente integrado ao vamos lsp
 │   ├── language-configuration.json
 │   ├── syntaxes/
 │   │   └── vamos.tmLanguage.json
@@ -255,16 +291,19 @@ funcao principal() {
 │   ├── transpiler.js
 │   ├── app.js
 │   └── README.md
+├── blocodenotasBR/           # Aplicação real completa (Bloco de Notas CLI + JSON)
 ├── exemplos/                 # Coleção de exemplos práticos
 │   ├── ola_mundo.vamos
 │   ├── concorrencia.vamos
 │   ├── estruturas_interfaces.vamos
 │   ├── calculadora.vamos
-│   └── servidor_web.vamos
-├── transpiler/               # Motor do transpilador Go
-├── cmd/                      # Comandos modulares da CLI
+│   ├── servidor_web.vamos
+│   ├── cripto_e_conversao.vamos
+│   └── nano.vamos            # Editor de texto estilo GNU nano em terminal
+├── transpiler/               # Motor do transpilador, validador Go AST e linter
+├── cmd/                      # Comandos modulares da CLI (run, build, lsp, get, etc.)
 ├── go.mod                    # Definição do módulo Go
-├── Makefile                  # Automação de compilação e testes
+├── Makefile                  # Automação de compilação, testes e demonstrações
 └── README.md                 # Documentação completa
 ```
 

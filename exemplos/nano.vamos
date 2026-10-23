@@ -1,0 +1,429 @@
+// ============================================================================
+// VAMOS NANO - EDITOR DE TEXTO EM TERMINAL (VAMOS-LANG)
+// Um editor simples e elegante inspirado no GNU nano, 100% em Português.
+// ============================================================================
+
+pacote principal
+
+importar (
+	"conversao"
+	"cordas"
+	"formatar"
+	"leitor"
+	"so"
+)
+
+// EditorNano gerencia o buffer de linhas e o estado do arquivo
+tipo EditorNano estrutura {
+	CaminhoArquivo texto
+	Linhas         []texto
+	Modificado     booleano
+	MensagemStatus texto
+}
+
+// NovoEditorNano cria uma nova instância do editor
+funcao NovoEditorNano(caminho texto) *EditorNano {
+	editor := &EditorNano{
+		CaminhoArquivo: caminho,
+		Linhas:         criar([]texto, 0),
+		Modificado:     falso,
+		MensagemStatus: "Bem-vindo ao VAMOS Nano! Digite :ajuda para ver os comandos.",
+	}
+	editor.Carregar()
+	retornar editor
+}
+
+// Carregar lê o arquivo do disco ou inicializa um buffer vazio se não existir
+funcao (e *EditorNano) Carregar() {
+	se e.CaminhoArquivo == "" {
+		e.CaminhoArquivo = "sem_titulo.txt"
+		e.Linhas = adicionar(e.Linhas, "")
+		retornar
+	}
+
+	dados, err := so.LerArquivo(e.CaminhoArquivo)
+	se err != nulo {
+		// Arquivo novo
+		e.Linhas = adicionar(e.Linhas, "")
+		e.MensagemStatus = formatar.Formatar("[Novo Arquivo: %s]", e.CaminhoArquivo)
+		retornar
+	}
+
+	conteudo := texto(dados)
+	linhasLidas := cordas.Dividir(conteudo, "\n")
+	se tamanho(linhasLidas) == 0 {
+		linhasLidas = adicionar(linhasLidas, "")
+	}
+
+	e.Linhas = linhasLidas
+	e.Modificado = falso
+	e.MensagemStatus = formatar.Formatar("Arquivo \"%s\" carregado (%d linhas)", e.CaminhoArquivo, tamanho(e.Linhas))
+}
+
+// Salvar grava o buffer atual no arquivo em disco
+funcao (e *EditorNano) Salvar() erro {
+	conteudoCompleto := cordas.Juntar(e.Linhas, "\n")
+	err := so.EscreverArquivo(e.CaminhoArquivo, []byte(conteudoCompleto), 0644)
+	se err != nulo {
+		e.MensagemStatus = formatar.Formatar("❌ Erro ao gravar: %v", err)
+		retornar err
+	}
+
+	e.Modificado = falso
+	e.MensagemStatus = formatar.Formatar("[ Gravado %d linhas em %s ]", tamanho(e.Linhas), e.CaminhoArquivo)
+	retornar nulo
+}
+
+// InserirLinha adiciona uma nova linha em uma posição específica (1-baseada)
+funcao (e *EditorNano) InserirLinha(posicao inteiro, conteudo texto) {
+	total := tamanho(e.Linhas)
+
+	se posicao <= 0 || posicao > total {
+		e.Linhas = adicionar(e.Linhas, conteudo)
+		e.Modificado = verdadeiro
+		e.MensagemStatus = formatar.Formatar("Linha %d adicionada ao final.", tamanho(e.Linhas))
+		retornar
+	}
+
+	indice := posicao - 1
+	novasLinhas := criar([]texto, 0)
+
+	para i := 0; i < total; i++ {
+		se i == indice {
+			novasLinhas = adicionar(novasLinhas, conteudo)
+		}
+		novasLinhas = adicionar(novasLinhas, e.Linhas[i])
+	}
+
+	e.Linhas = novasLinhas
+	e.Modificado = verdadeiro
+	e.MensagemStatus = formatar.Formatar("Linha inserida na posição %d.", posicao)
+}
+
+// EditarLinha altera o conteúdo de uma linha existente
+funcao (e *EditorNano) EditarLinha(posicao inteiro, novoConteudo texto) {
+	indice := posicao - 1
+	se indice < 0 || indice >= tamanho(e.Linhas) {
+		e.MensagemStatus = formatar.Formatar("Número de linha %d inválido (Total: %d)", posicao, tamanho(e.Linhas))
+		retornar
+	}
+
+	e.Linhas[indice] = novoConteudo
+	e.Modificado = verdadeiro
+	e.MensagemStatus = formatar.Formatar("Linha %d atualizada.", posicao)
+}
+
+// RemoverLinha exclui a linha indicada do buffer
+funcao (e *EditorNano) RemoverLinha(posicao inteiro) {
+	total := tamanho(e.Linhas)
+	indice := posicao - 1
+
+	se indice < 0 || indice >= total {
+		e.MensagemStatus = formatar.Formatar("Número de linha %d inválido para exclusão.", posicao)
+		retornar
+	}
+
+	se total == 1 {
+		e.Linhas[0] = ""
+		e.Modificado = verdadeiro
+		e.MensagemStatus = "Linha limpa (buffer vazio mantido com 1 linha)."
+		retornar
+	}
+
+	novasLinhas := criar([]texto, 0)
+	para i := 0; i < total; i++ {
+		se i != indice {
+			novasLinhas = adicionar(novasLinhas, e.Linhas[i])
+		}
+	}
+
+	e.Linhas = novasLinhas
+	e.Modificado = verdadeiro
+	e.MensagemStatus = formatar.Formatar("Linha %d removida com sucesso.", posicao)
+}
+
+// SubstituirGlobal substitui todas as ocorrências de um termo no documento
+funcao (e *EditorNano) SubstituirGlobal(antigo texto, novo texto) {
+	se antigo == "" {
+		e.MensagemStatus = "Termo de busca não pode ser vazio."
+		retornar
+	}
+
+	ocorrencias := 0
+	para i := 0; i < tamanho(e.Linhas); i++ {
+		linha := e.Linhas[i]
+		se cordas.Contem(linha, antigo) {
+			ocorrencias += cordas.Contar(linha, antigo)
+			e.Linhas[i] = cordas.SubstituirTudo(linha, antigo, novo)
+		}
+	}
+
+	se ocorrencias > 0 {
+		e.Modificado = verdadeiro
+		e.MensagemStatus = formatar.Formatar("Substituídas %d ocorrência(s) de \"%s\" por \"%s\".", ocorrencias, antigo, novo)
+	} senao {
+		e.MensagemStatus = formatar.Formatar("Termo \"%s\" não encontrado no documento.", antigo)
+	}
+}
+
+// BuscarTermo localiza e destaca as linhas que contêm a palavra procurada
+funcao (e *EditorNano) BuscarTermo(termo texto) {
+	se termo == "" {
+		e.MensagemStatus = "Digite o termo a pesquisar."
+		retornar
+	}
+
+	linhasEncontradas := criar([]inteiro, 0)
+	para i := 0; i < tamanho(e.Linhas); i++ {
+		se cordas.Contem(e.Linhas[i], termo) {
+			linhasEncontradas = adicionar(linhasEncontradas, i+1)
+		}
+	}
+
+	se tamanho(linhasEncontradas) == 0 {
+		e.MensagemStatus = formatar.Formatar("Nenhuma ocorrência encontrada para \"%s\".", termo)
+		retornar
+	}
+
+	partes := criar([]texto, 0)
+	para i := 0; i < tamanho(linhasEncontradas); i++ {
+		partes = adicionar(partes, formatar.Formatar("%d", linhasEncontradas[i]))
+	}
+
+	e.MensagemStatus = formatar.Formatar("Termo \"%s\" localizado na(s) linha(s): %s", termo, cordas.Juntar(partes, ", "))
+}
+
+// Renderizar desenha a interface visual com estilo clássico do GNU nano
+funcao (e *EditorNano) Renderizar() {
+	largura := 74
+	tagModificado := ""
+	se e.Modificado {
+		tagModificado = " [Modificado]"
+	}
+
+	// 1. Barra de Título Superior
+	tituloEsquerda := "  VAMOS Nano v1.1"
+	tituloCentro := formatar.Formatar("Arquivo: %s", e.CaminhoArquivo)
+	topoStr := tituloEsquerda + "            " + tituloCentro + tagModificado
+	espacosFim := largura - tamanho(topoStr)
+	se espacosFim > 0 {
+		topoStr += cordas.Repetir(" ", espacosFim)
+	}
+
+	formatar.ImprimirLinha("┌" + cordas.Repetir("─", largura) + "┐")
+	formatar.ImprimirLinha("│" + topoStr + "│")
+	formatar.ImprimirLinha("├" + cordas.Repetir("─", largura) + "┤")
+
+	// 2. Buffer de Linhas Numeradas
+	para i := 0; i < tamanho(e.Linhas); i++ {
+		numLinha := i + 1
+		conteudo := e.Linhas[i]
+
+		// Formata o número da linha em 3 dígitos
+		prefixo := formatar.Formatar("%03d │ ", numLinha)
+		linhaVisivel := prefixo + conteudo
+
+		se tamanho(linhaVisivel) > largura {
+			linhaVisivel = linhaVisivel[:largura]
+		} senao {
+			linhaVisivel += cordas.Repetir(" ", largura-tamanho(linhaVisivel))
+		}
+
+		formatar.ImprimirLinha("│" + linhaVisivel + "│")
+	}
+
+	formatar.ImprimirLinha("├" + cordas.Repetir("─", largura) + "┤")
+
+	// 3. Barra de Status
+	statusStr := " Mensagem: " + e.MensagemStatus
+	se tamanho(statusStr) > largura {
+		statusStr = statusStr[:largura]
+	} senao {
+		statusStr += cordas.Repetir(" ", largura-tamanho(statusStr))
+	}
+	formatar.ImprimirLinha("│" + statusStr + "│")
+	formatar.ImprimirLinha("├" + cordas.Repetir("─", largura) + "┤")
+
+	// 4. Barra Inferior de Atalhos (Estilo Nano)
+	formatar.ImprimirLinha("│  ^O Salvar (:w)      ^W Buscar (:b)        ^K Cortar Linha (:d)         │")
+	formatar.ImprimirLinha("│  ^X Sair (:q)        ^R Inserir (:i)       ^\\ Substituir (:s)           │")
+	formatar.ImprimirLinha("└" + cordas.Repetir("─", largura) + "┘")
+}
+
+// ExecutarDemonstracao realiza uma sequência de operações simuladas
+funcao ExecutarDemonstracao() {
+	formatar.ImprimirLinha("==========================================================================")
+	formatar.ImprimirLinha("           📝 DEMONSTRAÇÃO DO VAMOS NANO (EDITOR DE TEXTO)                ")
+	formatar.ImprimirLinha("==========================================================================")
+
+	editor := NovoEditorNano("exemplo_codigo.vamos")
+
+	formatar.ImprimirLinha("\n1. Inserindo linhas de código VAMOS-LANG no buffer...")
+	editor.InserirLinha(1, "pacote principal")
+	editor.InserirLinha(2, "")
+	editor.InserirLinha(3, "importar \"formatar\"")
+	editor.InserirLinha(4, "")
+	editor.InserirLinha(5, "funcao principal() {")
+	editor.InserirLinha(6, "    formatar.ImprimirLinha(\"Olá do VAMOS Nano!\")")
+	editor.InserirLinha(7, "}")
+
+	formatar.ImprimirLinha("2. Realizando busca e substituição global...")
+	editor.SubstituirGlobal("Olá do VAMOS Nano!", "Editor VAMOS Nano em pleno funcionamento! ✓")
+
+	formatar.ImprimirLinha("3. Renderizando visual do editor:")
+	editor.Renderizar()
+
+	formatar.ImprimirLinha("\n4. Gravando arquivo no disco...")
+	err := editor.Salvar()
+	se err != nulo {
+		formatar.ImprimirFormatado("Falha ao salvar: %v\n", err)
+		retornar
+	}
+
+	formatar.ImprimirFormatado("✓ Arquivo \"%s\" gravado com sucesso!\n", editor.CaminhoArquivo)
+
+	// Remove arquivo temporário de teste
+	_ = so.Remover("exemplo_codigo.vamos")
+
+	formatar.ImprimirLinha("==========================================================================")
+	formatar.ImprimirLinha("   Demonstração do VAMOS Nano concluída com sucesso! ✓                    ")
+	formatar.ImprimirLinha("==========================================================================")
+}
+
+funcao principal() {
+	caminhoArquivo := ""
+	modoDemo := falso
+
+	para i := 1; i < tamanho(so.Argumentos); i++ {
+		arg := so.Argumentos[i]
+		se arg == "--demo" || arg == "-d" || arg == "--simular" {
+			modoDemo = verdadeiro
+		} senao se !cordas.TemPrefixo(arg, "-") && caminhoArquivo == "" {
+			caminhoArquivo = arg
+		}
+	}
+
+	se modoDemo {
+		ExecutarDemonstracao()
+		retornar
+	}
+
+	se caminhoArquivo == "" {
+		caminhoArquivo = "rascunho.txt"
+	}
+
+	editor := NovoEditorNano(caminhoArquivo)
+	scanner := leitor.NovoScanner(so.EntradaPadrao)
+
+	para {
+		editor.Renderizar()
+		formatar.Imprimir("nano-comando (:w, :q, :i, :e, :d, :s, :b, :ajuda): ")
+
+		se !scanner.Escanear() {
+			interromper
+		}
+
+		linhaEntrada := cordas.ApararEspaco(scanner.ObterTexto())
+		se linhaEntrada == "" {
+			continuar
+		}
+
+		// Atalhos e Comandos
+		se linhaEntrada == ":q" || linhaEntrada == "^x" || linhaEntrada == "sair" {
+			se editor.Modificado {
+				formatar.Imprimir("⚠️ O arquivo possui alterações não salvas. Deseja sair mesmo assim? (s/n): ")
+				se scanner.Escanear() {
+					resp := cordas.ParaMinusculas(cordas.ApararEspaco(scanner.ObterTexto()))
+					se resp == "s" || resp == "sim" {
+						formatar.ImprimirLinha("Saindo do VAMOS Nano.")
+						retornar
+					}
+				}
+				continuar
+			}
+			formatar.ImprimirLinha("Saindo do VAMOS Nano. Até logo!")
+			retornar
+		}
+
+		se linhaEntrada == ":q!" {
+			formatar.ImprimirLinha("Saindo forçadamente sem salvar.")
+			retornar
+		}
+
+		se linhaEntrada == ":w" || linhaEntrada == "^o" || linhaEntrada == ":salvar" {
+			_ = editor.Salvar()
+			continuar
+		}
+
+		se linhaEntrada == ":ajuda" || linhaEntrada == "^g" {
+			editor.MensagemStatus = "Comandos: :w (salvar), :q (sair), :i <texto>, :i <lin> <texto>, :d <lin>, :s <de> <para>, :b <termo>"
+			continuar
+		}
+
+		// Inserir linha: :i <texto> ou :i <linha> <texto>
+		se cordas.TemPrefixo(linhaEntrada, ":i ") {
+			resto := cordas.ApararEspaco(cordas.Substituir(linhaEntrada, ":i ", "", 1))
+			partes := cordas.Dividir(resto, " ")
+			se tamanho(partes) >= 2 {
+				num, err := conversao.ParaInteiro(partes[0])
+				se err == nulo {
+					textoInserir := cordas.Juntar(partes[1:], " ")
+					editor.InserirLinha(num, textoInserir)
+					continuar
+				}
+			}
+			editor.InserirLinha(tamanho(editor.Linhas)+1, resto)
+			continuar
+		}
+
+		// Editar linha: :e <linha> <novo_texto>
+		se cordas.TemPrefixo(linhaEntrada, ":e ") {
+			resto := cordas.ApararEspaco(cordas.Substituir(linhaEntrada, ":e ", "", 1))
+			partes := cordas.Dividir(resto, " ")
+			se tamanho(partes) >= 2 {
+				num, err := conversao.ParaInteiro(partes[0])
+				se err == nulo {
+					novoTexto := cordas.Juntar(partes[1:], " ")
+					editor.EditarLinha(num, novoTexto)
+					continuar
+				}
+			}
+			editor.MensagemStatus = "Uso de edição: :e <numero_linha> <novo texto>"
+			continuar
+		}
+
+		// Deletar linha: :d <linha>
+		se cordas.TemPrefixo(linhaEntrada, ":d ") {
+			numStr := cordas.ApararEspaco(cordas.Substituir(linhaEntrada, ":d ", "", 1))
+			num, err := conversao.ParaInteiro(numStr)
+			se err == nulo {
+				editor.RemoverLinha(num)
+			} senao {
+				editor.MensagemStatus = "Informe o número da linha válido para exclusão."
+			}
+			continuar
+		}
+
+		// Substituir: :s <antigo> <novo>
+		se cordas.TemPrefixo(linhaEntrada, ":s ") {
+			resto := cordas.ApararEspaco(cordas.Substituir(linhaEntrada, ":s ", "", 1))
+			partes := cordas.Dividir(resto, " ")
+			se tamanho(partes) >= 2 {
+				editor.SubstituirGlobal(partes[0], partes[1])
+			} senao {
+				editor.MensagemStatus = "Uso: :s <termo_antigo> <novo_termo>"
+			}
+			continuar
+		}
+
+		// Buscar: :b <termo>
+		se cordas.TemPrefixo(linhaEntrada, ":b ") {
+			termo := cordas.ApararEspaco(cordas.Substituir(linhaEntrada, ":b ", "", 1))
+			editor.BuscarTermo(termo)
+			continuar
+		}
+
+		// Se nenhuma das opções acima bater, assume inserção direta da linha
+		editor.InserirLinha(tamanho(editor.Linhas)+1, linhaEntrada)
+	}
+}

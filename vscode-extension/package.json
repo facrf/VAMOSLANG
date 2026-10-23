@@ -1,16 +1,22 @@
 {
   "name": "vamos-lang",
   "displayName": "VAMOS-LANG (Go em Português)",
-  "description": "Suporte oficial à linguagem VAMOS-LANG: Realce de sintaxe, snippets e configuração para Go 100% em Português do Brasil.",
-  "version": "1.0.0",
+  "description": "Suporte oficial à linguagem VAMOS-LANG: Realce de sintaxe, LSP inteligente, snippets e formatação para Go 100% em Português do Brasil.",
+  "version": "1.1.0",
   "publisher": "vamos-lang",
   "icon": "icon.png",
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:vamos"
+  ],
   "engines": {
     "vscode": "^1.70.0"
   },
   "categories": [
     "Programming Languages",
-    "Snippets"
+    "Snippets",
+    "Linters",
+    "Formatters"
   ],
   "keywords": [
     "vamos",
@@ -18,7 +24,8 @@
     "go",
     "golang",
     "portugues",
-    "pt-br"
+    "pt-br",
+    "lsp"
   ],
   "contributes": {
     "languages": [
@@ -41,6 +48,33 @@
         "language": "vamos",
         "path": "./snippets/vamos.json"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "vamos.runCurrentFile",
+        "title": "VAMOS: Executar Arquivo Atual (vamos run)",
+        "category": "VAMOS-LANG"
+      },
+      {
+        "command": "vamos.buildCurrentFile",
+        "title": "VAMOS: Compilar Binário (vamos build)",
+        "category": "VAMOS-LANG"
+      },
+      {
+        "command": "vamos.testWorkspace",
+        "title": "VAMOS: Executar Testes (vamos test)",
+        "category": "VAMOS-LANG"
+      }
+    ],
+    "configuration": {
+      "title": "VAMOS-LANG",
+      "properties": {
+        "vamos.lspPath": {
+          "type": "string",
+          "default": "vamos",
+          "description": "Caminho para o binário da CLI do VAMOS-LANG que provê o servidor LSP."
+        }
+      }
+    }
   }
 }

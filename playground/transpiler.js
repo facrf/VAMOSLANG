@@ -95,7 +95,17 @@ const VAMOS_STDLIB_IMPORTS = {
   "registrador": "log",
   "caminho": "path/filepath",
   "ordenacao": "sort",
-  "teste": "testing"
+  "teste": "testing",
+  "banco_dados": "database/sql",
+  "banco/sql": "database/sql",
+  "banco": "database/sql",
+  "conversao": "strconv",
+  "cripto/sha256": "crypto/sha256",
+  "sha256": "crypto/sha256",
+  "cripto/md5": "crypto/md5",
+  "md5": "crypto/md5",
+  "matematica/aleatorio": "math/rand",
+  "aleatorio": "math/rand"
 };
 
 const VAMOS_STDLIB_IDENTS = {
@@ -130,7 +140,16 @@ const VAMOS_STDLIB_IDENTS = {
   "ordenacao": "sort",
   "sort": "sort",
   "teste": "testing",
-  "testing": "testing"
+  "testing": "testing",
+  "banco_dados": "sql",
+  "banco": "sql",
+  "sql": "sql",
+  "conversao": "strconv",
+  "strconv": "strconv",
+  "sha256": "sha256",
+  "md5": "md5",
+  "aleatorio": "rand",
+  "rand": "rand"
 };
 
 const VAMOS_STDLIB_METHODS = {
@@ -290,6 +309,51 @@ const VAMOS_STDLIB_METHODS = {
     "Executar": "Run",
     "Pular": "Skip",
     "PularAgora": "SkipNow"
+  },
+  "sql": {
+    "Abrir": "Open",
+    "Executar": "Exec",
+    "Consultar": "Query",
+    "ConsultarLinha": "QueryRow",
+    "Escanear": "Scan",
+    "Fechar": "Close",
+    "IniciarTransacao": "Begin",
+    "Confirmar": "Commit",
+    "Reverter": "Rollback",
+    "Preparar": "Prepare",
+    "BancoDados": "DB",
+    "Linhas": "Rows",
+    "Linha": "Row",
+    "Declaracao": "Stmt",
+    "Transacao": "Tx"
+  },
+  "strconv": {
+    "ParaInteiro": "Atoi",
+    "InteiroParaTexto": "Itoa",
+    "FormatarInteiro": "FormatInt",
+    "AnalisarInteiro": "ParseInt",
+    "AnalisarDecimal": "ParseFloat",
+    "FormatarDecimal": "FormatFloat",
+    "AnalisarBooleano": "ParseBool",
+    "FormatarBooleano": "FormatBool"
+  },
+  "sha256": {
+    "Soma256": "Sum256",
+    "Novo": "New",
+    "Tamanho": "Size"
+  },
+  "md5": {
+    "Soma": "Sum",
+    "Novo": "New",
+    "Tamanho": "Size"
+  },
+  "rand": {
+    "InteiroAte": "Intn",
+    "Inteiro": "Int",
+    "Decimal": "Float64",
+    "Semente": "Seed",
+    "NovoFonte": "NewSource",
+    "Novo": "New"
   }
 };
 
@@ -313,7 +377,17 @@ const VAMOS_METHOD_ALIASES = {
   "Microssegundos": "Microseconds",
   "Nanosegundos": "Nanoseconds",
   "Minutos": "Minutes",
-  "Horas": "Hours"
+  "Horas": "Hours",
+  "Executar": "Exec",
+  "Consultar": "Query",
+  "ConsultarLinha": "QueryRow",
+  "IniciarTransacao": "Begin",
+  "Confirmar": "Commit",
+  "Reverter": "Rollback",
+  "Preparar": "Prepare",
+  "Soma": "Sum",
+  "Escanear": "Scan",
+  "Proximo": "Next"
 };
 
 /**

@@ -1,0 +1,335 @@
+// ============================================================================
+// JOGO DA COBRINHA (SNAKE GAME) - VAMOS-LANG
+// Um clássico arcade implementado 100% com sintaxe em Português do Brasil.
+// ============================================================================
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"leitor"
+	"matematica/aleatorio"
+	"so"
+	"tempo"
+)
+
+// Ponto representa uma coordenada cartesiana na grade 2D
+tipo Ponto estrutura {
+	X inteiro
+	Y inteiro
+}
+
+// Constantes de Direção
+constante (
+	DirCima     inteiro = 1
+	DirBaixo    inteiro = 2
+	DirEsquerda inteiro = 3
+	DirDireita  inteiro = 4
+)
+
+// JogoCobrinha gerencia o estado completo da partida
+tipo JogoCobrinha estrutura {
+	Largura        inteiro
+	Altura         inteiro
+	Corpo          []Ponto
+	DirecaoAtual   inteiro
+	Comida         Ponto
+	Pontuacao      inteiro
+	FimDeJogo      booleano
+	Vitoria        booleano
+	ModoDemo       booleano
+	PassosTotais   inteiro
+}
+
+// NovoJogoCobrinha inicializa a cobrinha centralizada e a primeira maçã
+funcao NovoJogoCobrinha(largura inteiro, altura inteiro, modoDemo booleano) *JogoCobrinha {
+	centroX := largura / 2
+	centroY := altura / 2
+
+	// Inicializa a cobra com 3 segmentos
+	corpoInicial := criar([]Ponto, 0)
+	corpoInicial = adicionar(corpoInicial, Ponto{X: centroX - 2, Y: centroY})
+	corpoInicial = adicionar(corpoInicial, Ponto{X: centroX - 1, Y: centroY})
+	corpoInicial = adicionar(corpoInicial, Ponto{X: centroX, Y: centroY})
+
+	jogo := &JogoCobrinha{
+		Largura:      largura,
+		Altura:       altura,
+		Corpo:        corpoInicial,
+		DirecaoAtual: DirDireita,
+		Pontuacao:    0,
+		FimDeJogo:    falso,
+		Vitoria:      falso,
+		ModoDemo:     modoDemo,
+		PassosTotais: 0,
+	}
+
+	jogo.GerarNovaComida()
+	retornar jogo
+}
+
+// PosicaoOcupadaPelaCobra verifica se uma coordenada coincide com o corpo
+funcao (j *JogoCobrinha) PosicaoOcupadaPelaCobra(x inteiro, y inteiro) booleano {
+	para i := 0; i < tamanho(j.Corpo); i++ {
+		se j.Corpo[i].X == x && j.Corpo[i].Y == y {
+			retornar verdadeiro
+		}
+	}
+	retornar falso
+}
+
+// GerarNovaComida posiciona uma fruta aleatória em casa livre
+funcao (j *JogoCobrinha) GerarNovaComida() {
+	tentativas := 0
+	para tentativas < 1000 {
+		cx := aleatorio.InteiroAte(j.Largura)
+		cy := aleatorio.InteiroAte(j.Altura)
+		se !j.PosicaoOcupadaPelaCobra(cx, cy) {
+			j.Comida = Ponto{X: cx, Y: cy}
+			retornar
+		}
+		tentativas++
+	}
+	// Se todo o tabuleiro estiver ocupado, o jogador venceu
+	j.Vitoria = verdadeiro
+	j.FimDeJogo = verdadeiro
+}
+
+// ObterCabeca retorna a coordenada atual da cabeça da cobrinha
+funcao (j *JogoCobrinha) ObterCabeca() Ponto {
+	retornar j.Corpo[tamanho(j.Corpo)-1]
+}
+
+// MudarDirecao altera o vetor de movimento evitando reversão de 180 graus
+funcao (j *JogoCobrinha) MudarDirecao(novaDir inteiro) {
+	se novaDir == DirCima && j.DirecaoAtual != DirBaixo {
+		j.DirecaoAtual = DirCima
+	} senao se novaDir == DirBaixo && j.DirecaoAtual != DirCima {
+		j.DirecaoAtual = DirBaixo
+	} senao se novaDir == DirEsquerda && j.DirecaoAtual != DirDireita {
+		j.DirecaoAtual = DirEsquerda
+	} senao se novaDir == DirDireita && j.DirecaoAtual != DirEsquerda {
+		j.DirecaoAtual = DirDireita
+	}
+}
+
+// DecidirProximoPassoDemo calcula movimento inteligente autônomo da cobra
+funcao (j *JogoCobrinha) DecidirProximoPassoDemo() {
+	cabeca := j.ObterCabeca()
+	dx := j.Comida.X - cabeca.X
+	dy := j.Comida.Y - cabeca.Y
+
+	direcoesCandidatas := criar([]inteiro, 0)
+
+	// Prioriza o eixo com maior distância
+	se dx > 0 && j.DirecaoAtual != DirEsquerda {
+		direcoesCandidatas = adicionar(direcoesCandidatas, DirDireita)
+	} senao se dx < 0 && j.DirecaoAtual != DirDireita {
+		direcoesCandidatas = adicionar(direcoesCandidatas, DirEsquerda)
+	}
+
+	se dy > 0 && j.DirecaoAtual != DirCima {
+		direcoesCandidatas = adicionar(direcoesCandidatas, DirBaixo)
+	} senao se dy < 0 && j.DirecaoAtual != DirBaixo {
+		direcoesCandidatas = adicionar(direcoesCandidatas, DirCima)
+	}
+
+	// Adiciona direções restantes como alternativa segura
+	todasDirs := []inteiro{DirDireita, DirBaixo, DirEsquerda, DirCima}
+	para i := 0; i < tamanho(todasDirs); i++ {
+		direcoesCandidatas = adicionar(direcoesCandidatas, todasDirs[i])
+	}
+
+	// Escolhe a primeira direção válida que não resulte em colisão imediata
+	para i := 0; i < tamanho(direcoesCandidatas); i++ {
+		dir := direcoesCandidatas[i]
+		novoX := cabeca.X
+		novoY := cabeca.Y
+
+		se dir == DirCima {
+			novoY--
+		} senao se dir == DirBaixo {
+			novoY++
+		} senao se dir == DirEsquerda {
+			novoX--
+		} senao se dir == DirDireita {
+			novoX++
+		}
+
+		// Checa se fica dentro dos limites e não colide com o corpo
+		se novoX >= 0 && novoX < j.Largura && novoY >= 0 && novoY < j.Altura {
+			se !j.PosicaoOcupadaPelaCobra(novoX, novoY) {
+				j.MudarDirecao(dir)
+				retornar
+			}
+		}
+	}
+}
+
+// AvancarTurno executa um passo físico na simulação
+funcao (j *JogoCobrinha) AvancarTurno() {
+	se j.FimDeJogo {
+		retornar
+	}
+
+	se j.ModoDemo {
+		j.DecidirProximoPassoDemo()
+	}
+
+	cabeca := j.ObterCabeca()
+	novoX := cabeca.X
+	novoY := cabeca.Y
+
+	se j.DirecaoAtual == DirCima {
+		novoY--
+	} senao se j.DirecaoAtual == DirBaixo {
+		novoY++
+	} senao se j.DirecaoAtual == DirEsquerda {
+		novoX--
+	} senao se j.DirecaoAtual == DirDireita {
+		novoX++
+	}
+
+	// 1. Checa Colisão com Paredes
+	se novoX < 0 || novoX >= j.Largura || novoY < 0 || novoY >= j.Altura {
+		j.FimDeJogo = verdadeiro
+		retornar
+	}
+
+	// 2. Checa Colisão com o Próprio Corpo
+	se j.PosicaoOcupadaPelaCobra(novoX, novoY) {
+		j.FimDeJogo = verdadeiro
+		retornar
+	}
+
+	novaCabeca := Ponto{X: novoX, Y: novoY}
+	j.Corpo = adicionar(j.Corpo, novaCabeca)
+	j.PassosTotais++
+
+	// 3. Checa se Comeu a Comida
+	se novoX == j.Comida.X && novoY == j.Comida.Y {
+		j.Pontuacao += 10
+		j.GerarNovaComida()
+	} senao {
+		// Remove cauda para manter o mesmo tamanho
+		j.Corpo = j.Corpo[1:]
+	}
+}
+
+// Renderizar desenha o estado visual da grade no terminal
+funcao (j *JogoCobrinha) Renderizar() {
+	// Borda superior
+	formatar.ImprimirLinha("┌" + cordas.Repetir("──", j.Largura) + "┐")
+
+	cabeca := j.ObterCabeca()
+
+	para y := 0; y < j.Altura; y++ {
+		linha := "│"
+		para x := 0; x < j.Largura; x++ {
+			se x == cabeca.X && y == cabeca.Y {
+				linha += "◉ " // Cabeça da cobra
+			} senao se x == j.Comida.X && y == j.Comida.Y {
+				linha += "★ " // Comida / Fruta
+			} senao se j.PosicaoOcupadaPelaCobra(x, y) {
+				linha += "○ " // Corpo da cobra
+			} senao {
+				linha += "  " // Vazio
+			}
+		}
+		linha += "│"
+		formatar.ImprimirLinha(linha)
+	}
+
+	// Borda inferior
+	formatar.ImprimirLinha("└" + cordas.Repetir("──", j.Largura) + "┘")
+	formatar.ImprimirFormatado(" Pontuação: %d pontos | Tamanho: %d | Passos: %d\n", j.Pontuacao, tamanho(j.Corpo), j.PassosTotais)
+}
+
+funcao principal() {
+	aleatorio.Semente(tempo.Agora().Unix())
+
+	largura := 16
+	altura := 10
+	modoDemo := falso
+	maxPassosDemo := 30
+
+	// Analisa flags de linha de comando
+	para i := 0; i < tamanho(so.Argumentos); i++ {
+		arg := so.Argumentos[i]
+		se arg == "--demo" || arg == "-d" || arg == "--simular" {
+			modoDemo = verdadeiro
+		}
+	}
+
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("      🐍 JOGO DA COBRINHA (VAMOS-LANG) 🇧🇷         ")
+	formatar.ImprimirLinha("==================================================")
+
+	se modoDemo {
+		formatar.ImprimirLinha("Modo: Demonstração Autônoma (IA Inteligente)")
+		formatar.ImprimirLinha("A cobrinha busca alimentos automaticamente.")
+		formatar.ImprimirLinha("--------------------------------------------------")
+
+		jogo := NovoJogoCobrinha(largura, altura, verdadeiro)
+
+		para passo := 1; passo <= maxPassosDemo; passo++ {
+			jogo.AvancarTurno()
+			formatar.ImprimirFormatado("\n--- Turno %d de %d ---\n", passo, maxPassosDemo)
+			jogo.Renderizar()
+
+			se jogo.FimDeJogo {
+				formatar.ImprimirLinha("\n[Fim de Jogo] A cobrinha colidiu!")
+				interromper
+			}
+
+			tempo.Dormir(tempo.Milissegundo * 100)
+		}
+
+		formatar.ImprimirLinha("\n==================================================")
+		formatar.ImprimirFormatado(" Demonstração Concluída com Sucesso! Pontos: %d ✓\n", jogo.Pontuacao)
+		formatar.ImprimirLinha("==================================================")
+		retornar
+	}
+
+	// Modo Interativo via Terminal
+	formatar.ImprimirLinha("Comandos: [W] Cima | [S] Baixo | [A] Esquerda | [D] Direita")
+	formatar.ImprimirLinha("Digite [Q] para sair ou pressione Enter para avançar.")
+	formatar.ImprimirLinha("Dica: Use '--demo' para assistir ao jogo automático!")
+	formatar.ImprimirLinha("--------------------------------------------------")
+
+	jogo := NovoJogoCobrinha(largura, altura, falso)
+	scanner := leitor.NovoScanner(so.EntradaPadrao)
+
+	para !jogo.FimDeJogo {
+		jogo.Renderizar()
+		formatar.Imprimir("Comando (w/a/s/d/q ou enter): ")
+
+		se !scanner.Escanear() {
+			interromper
+		}
+
+		entrada := cordas.ParaMinusculas(cordas.ApararEspaco(scanner.ObterTexto()))
+
+		se entrada == "q" || entrada == "sair" {
+			formatar.ImprimirLinha("\nPartida encerrada pelo jogador.")
+			retornar
+		} senao se entrada == "w" {
+			jogo.MudarDirecao(DirCima)
+		} senao se entrada == "s" {
+			jogo.MudarDirecao(DirBaixo)
+		} senao se entrada == "a" {
+			jogo.MudarDirecao(DirEsquerda)
+		} senao se entrada == "d" {
+			jogo.MudarDirecao(DirDireita)
+		}
+
+		jogo.AvancarTurno()
+		formatar.ImprimirLinha("")
+	}
+
+	formatar.ImprimirLinha("\n==================================================")
+	formatar.ImprimirLinha("                  FIM DE JOGO!                    ")
+	formatar.ImprimirFormatado(" Pontuação Final: %d | Tamanho da cobra: %d\n", jogo.Pontuacao, tamanho(jogo.Corpo))
+	formatar.ImprimirLinha("==================================================")
+}

@@ -1,0 +1,43 @@
+// Exemplo de Criptografia, Conversão e Aleatoriedade em VAMOS-LANG
+pacote principal
+
+importar (
+	"conversao"
+	"cripto/sha256"
+	"formatar"
+	"matematica/aleatorio"
+	"tempo"
+)
+
+funcao principal() {
+	formatar.ImprimirLinha("========================================")
+	formatar.ImprimirLinha("   VAMOS-LANG: Cripto & Conversões      ")
+	formatar.ImprimirLinha("========================================")
+
+	// 1. Conversão de Strings e Números (strconv)
+	textoNum := "2026"
+	ano, err := conversao.ParaInteiro(textoNum)
+	se err != nulo {
+		formatar.ImprimirFormatado("Erro na conversão: %v\n", err)
+		retornar
+	}
+	formatar.ImprimirFormatado("-> Ano convertido para inteiro: %d (tipo: %T)\n", ano, ano)
+
+	decimalTexto := conversao.FormatarDecimal(3.14159, 'f', 2, 64)
+	formatar.ImprimirFormatado("-> Decimal formatado em texto: %s\n", decimalTexto)
+
+	// 2. Criptografia Hashing (crypto/sha256)
+	mensagemSecreta := "VAMOS-LANG é Go em Português"
+	hashBytes := sha256.Soma256([]byte(mensagemSecreta))
+	formatar.ImprimirFormatado("-> Mensagem original: %s\n", mensagemSecreta)
+	formatar.ImprimirFormatado("-> SHA-256 (Hex):     %x\n", hashBytes)
+
+	// 3. Geração de Números Aleatórios (math/rand)
+	aleatorio.Semente(tempo.Agora().Unix())
+	sorteado := aleatorio.InteiroAte(100) + 1
+	formatar.ImprimirFormatado("-> Número da sorte gerado (1-100): %d\n", sorteado)
+
+	formatar.ImprimirLinha("========================================")
+	formatar.ImprimirLinha(" Processamento finalizado com sucesso! ✓ ")
+	formatar.ImprimirLinha("========================================")
+}

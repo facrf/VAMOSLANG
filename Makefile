@@ -1,4 +1,4 @@
-.PHONY: all build test run-examples clean install
+.PHONY: all build test run-examples run-games clean install
 
 BINARY_NAME=vamos
 
@@ -24,6 +24,22 @@ run-examples: build
 	@echo ""
 	@echo "==> Testando exemplo 'calculadora.vamos':"
 	./$(BINARY_NAME) run exemplos/calculadora.vamos
+	@echo ""
+	@echo "==> Testando exemplo 'cripto_e_conversao.vamos':"
+	./$(BINARY_NAME) run exemplos/cripto_e_conversao.vamos
+	@echo ""
+	@echo "==> Testando exemplo 'nano.vamos' (Editor de Texto):"
+	./$(BINARY_NAME) run exemplos/nano.vamos --demo
+
+run-games: build
+	@echo "==> Executando demonstração do Jogo da Cobrinha:"
+	./$(BINARY_NAME) run jogos/cobrinha.vamos --demo
+	@echo ""
+	@echo "==> Executando demonstração do Pacman:"
+	./$(BINARY_NAME) run jogos/pacman.vamos --demo
+	@echo ""
+	@echo "==> Executando demonstração do Jogo de Damas:"
+	./$(BINARY_NAME) run jogos/damas.vamos --demo
 
 clean:
 	@echo "==> Limpando arquivos compilados..."
