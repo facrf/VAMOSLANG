@@ -33,7 +33,7 @@ flowchart TD
 
 ---
 
-## 🗺️ As 5 Etapas da Jornada de Bootstrapping
+## 🗺️ As 7 Etapas da Jornada de Bootstrapping
 
 | Etapa | Meta | Descrição | Status |
 | :---: | :--- | :--- | :---: |
@@ -42,6 +42,8 @@ flowchart TD
 | **3** | **CLI Auto-Hospedada (`vamosc`) & Prova de Ouro** | CLI com `compilar`, `rodar`, `fmt` e ciclo completo de auto-compilação (G0 ➔ G1 ➔ G2 ➔ G3). | ✅ **Concluído** |
 | **4** | **Emissão Direta e Máquina Virtual (VVM)** | Emissor de bytecode, execução na Máquina Virtual VVM, formato `.vamosb` serializável e persistente. | ✅ **Concluído** |
 | **5** | **Emissão Nativa WebAssembly 1.0 (Wasm)** | Emissor direto de binários `.wasm` autônomos sem compiladores externos, com LEB128 e seção de exportação. | ✅ **Concluído** |
+| **6** | **Análise Semântica e Verificação de Tipos** | Tabela de símbolos com escopos léxicos, validação de tipos, variáveis não declaradas e assinaturas de funções. | ✅ **Concluído** |
+| **7** | **Backend C Nativo (C99) & Compilação via GCC** | Emissor de C99 nativo e geração de binários de máquina ELF sem dependência do compilador Go hospedeiro. | ✅ **Concluído** |
 
 ---
 
@@ -79,44 +81,62 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
    - Seções canônicas de módulo Wasm: Type (1), Function (3), Export (7) e Code (10).
    - Opcodes de pilha: aritmética i32 (`add`, `sub`, `mul`, `div_s`), comparações relacionais (`eq`, `ne`, `lt_s`, `gt_s`, `le_s`, `ge_s`), fluxo condicional (`if`, `else`, `end`), chamadas diretas com recursão (`call`) e variáveis locais (`local.get`, `local.set`).
    - Gera módulos `.wasm` ultra-compactos (menos de 300 bytes) sem dependências externas.
-10. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
+10. **[`compilador/semantico.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/semantico.vamos)**:
+    - Analisador semântico e verificador de tipos em tempo de compilação em VAMOS-LANG.
+    - Tabela de símbolos com encadeamento de escopos léxicos (`Escopo`).
+    - Validação de identificadores não declarados, variáveis duplicadas, verificação de tipos e contagem de argumentos em chamadas de função.
+11. **[`compilador/emissor_c.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/emissor_c.vamos)**:
+    - Backend C nativo (C99 standard) para compilação direta via GCC, Clang e TinyCC.
+    - Tradução direta de AST para código C puro: mapeamento de tipos primitivos (`int64_t`, `double`, `const char*`, `bool`), estruturas (`typedef struct`), funções, laços `for/while`, condicionais e E/S formatada com `printf`.
+    - Produz binários ELF nativos ultra-leves (~16 KB) totalmente desvinculados do toolchain Go.
+12. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
     - Motor de emissão Go em VAMOS-LANG para geração de binários nativos de máquina.
-11. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
+13. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
     - Ponto de entrada CLI completo do compilador auto-hospedado (`vamosc`).
-    - Comandos oficiais: `compilar`, `rodar`, `vm`, `bytecode`, `wasm`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
+    - Comandos oficiais: `compilar`, `compilar-c`, `c`, `rodar`, `vm`, `bytecode`, `wasm`, `checar`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
 
 ---
 
 ## 🛠️ Como Executar e Validar
 
 ```bash
-# 1. Executar o Ciclo de Ouro completo de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm):
+# 1. Executar o Ciclo de Ouro completo de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm + C/GCC):
 make bootstrap
 
-# 2. Compilar diretamente para WebAssembly 1.0 nativo (.wasm):
+# 2. Compilar binário nativo executável diretamente via GCC (sem Go):
+./vamos compilar-c exemplos/c_nativo.vamos -o /tmp/c_app
+/tmp/c_app
+
+# 3. Gerar código-fonte C99 nativo a partir do código .vamos:
+./vamos c exemplos/c_nativo.vamos -o /tmp/c_app.c
+
+# 4. Executar verificação semântica estática e de tipos:
+./vamosc checar exemplos/ola_mundo.vamos
+
+# 5. Compilar diretamente para WebAssembly 1.0 nativo (.wasm):
 ./vamos wasm exemplos/wasm_modulo.vamos -o modulo.wasm
 # ou via compilador auto-hospedado:
 ./compilador/vamosc wasm exemplos/wasm_modulo.vamos -o modulo.wasm
 
-# 3. Executar código diretamente na Máquina Virtual VVM:
+# 6. Executar código diretamente na Máquina Virtual VVM:
 ./compilador/vamosc vm exemplos/maquina_virtual.vamos
 
-# 4. Gerar e salvar arquivo de Bytecode VVM (.vamosb):
+# 7. Gerar e salvar arquivo de Bytecode VVM (.vamosb):
 ./compilador/vamosc bytecode exemplos/maquina_virtual.vamos -o app.vamosb
 
-# 5. Executar arquivo de Bytecode (.vamosb) diretamente na VM:
+# 8. Executar arquivo de Bytecode (.vamosb) diretamente na VM:
 ./compilador/vamosc vm app.vamosb
 
-# 6. Desassemblar bytecode de um arquivo .vamos ou .vamosb:
+# 9. Desassemblar bytecode de um arquivo .vamos ou .vamosb:
 ./compilador/vamosc bytecode app.vamosb
 
-# 7. Compilar executável binário de máquina com o 'vamosc':
+# 10. Compilar executável binário de máquina com o 'vamosc':
 ./compilador/vamosc compilar exemplos/calculadora.vamos -o /tmp/calc
 /tmp/calc
 
-# 8. Formatar código usando o formatador em VAMOS:
+# 11. Formatar código usando o formatador em VAMOS:
 ./compilador/vamosc formatar exemplos/ola_mundo.vamos
 
-# 9. Visualizar a Árvore Sintática Abstrata (AST):
+# 12. Visualizar a Árvore Sintática Abstrata (AST):
 ./compilador/vamosc ast exemplos/estruturas_interfaces.vamos
 ```

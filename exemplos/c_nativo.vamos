@@ -1,0 +1,38 @@
+// Exemplo de compilação direta para C99 e binário nativo de máquina via GCC
+pacote principal
+
+importar "formatar"
+
+funcao calcularFatorial(n inteiro) inteiro {
+	se n <= 1 {
+		retornar 1
+	}
+	retornar n * calcularFatorial(n - 1)
+}
+
+funcao somarPares(limite inteiro) inteiro {
+	soma := 0
+	para i := 0; i <= limite; i++ {
+		se i % 2 == 0 {
+			soma = soma + i
+		}
+	}
+	retornar soma
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("   VAMOS-LANG: COMPILAÇÃO C NATIVA (GCC / C99)  ")
+	formatar.ImprimirLinha("================================================")
+
+	fat := calcularFatorial(6)
+	formatar.ImprimirFormatado("Fatorial de 6 calculado via C: %lld\n", fat)
+
+	soma := somarPares(10)
+	formatar.ImprimirFormatado("Soma dos números pares até 10: %lld\n", soma)
+
+	se fat == 720 && soma == 30 {
+		formatar.ImprimirLinha("✓ Sucesso: Executável C puro compilado e rodando com perfeição!")
+	}
+	formatar.ImprimirLinha("================================================")
+}

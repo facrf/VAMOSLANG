@@ -18,16 +18,19 @@ constante VersaoCompilador texto = "4.0.0-bootstrap"
 
 funcao exibirAjuda() {
 	formatar.ImprimirLinha("==================================================================")
-	formatar.ImprimirLinha("   COMPILADOR AUTO-HOSPEDADO VAMOS-LANG (vamosc) - ETAPAS 1 A 5  ")
+	formatar.ImprimirLinha("   COMPILADOR AUTO-HOSPEDADO VAMOS-LANG (vamosc) - ETAPAS 1 A 7  ")
 	formatar.ImprimirLinha("==================================================================")
 	formatar.ImprimirLinha("Uso: vamosc <comando> [arquivo.vamos] [opcoes...]")
 	formatar.ImprimirLinha("")
 	formatar.ImprimirLinha("Comandos disponíveis:")
 	formatar.ImprimirLinha("  compilar, build <arquivo.vamos> [-o saida]  Compila para executável binário")
+	formatar.ImprimirLinha("  compilar-c <arquivo.vamos> [-o binario]     Compila para binário nativo via GCC")
 	formatar.ImprimirLinha("  rodar, run <arquivo.vamos> [args...]        Executa código VAMOS diretamente")
 	formatar.ImprimirLinha("  vm, executar-vm <arquivo.vamos|.vamosb>     Executa na Máquina Virtual VVM")
 	formatar.ImprimirLinha("  bytecode <arquivo.vamos> [-o saida.vamosb]  Gera/desassembla Bytecode VVM")
 	formatar.ImprimirLinha("  wasm <arquivo.vamos> [-o saida.wasm]        Gera binário WebAssembly (.wasm)")
+	formatar.ImprimirLinha("  c <arquivo.vamos> [-o saida.c]              Gera código-fonte C99 nativo")
+	formatar.ImprimirLinha("  checar, semantico <arquivo.vamos>           Verificação semântica estática e tipos")
 	formatar.ImprimirLinha("  formatar, fmt <arquivo.vamos>               Formata código padronizado")
 	formatar.ImprimirLinha("  ast, --ast <arquivo.vamos>                  Exibe a Árvore Sintática (AST)")
 	formatar.ImprimirLinha("  tokens, --tokens <arquivo.vamos>            Lista tokens léxicos identificados")
@@ -244,6 +247,132 @@ funcao executarWasm(caminhoArquivo texto, destinoSaida texto) {
 	}
 
 	formatar.ImprimirFormatado("✓ Módulo WebAssembly (.wasm) gerado com sucesso: %s (%d bytes)\n", destinoSaida, tamanho(bytesWasm))
+}
+
+funcao executarChecagemSemantica(caminhoArquivo texto) {
+	dados, err := so.LerArquivo(caminhoArquivo)
+	se err != nulo {
+		formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+		so.Sair(1)
+	}
+
+	lexer := NovoAnalisadorLexico(texto(dados))
+	tokens, errLex := lexer.TokenizarTodos()
+	se errLex != nulo {
+		formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+		so.Sair(1)
+	}
+
+	parser := NovoAnalisadorSintatico(tokens)
+	ast, errParse := parser.AnalisarPrograma()
+	se errParse != nulo {
+		formatar.ImprimirFormatado("Erro sintático: %v\n", errParse)
+		so.Sair(1)
+	}
+
+	erros, avisos := ValidarAST(ast)
+	se tamanho(avisos) > 0 {
+		para _, aviso := intervalo avisos {
+			formatar.ImprimirLinha(aviso)
+		}
+	}
+
+	se tamanho(erros) > 0 {
+		formatar.ImprimirFormatado("Falha na validação semântica de '%s': %d erro(s) encontrado(s):\n", caminhoArquivo, tamanho(erros))
+		para _, errSem := intervalo erros {
+			formatar.ImprimirFormatado("  ✗ %s\n", errSem)
+		}
+		so.Sair(1)
+	}
+
+	formatar.ImprimirFormatado("✓ Análise semântica estática aprovada: '%s' (0 erros)\n", caminhoArquivo)
+}
+
+funcao executarEmissaoC(caminhoArquivo texto, destinoSaida texto) {
+	dados, err := so.LerArquivo(caminhoArquivo)
+	se err != nulo {
+		formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+		so.Sair(1)
+	}
+
+	lexer := NovoAnalisadorLexico(texto(dados))
+	tokens, errLex := lexer.TokenizarTodos()
+	se errLex != nulo {
+		formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+		so.Sair(1)
+	}
+
+	parser := NovoAnalisadorSintatico(tokens)
+	ast, errParse := parser.AnalisarPrograma()
+	se errParse != nulo {
+		formatar.ImprimirFormatado("Erro sintático: %v\n", errParse)
+		so.Sair(1)
+	}
+
+	emissor := NovoEmissorC()
+	codigoC := emissor.CompilarAST(ast)
+
+	se destinoSaida == "" {
+		formatar.ImprimirLinha(codigoC)
+		retornar
+	}
+
+	errSalvar := so.EscreverArquivo(destinoSaida, []byte(codigoC), 0644)
+	se errSalvar != nulo {
+		formatar.ImprimirFormatado("Erro ao salvar arquivo C '%s': %v\n", destinoSaida, errSalvar)
+		so.Sair(1)
+	}
+
+	formatar.ImprimirFormatado("✓ Código-fonte C99 gerado com sucesso em: %s\n", destinoSaida)
+}
+
+funcao executarCompilacaoGCC(caminhoArquivo texto, destinoBinario texto) {
+	se destinoBinario == "" {
+		se cordas.TemSufixo(caminhoArquivo, ".vamos") {
+			destinoBinario = caminhoArquivo[:tamanho(caminhoArquivo)-6]
+		} senao {
+			destinoBinario = "app"
+		}
+	}
+
+	dados, err := so.LerArquivo(caminhoArquivo)
+	se err != nulo {
+		formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+		so.Sair(1)
+	}
+
+	lexer := NovoAnalisadorLexico(texto(dados))
+	tokens, errLex := lexer.TokenizarTodos()
+	se errLex != nulo {
+		formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+		so.Sair(1)
+	}
+
+	parser := NovoAnalisadorSintatico(tokens)
+	ast, errParse := parser.AnalisarPrograma()
+	se errParse != nulo {
+		formatar.ImprimirFormatado("Erro sintático: %v\n", errParse)
+		so.Sair(1)
+	}
+
+	tempC := "/tmp/vamosc_temp_gcc.c"
+	emissor := NovoEmissorC()
+	codigoC := emissor.CompilarAST(ast)
+	errG := so.EscreverArquivo(tempC, []byte(codigoC), 0644)
+	se errG != nulo {
+		formatar.ImprimirFormatado("Erro ao gravar arquivo temporário C: %v\n", errG)
+		so.Sair(1)
+	}
+
+	errGCC := CompilarBinarioC(tempC, destinoBinario)
+	so.Remover(tempC)
+
+	se errGCC != nulo {
+		formatar.ImprimirFormatado("Erro ao compilar com GCC: %v\n", errGCC)
+		so.Sair(1)
+	}
+
+	formatar.ImprimirFormatado("✓ Executável binário nativo gerado com sucesso via GCC: %s\n", destinoBinario)
 }
 
 funcao executarTranspilacao(caminhoArquivo texto, destinoSaida texto) {
@@ -518,13 +647,46 @@ funcao principal() {
 		so.Sair(1)
 	}
 
+	// 7. Teste de Análise Semântica e Verificação Estática de Tipos
+	errosSem, _ := ValidarAST(ast)
+	se tamanho(errosSem) > 0 {
+		formatar.ImprimirFormatado("Falha na validação semântica do código válido: %v\n", errosSem)
+		so.Sair(1)
+	}
+
+	codigoInvalido := `pacote principal
+funcao teste() {
+	x := 10
+	x := 20
+}
+`
+	lexInv := NovoAnalisadorLexico(codigoInvalido)
+	toksInv, _ := lexInv.TokenizarTodos()
+	parseInv := NovoAnalisadorSintatico(toksInv)
+	astInv, _ := parseInv.AnalisarPrograma()
+	errosInv, _ := ValidarAST(astInv)
+	se tamanho(errosInv) == 0 {
+		formatar.ImprimirLinha("Falha na detecção de erro semântico de variável duplicada.")
+		so.Sair(1)
+	}
+
+	// 8. Teste de Emissão C Nativa (C99)
+	emissorC := NovoEmissorC()
+	codigoC := emissorC.CompilarAST(ast)
+	se !cordas.Contem(codigoC, "#include <stdio.h>") || !cordas.Contem(codigoC, "int main(") {
+		formatar.ImprimirLinha("Falha na geração de código C nativo.")
+		so.Sair(1)
+	}
+
 	formatar.ImprimirLinha("✓ 1. Análise léxica em VAMOS-LANG: APROVADA")
 	formatar.ImprimirLinha("✓ 2. Parser sintático descendente recursivo (AST) em VAMOS-LANG: APROVADO")
 	formatar.ImprimirLinha("✓ 3. Formatador automático em VAMOS-LANG: APROVADO")
 	formatar.ImprimirLinha("✓ 4. Mapeamento e transpilação em VAMOS-LANG: APROVADOS")
 	formatar.ImprimirLinha("✓ 5. Emissão de Bytecode e Máquina Virtual VVM em VAMOS-LANG: APROVADOS")
 	formatar.ImprimirLinha("✓ 6. Emissão Nativa WebAssembly 1.0 (Wasm) em VAMOS-LANG: APROVADA")
-	formatar.ImprimirLinha("✓ Auto-teste de Bootstrapping (Etapas 1 a 5) concluído com 100% de êxito!")
+	formatar.ImprimirLinha("✓ 7. Análise Semântica Estática e Tipos em VAMOS-LANG: APROVADA")
+	formatar.ImprimirLinha("✓ 8. Emissão Nativa C (C99) para GCC/Clang em VAMOS-LANG: APROVADA")
+	formatar.ImprimirLinha("✓ Auto-teste de Bootstrapping (Etapas 1 a 7) concluído com 100% de êxito!")
 }
 
 funcao principal() {
@@ -592,6 +754,38 @@ funcao principal() {
 			destinoWasm = args[3]
 		}
 		executarWasm(args[1], destinoWasm)
+		so.Sair(0)
+
+	caso "checar", "--checar", "semantico", "--semantico":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o arquivo .vamos para checar a semântica.")
+			so.Sair(1)
+		}
+		executarChecagemSemantica(args[1])
+		so.Sair(0)
+
+	caso "c", "--c":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o arquivo .vamos para gerar código C.")
+			so.Sair(1)
+		}
+		destinoC := ""
+		se tamanho(args) >= 4 && args[2] == "-o" {
+			destinoC = args[3]
+		}
+		executarEmissaoC(args[1], destinoC)
+		so.Sair(0)
+
+	caso "compilar-c", "--compilar-c":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o arquivo .vamos para compilar via GCC.")
+			so.Sair(1)
+		}
+		destinoBin := ""
+		se tamanho(args) >= 4 && args[2] == "-o" {
+			destinoBin = args[3]
+		}
+		executarCompilacaoGCC(args[1], destinoBin)
 		so.Sair(0)
 
 	caso "rodar", "run", "--rodar":

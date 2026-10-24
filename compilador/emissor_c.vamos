@@ -1,0 +1,394 @@
+// Pacote compilador - Emissor Nativo C (C99) em VAMOS-LANG
+// Transforma a AST em código-fonte C compatível com GCC, Clang e TCC para compilação de binários nativos.
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"sistema/executar"
+	"so"
+)
+
+// EmissorC traduz nós da AST em código-fonte C99
+tipo EmissorC estrutura {
+	Buffer      texto
+	Indentacao  inteiro
+	Locais      mapa[texto]texto // Nome da variável -> Tipo C
+	Funcoes     mapa[texto]texto // Nome da função -> Tipo retorno C
+	EmPrincipal booleano
+}
+
+// NovoEmissorC inicializa o gerador de código C
+funcao NovoEmissorC() *EmissorC {
+	retornar &EmissorC{
+		Buffer:      "",
+		Indentacao:  0,
+		Locais:      criar(mapa[texto]texto),
+		Funcoes:     criar(mapa[texto]texto),
+		EmPrincipal: falso,
+	}
+}
+
+// emitirLinha adiciona texto formatado com indentação no buffer C
+funcao (e *EmissorC) emitirLinha(s texto) {
+	para i := 0; i < e.Indentacao; i++ {
+		e.Buffer = e.Buffer + "    "
+	}
+	e.Buffer = e.Buffer + s + "\n"
+}
+
+// mapearTipoC converte os tipos do VAMOS para equivalentes em C99
+funcao (e *EmissorC) mapearTipoC(tipoVamos texto) texto {
+	limpo := cordas.ApararEspaco(tipoVamos)
+	escolha limpo {
+	caso "inteiro", "int":
+		retornar "int64_t"
+	caso "inteiro32", "int32":
+		retornar "int32_t"
+	caso "decimal64", "float64":
+		retornar "double"
+	caso "decimal32", "float32":
+		retornar "float"
+	caso "texto", "string":
+		retornar "const char*"
+	caso "booleano", "bool":
+		retornar "bool"
+	caso "byte":
+		retornar "uint8_t"
+	caso "vazio", "void", "":
+		retornar "void"
+	padrao:
+		retornar limpo
+	}
+}
+
+// CompilarAST gera todo o código C a partir da AST do programa
+funcao (e *EmissorC) CompilarAST(raiz *NoAST) texto {
+	e.Buffer = ""
+	e.emitirLinha("/* ============================================================================== */")
+	e.emitirLinha("/* Código gerado automaticamente pelo compilador auto-hospedado VAMOS-LANG       */")
+	e.emitirLinha("/* Backend C Nativo (C99) - Compatível com GCC, Clang e TinyCC                  */")
+	e.emitirLinha("/* ============================================================================== */")
+	e.emitirLinha("#include <stdio.h>")
+	e.emitirLinha("#include <stdlib.h>")
+	e.emitirLinha("#include <stdint.h>")
+	e.emitirLinha("#include <stdbool.h>")
+	e.emitirLinha("#include <string.h>")
+	e.emitirLinha("#include <inttypes.h>")
+	e.emitirLinha("")
+
+	// Coleta protótipos de structs primeiro
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoEstrutura {
+			e.emitirEstrutura(filho)
+		}
+	}
+
+	// Coleta declarações de funções e protótipos
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoFuncao && filho.Nome != "principal" {
+			tipoRetorno := e.mapearTipoC(cordas.ApararEspaco(cordas.Substituir(filho.TipoDado, "retorno:", "", 1)))
+			e.Funcoes[filho.Nome] = tipoRetorno
+			paramsStr := e.obterParametrosC(filho)
+			e.emitirLinha(formatar.Formatar("%s %s(%s);", tipoRetorno, filho.Nome, paramsStr))
+		}
+	}
+	e.emitirLinha("")
+
+	// Emite o corpo de cada função
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoFuncao {
+			e.emitirFuncao(filho)
+		}
+	}
+
+	retornar e.Buffer
+}
+
+// obterParametrosC formata a lista de parâmetros para assinatura C
+funcao (e *EmissorC) obterParametrosC(fn *NoAST) texto {
+	params := criar([]texto, 0)
+	para _, p := intervalo fn.Filhos {
+		se p.Tipo == NoTipoParametro {
+			tipoC := e.mapearTipoC(p.TipoDado)
+			params = anexar(params, formatar.Formatar("%s %s", tipoC, p.Nome))
+		}
+	}
+	se tamanho(params) == 0 {
+		retornar "void"
+	}
+	retornar cordas.Juntar(params, ", ")
+}
+
+// emitirEstrutura gera uma definição typedef struct em C
+funcao (e *EmissorC) emitirEstrutura(no *NoAST) {
+	e.emitirLinha(formatar.Formatar("typedef struct %s {", no.Nome))
+	e.Indentacao++
+	para _, c := intervalo no.Filhos {
+		se c.Tipo == NoTipoCampo {
+			tipoC := e.mapearTipoC(c.TipoDado)
+			e.emitirLinha(formatar.Formatar("%s %s;", tipoC, c.Nome))
+		}
+	}
+	e.Indentacao--
+	e.emitirLinha(formatar.Formatar("} %s;", no.Nome))
+	e.emitirLinha("")
+}
+
+// emitirFuncao traduz uma função VAMOS para função em C
+funcao (e *EmissorC) emitirFuncao(fn *NoAST) {
+	e.Locais = criar(mapa[texto]texto)
+
+	se fn.Nome == "principal" {
+		e.EmPrincipal = verdadeiro
+		e.emitirLinha("int main(int argc, char** argv) {")
+	} senao {
+		e.EmPrincipal = falso
+		tipoRetorno := e.mapearTipoC(cordas.ApararEspaco(cordas.Substituir(fn.TipoDado, "retorno:", "", 1)))
+		paramsStr := e.obterParametrosC(fn)
+		para _, p := intervalo fn.Filhos {
+			se p.Tipo == NoTipoParametro {
+				e.Locais[p.Nome] = e.mapearTipoC(p.TipoDado)
+			}
+		}
+		e.emitirLinha(formatar.Formatar("%s %s(%s) {", tipoRetorno, fn.Nome, paramsStr))
+	}
+
+	e.Indentacao++
+
+	para _, filho := intervalo fn.Filhos {
+		se filho.Tipo == NoTipoBloco {
+			e.emitirBlocoC(filho)
+		}
+	}
+
+	se e.EmPrincipal {
+		e.emitirLinha("return 0;")
+	}
+
+	e.Indentacao--
+	e.emitirLinha("}")
+	e.emitirLinha("")
+}
+
+// emitirBlocoC percorre instruções do bloco
+funcao (e *EmissorC) emitirBlocoC(bloco *NoAST) {
+	para _, no := intervalo bloco.Filhos {
+		escolha no.Tipo {
+		caso NoTipoBloco:
+			e.emitirLinha("{")
+			e.Indentacao++
+			e.emitirBlocoC(no)
+			e.Indentacao--
+			e.emitirLinha("}")
+
+		caso NoTipoVariavel:
+			tipoC := e.mapearTipoC(no.TipoDado)
+			e.Locais[no.Nome] = tipoC
+			se no.Valor != "" {
+				valC := e.traduzirExpressaoC(no.Valor)
+				e.emitirLinha(formatar.Formatar("%s %s = %s;", tipoC, no.Nome, valC))
+			} senao {
+				e.emitirLinha(formatar.Formatar("%s %s;", tipoC, no.Nome))
+			}
+
+		caso NoTipoExpressao:
+			e.emitirInstrucaoExpressaoC(no.Valor)
+
+		caso NoTipoCondicional:
+			e.emitirCondicionalC(no)
+
+		caso NoTipoLaco:
+			e.emitirLacoC(no)
+
+		caso NoTipoRetorno:
+			val := cordas.ApararEspaco(no.Valor)
+			se val != "" {
+				valC := e.traduzirExpressaoC(val)
+				e.emitirLinha(formatar.Formatar("return %s;", valC))
+			} senao {
+				e.emitirLinha("return;")
+			}
+		}
+	}
+}
+
+// emitirCondicionalC gera if/else em C
+funcao (e *EmissorC) emitirCondicionalC(no *NoAST) {
+	condC := e.traduzirExpressaoC(no.Valor)
+	e.emitirLinha(formatar.Formatar("if (%s) {", condC))
+	e.Indentacao++
+
+	temSenao := falso
+	var noSenao *NoAST = nulo
+
+	para _, filho := intervalo no.Filhos {
+		se filho.Tipo == NoTipoCondicional && filho.Nome == "Senao" {
+			temSenao = verdadeiro
+			noSenao = filho
+		} senao se filho.Tipo == NoTipoBloco {
+			e.emitirBlocoC(filho)
+		}
+	}
+	e.Indentacao--
+
+	se temSenao && noSenao != nulo {
+		e.emitirLinha("} else {")
+		e.Indentacao++
+		para _, f := intervalo noSenao.Filhos {
+			se f.Tipo == NoTipoBloco {
+				e.emitirBlocoC(f)
+			}
+		}
+		e.Indentacao--
+	}
+	e.emitirLinha("}")
+}
+
+// emitirLacoC gera loops for ou while em C
+funcao (e *EmissorC) emitirLacoC(no *NoAST) {
+	clausula := cordas.ApararEspaco(no.Valor)
+	se clausula == "" {
+		e.emitirLinha("while (true) {")
+	} senao se cordas.Contem(clausula, ";") {
+		partes := cordas.Dividir(clausula, ";")
+		init := ""
+		cond := "true"
+		passo := ""
+		se tamanho(partes) >= 1 {
+			init = cordas.ApararEspaco(partes[0])
+			se cordas.Contem(init, ":=") {
+				p := cordas.Dividir(init, ":=")
+				init = formatar.Formatar("int64_t %s = %s", cordas.ApararEspaco(p[0]), e.traduzirExpressaoC(p[1]))
+			}
+		}
+		se tamanho(partes) >= 2 && cordas.ApararEspaco(partes[1]) != "" {
+			cond = e.traduzirExpressaoC(partes[1])
+		}
+		se tamanho(partes) >= 3 {
+			passo = e.traduzirExpressaoC(partes[2])
+		}
+		e.emitirLinha(formatar.Formatar("for (%s; %s; %s) {", init, cond, passo))
+	} senao {
+		e.emitirLinha(formatar.Formatar("while (%s) {", e.traduzirExpressaoC(clausula)))
+	}
+
+	e.Indentacao++
+	para _, f := intervalo no.Filhos {
+		se f.Tipo == NoTipoBloco {
+			e.emitirBlocoC(f)
+		}
+	}
+	e.Indentacao--
+	e.emitirLinha("}")
+}
+
+// emitirInstrucaoExpressaoC trata atribuições, chamadas e impressões em C
+funcao (e *EmissorC) emitirInstrucaoExpressaoC(expr texto) {
+	limpa := cordas.ApararEspaco(expr)
+	se limpa == "" {
+		retornar
+	}
+
+	// Declaração curta: var := valor
+	se cordas.Contem(limpa, ":=") {
+		partes := cordas.Dividir(limpa, ":=")
+		se tamanho(partes) >= 2 {
+			nomeVar := cordas.ApararEspaco(partes[0])
+			valC := e.traduzirExpressaoC(partes[1])
+			tipoC := "int64_t"
+			valAparado := cordas.ApararEspaco(partes[1])
+			se cordas.TemPrefixo(valAparado, "\"") {
+				tipoC = "const char*"
+			} senao se valAparado == "verdadeiro" || valAparado == "falso" {
+				tipoC = "bool"
+			} senao se cordas.Contem(valAparado, ".") && !cordas.Contem(valAparado, " ") {
+				tipoC = "double"
+			}
+			e.Locais[nomeVar] = tipoC
+			e.emitirLinha(formatar.Formatar("%s %s = %s;", tipoC, nomeVar, valC))
+			retornar
+		}
+	}
+
+	// Atribuição comum: var = valor
+	se cordas.Contem(limpa, "=") && !cordas.Contem(limpa, "==") && !cordas.Contem(limpa, "!=") && !cordas.Contem(limpa, "<=") && !cordas.Contem(limpa, ">=") {
+		partes := cordas.Dividir(limpa, "=")
+		se tamanho(partes) >= 2 {
+			nomeVar := cordas.ApararEspaco(partes[0])
+			valC := e.traduzirExpressaoC(partes[1])
+			e.emitirLinha(formatar.Formatar("%s = %s;", nomeVar, valC))
+			retornar
+		}
+	}
+
+	// Impressão: formatar.ImprimirLinha(...)
+	se cordas.TemPrefixo(limpa, "formatar.ImprimirLinha(") || cordas.TemPrefixo(limpa, "formatar . ImprimirLinha (") {
+		idxAbre := cordas.Indice(limpa, "(")
+		idxFecha := cordas.UltimoIndice(limpa, ")")
+		arg := cordas.ApararEspaco(limpa[idxAbre+1 : idxFecha])
+		se cordas.TemPrefixo(arg, "\"") {
+			// String pura
+			e.emitirLinha(formatar.Formatar("printf(\"%%s\\n\", %s);", arg))
+		} senao {
+			argC := e.traduzirExpressaoC(arg)
+			tipoArg := e.Locais[arg]
+			se tipoArg == "const char*" {
+				e.emitirLinha(formatar.Formatar("printf(\"%%s\\n\", %s);", argC))
+			} senao se tipoArg == "double" || tipoArg == "float" {
+				e.emitirLinha(formatar.Formatar("printf(\"%%f\\n\", %s);", argC))
+			} senao {
+				e.emitirLinha(formatar.Formatar("printf(\"%%\" PRId64 \"\\n\", (int64_t)(%s));", argC))
+			}
+		}
+		retornar
+	}
+
+	// Impressão formatada: formatar.ImprimirFormatado(fmt, args...)
+	se cordas.TemPrefixo(limpa, "formatar.ImprimirFormatado(") || cordas.TemPrefixo(limpa, "formatar . ImprimirFormatado (") {
+		idxAbre := cordas.Indice(limpa, "(")
+		idxFecha := cordas.UltimoIndice(limpa, ")")
+		conteudo := cordas.ApararEspaco(limpa[idxAbre+1 : idxFecha])
+		args := cordas.Dividir(conteudo, ",")
+		argsC := criar([]texto, 0)
+		para _, a := intervalo args {
+			argsC = anexar(argsC, e.traduzirExpressaoC(a))
+		}
+		e.emitirLinha(formatar.Formatar("printf(%s);", cordas.Juntar(argsC, ", ")))
+		retornar
+	}
+
+	// Chamada ou expressão solta
+	traduzida := e.traduzirExpressaoC(limpa)
+	e.emitirLinha(traduzida + ";")
+}
+
+// traduzirExpressaoC converte identificadores, constantes e operadores para C
+funcao (e *EmissorC) traduzirExpressaoC(expr texto) texto {
+	limpa := cordas.ApararEspaco(expr)
+
+	// Booleanos e nulos
+	limpa = cordas.Substituir(limpa, "verdadeiro", "true", -1)
+	limpa = cordas.Substituir(limpa, "falso", "false", -1)
+	limpa = cordas.Substituir(limpa, "nulo", "NULL", -1)
+
+	retornar limpa
+}
+
+// SalvarCodigoC compila a AST para código C e grava no disco
+funcao SalvarCodigoC(caminhoArquivo texto, raiz *NoAST) erro {
+	emissor := NovoEmissorC()
+	codigoC := emissor.CompilarAST(raiz)
+	retornar so.EscreverArquivo(caminhoArquivo, []byte(codigoC), 0644)
+}
+
+// CompilarBinarioC invoca GCC diretamente para compilar código C em executável nativo
+funcao CompilarBinarioC(caminhoFonteC texto, destinoBinario texto) erro {
+	cmd := executar.Comando("gcc", "-O2", "-o", destinoBinario, caminhoFonteC)
+	saida, err := cmd.SaidaCombinada()
+	se err != nulo {
+		retornar formatar.ErroFormatado("Falha na compilação GCC:\n%s", texto(saida))
+	}
+	retornar nulo
+}

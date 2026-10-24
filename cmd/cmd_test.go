@@ -155,3 +155,40 @@ func TestRunWasm(t *testing.T) {
 		t.Errorf("Módulo WebAssembly inválido ou cabeçalho incorreto")
 	}
 }
+
+func TestRunCAndBuildC(t *testing.T) {
+	root := FindProjectRoot(".")
+	exemploPath := filepath.Join(root, "exemplos", "c_nativo.vamos")
+	saidaC := filepath.Join(os.TempDir(), "teste_c_out.c")
+	binC := filepath.Join(os.TempDir(), "teste_c_bin")
+	defer os.Remove(saidaC)
+	defer os.Remove(binC)
+
+	codeC := RunC([]string{exemploPath, "-o", saidaC})
+	if codeC != 0 {
+		t.Errorf("RunC retornou código de erro: %d", codeC)
+	}
+
+	dadosC, err := os.ReadFile(saidaC)
+	if err != nil || !strings.Contains(string(dadosC), "#include <stdio.h>") {
+		t.Errorf("Código C não foi gerado corretamente")
+	}
+
+	codeBuildC := RunBuildC([]string{exemploPath, "-o", binC})
+	if codeBuildC != 0 {
+		t.Errorf("RunBuildC retornou código de erro: %d", codeBuildC)
+	}
+
+	if _, err := os.Stat(binC); err != nil {
+		t.Errorf("Executável binário nativo C não foi encontrado: %v", err)
+	}
+}
+
+func TestRunSemanticCheck(t *testing.T) {
+	root := FindProjectRoot(".")
+	exemploPath := filepath.Join(root, "exemplos", "ola_mundo.vamos")
+	codeCheck := RunSemanticCheck([]string{exemploPath})
+	if codeCheck != 0 {
+		t.Errorf("RunSemanticCheck falhou para arquivo válido: %d", codeCheck)
+	}
+}

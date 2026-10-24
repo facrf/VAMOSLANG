@@ -129,3 +129,90 @@ func RunWasm(args []string) int {
 	}
 	return 0
 }
+
+// RunC gera código-fonte C99 nativo a partir do arquivo .vamos
+func RunC(args []string) int {
+	if len(args) == 0 {
+		fmt.Println("Erro: informe o arquivo .vamos para gerar código C.")
+		fmt.Println("Uso: vamos c <arquivo.vamos> [-o saida.c]")
+		return 1
+	}
+
+	vamoscPath, err := findVamosc()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Erro: %v\n", err)
+		return 1
+	}
+
+	execArgs := append([]string{"c"}, args...)
+	cmd := exec.Command(vamoscPath, execArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.ExitCode()
+		}
+		return 1
+	}
+	return 0
+}
+
+// RunBuildC compila código VAMOS-LANG diretamente em binário de máquina nativo via GCC
+func RunBuildC(args []string) int {
+	if len(args) == 0 {
+		fmt.Println("Erro: informe o arquivo .vamos para compilar via GCC.")
+		fmt.Println("Uso: vamos compilar-c <arquivo.vamos> [-o binario]")
+		return 1
+	}
+
+	vamoscPath, err := findVamosc()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Erro: %v\n", err)
+		return 1
+	}
+
+	execArgs := append([]string{"compilar-c"}, args...)
+	cmd := exec.Command(vamoscPath, execArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.ExitCode()
+		}
+		return 1
+	}
+	return 0
+}
+
+// RunSemanticCheck executa a análise semântica estática e de tipos no arquivo .vamos
+func RunSemanticCheck(args []string) int {
+	if len(args) == 0 {
+		fmt.Println("Erro: informe o arquivo .vamos para verificação semântica.")
+		fmt.Println("Uso: vamos semantico <arquivo.vamos>")
+		return 1
+	}
+
+	vamoscPath, err := findVamosc()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Erro: %v\n", err)
+		return 1
+	}
+
+	execArgs := append([]string{"checar"}, args...)
+	cmd := exec.Command(vamoscPath, execArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.ExitCode()
+		}
+		return 1
+	}
+	return 0
+}

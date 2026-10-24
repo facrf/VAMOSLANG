@@ -26,6 +26,12 @@ func main() {
 		os.Exit(cmd.RunBytecode(args))
 	case "wasm":
 		os.Exit(cmd.RunWasm(args))
+	case "c":
+		os.Exit(cmd.RunC(args))
+	case "compilar-c", "build-c":
+		os.Exit(cmd.RunBuildC(args))
+	case "semantico", "checar-semantico":
+		os.Exit(cmd.RunSemanticCheck(args))
 	case "build", "compilar", "construir":
 		os.Exit(cmd.RunBuild(args))
 	case "test", "testar", "teste":

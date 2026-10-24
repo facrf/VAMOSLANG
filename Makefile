@@ -46,6 +46,11 @@ run-examples: build
 	@echo "==> Testando exemplo 'wasm_modulo.vamos' (Compilação Nativa WebAssembly):"
 	./$(BINARY_NAME) wasm exemplos/wasm_modulo.vamos -o /tmp/modulo.wasm
 	@rm -f /tmp/modulo.wasm
+	@echo ""
+	@echo "==> Testando exemplo 'c_nativo.vamos' (Backend C99 & GCC Nativo):"
+	./$(BINARY_NAME) compilar-c exemplos/c_nativo.vamos -o /tmp/c_demo
+	/tmp/c_demo
+	@rm -f /tmp/c_demo
 
 check: build
 	@echo "==> 1. Verificando formatação de código..."
@@ -97,8 +102,11 @@ bootstrap: build
 	./compilador/vamosc-g3 --auto-teste
 	@echo "==> 9. Prova de WebAssembly Nativo: Compilando binário Wasm 1.0 com G3..."
 	./compilador/vamosc-g3 wasm exemplos/wasm_modulo.vamos -o compilador/modulo.wasm
-	@rm -f compilador/vamosc-g2 compilador/vamosc-g3 compilador/modulo.wasm
-	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm) CONCLUÍDO COM ÊXITO!"
+	@echo "==> 10. Prova de Backend C Nativo: Compilando binário nativo via GCC com G3..."
+	./compilador/vamosc-g3 compilar-c exemplos/c_nativo.vamos -o compilador/c_app
+	./compilador/c_app
+	@rm -f compilador/vamosc-g2 compilador/vamosc-g3 compilador/modulo.wasm compilador/c_app
+	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm + C/GCC) CONCLUÍDO COM ÊXITO!"
 
 clean:
 	@echo "==> Limpando arquivos compilados..."

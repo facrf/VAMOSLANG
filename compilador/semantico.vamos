@@ -1,0 +1,428 @@
+// Pacote compilador - Analisador Semântico e Tabela de Símbolos em VAMOS-LANG
+// Realiza a verificação estática de tipos, escopos léxicos, parâmetros e declarações na AST.
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+)
+
+// Simbolo representa uma entidade declarada (variável, constante, função, parâmetro ou tipo)
+tipo Simbolo estrutura {
+	Nome       texto
+	Tipo       texto
+	Categoria  texto // "variavel", "constante", "funcao", "parametro", "estrutura", "interface"
+	Linha      inteiro
+	Params     []texto // Tipos dos parâmetros se for função
+	Retorno    texto   // Tipo de retorno se for função
+	Campos     mapa[texto]texto
+}
+
+// NovoSimbolo cria um novo registro de símbolo
+funcao NovoSimbolo(nome texto, tipoDado texto, categoria texto, linha inteiro) *Simbolo {
+	retornar &Simbolo{
+		Nome:      nome,
+		Tipo:      tipoDado,
+		Categoria: categoria,
+		Linha:     linha,
+		Params:    criar([]texto, 0),
+		Retorno:   "",
+		Campos:    criar(mapa[texto]texto),
+	}
+}
+
+// Escopo gerencia a tabela de símbolos de um bloco léxico
+tipo Escopo estrutura {
+	Pai      *Escopo
+	Simbolos mapa[texto]*Simbolo
+}
+
+// NovoEscopo instancia um novo escopo com ligação opcional ao escopo pai
+funcao NovoEscopo(pai *Escopo) *Escopo {
+	retornar &Escopo{
+		Pai:      pai,
+		Simbolos: criar(mapa[texto]*Simbolo),
+	}
+}
+
+// Definir insere um símbolo no escopo atual. Retorna falso se já estiver definido neste escopo
+funcao (e *Escopo) Definir(s *Simbolo) booleano {
+	se _, existe := e.Simbolos[s.Nome]; existe {
+		retornar falso
+	}
+	e.Simbolos[s.Nome] = s
+	retornar verdadeiro
+}
+
+// Resolver busca um símbolo no escopo atual e, recursivamente, nos escopos pais
+funcao (e *Escopo) Resolver(nome texto) *Simbolo {
+	se s, existe := e.Simbolos[nome]; existe {
+		retornar s
+	}
+	se e.Pai != nulo {
+		retornar e.Pai.Resolver(nome)
+	}
+	retornar nulo
+}
+
+// ResolverLocal busca um símbolo apenas no escopo imediato
+funcao (e *Escopo) ResolverLocal(nome texto) *Simbolo {
+	se s, existe := e.Simbolos[nome]; existe {
+		retornar s
+	}
+	retornar nulo
+}
+
+// AnalisadorSemantico percorre a AST e valida regras da linguagem
+tipo AnalisadorSemantico estrutura {
+	EscopoGlobal *Escopo
+	EscopoAtual  *Escopo
+	FuncaoAtual  *Simbolo
+	Erros        []texto
+	Avisos       []texto
+}
+
+// NovoAnalisadorSemantico inicializa o analisador com símbolos pré-definidos (built-ins)
+funcao NovoAnalisadorSemantico() *AnalisadorSemantico {
+	global := NovoEscopo(nulo)
+
+	// Tipos primitivos pré-definidos
+	tiposPrimitivos := []texto{
+		"inteiro", "inteiro8", "inteiro16", "inteiro32", "inteiro64",
+		"uinquenta", "uint8", "uint16", "uint32", "uint64",
+		"decimal32", "decimal64", "texto", "booleano", "byte", "rune", "erro",
+	}
+	para _, t := intervalo tiposPrimitivos {
+		global.Definir(NovoSimbolo(t, t, "tipo", 0))
+	}
+
+	// Funções embutidas (built-ins)
+	fnTamanho := NovoSimbolo("tamanho", "inteiro", "funcao", 0)
+	fnTamanho.Params = anexar(fnTamanho.Params, "qualquer")
+	fnTamanho.Retorno = "inteiro"
+	global.Definir(fnTamanho)
+
+	fnAnexar := NovoSimbolo("anexar", "qualquer", "funcao", 0)
+	global.Definir(fnAnexar)
+
+	fnCriar := NovoSimbolo("criar", "qualquer", "funcao", 0)
+	global.Definir(fnCriar)
+
+	fnPanico := NovoSimbolo("panico", "vazio", "funcao", 0)
+	global.Definir(fnPanico)
+
+	fnRecuperar := NovoSimbolo("recuperar", "qualquer", "funcao", 0)
+	global.Definir(fnRecuperar)
+
+	// Constantes pré-definidas
+	global.Definir(NovoSimbolo("verdadeiro", "booleano", "constante", 0))
+	global.Definir(NovoSimbolo("falso", "booleano", "constante", 0))
+	global.Definir(NovoSimbolo("nulo", "qualquer", "constante", 0))
+
+	retornar &AnalisadorSemantico{
+		EscopoGlobal: global,
+		EscopoAtual:  global,
+		FuncaoAtual:  nulo,
+		Erros:        criar([]texto, 0),
+		Avisos:       criar([]texto, 0),
+	}
+}
+
+// registrarErro adiciona um erro semântico formatado
+funcao (a *AnalisadorSemantico) registrarErro(linha inteiro, msg texto) {
+	se linha > 0 {
+		a.Erros = anexar(a.Erros, formatar.Formatar("linha %d: %s", linha, msg))
+	} senao {
+		a.Erros = anexar(a.Erros, msg)
+	}
+}
+
+// registrarAviso adiciona um aviso informativo
+funcao (a *AnalisadorSemantico) registrarAviso(linha inteiro, msg texto) {
+	se linha > 0 {
+		a.Avisos = anexar(a.Avisos, formatar.Formatar("linha %d: [aviso] %s", linha, msg))
+	} senao {
+		a.Avisos = anexar(a.Avisos, "[aviso] " + msg)
+	}
+}
+
+// Analisar executa as fases de verificação semântica sobre a raiz do programa
+funcao (a *AnalisadorSemantico) Analisar(raiz *NoAST) []texto {
+	se raiz == nulo {
+		retornar a.Erros
+	}
+
+	// Fase 1: Coleta de tipos globais e declarações de funções
+	a.coletarDeclaracoesGlobais(raiz)
+
+	// Fase 2: Verificação de corpos de funções, escopos locais e expressões
+	a.verificarCorpos(raiz)
+
+	retornar a.Erros
+}
+
+// coletarDeclaracoesGlobais registra structs, interfaces e assinaturas de funções
+funcao (a *AnalisadorSemantico) coletarDeclaracoesGlobais(raiz *NoAST) {
+	para _, filho := intervalo raiz.Filhos {
+		escolha filho.Tipo {
+		caso NoTipoEstrutura:
+			s := NovoSimbolo(filho.Nome, filho.Nome, "estrutura", filho.Linha)
+			para _, campo := intervalo filho.Filhos {
+				se campo.Tipo == NoTipoCampo {
+					s.Campos[campo.Nome] = campo.TipoDado
+				}
+			}
+			se !a.EscopoGlobal.Definir(s) {
+				a.registrarErro(filho.Linha, formatar.Formatar("tipo de estrutura '%s' já foi declarado", filho.Nome))
+			}
+
+		caso NoTipoInterface:
+			s := NovoSimbolo(filho.Nome, filho.Nome, "interface", filho.Linha)
+			se !a.EscopoGlobal.Definir(s) {
+				a.registrarErro(filho.Linha, formatar.Formatar("interface '%s' já foi declarada", filho.Nome))
+			}
+
+		caso NoTipoFuncao:
+			s := NovoSimbolo(filho.Nome, "funcao", "funcao", filho.Linha)
+			s.Retorno = cordas.ApararEspaco(cordas.Substituir(filho.TipoDado, "retorno:", "", 1))
+			para _, p := intervalo filho.Filhos {
+				se p.Tipo == NoTipoParametro {
+					s.Params = anexar(s.Params, p.TipoDado)
+				}
+			}
+			se !a.EscopoGlobal.Definir(s) {
+				a.registrarErro(filho.Linha, formatar.Formatar("função '%s' redeclarada neste pacote", filho.Nome))
+			}
+
+		caso NoTipoConstante:
+			s := NovoSimbolo(filho.Nome, filho.TipoDado, "constante", filho.Linha)
+			se !a.EscopoGlobal.Definir(s) {
+				a.registrarErro(filho.Linha, formatar.Formatar("constante '%s' já declarada", filho.Nome))
+			}
+		}
+	}
+}
+
+// verificarCorpos percorre blocos e validações dentro das funções
+funcao (a *AnalisadorSemantico) verificarCorpos(raiz *NoAST) {
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoFuncao {
+			a.verificarFuncao(filho)
+		}
+	}
+}
+
+// verificarFuncao valida uma função e seus nós internos
+funcao (a *AnalisadorSemantico) verificarFuncao(fn *NoAST) {
+	simboloFn := a.EscopoGlobal.Resolver(fn.Nome)
+	a.FuncaoAtual = simboloFn
+
+	// Cria o escopo da função
+	escopoFn := NovoEscopo(a.EscopoGlobal)
+	a.EscopoAtual = escopoFn
+
+	// Registra parâmetros no escopo local
+	para _, p := intervalo fn.Filhos {
+		se p.Tipo == NoTipoParametro {
+			paramSim := NovoSimbolo(p.Nome, p.TipoDado, "parametro", p.Linha)
+			se !a.EscopoAtual.Definir(paramSim) {
+				a.registrarErro(p.Linha, formatar.Formatar("parâmetro '%s' duplicado na função '%s'", p.Nome, fn.Nome))
+			}
+		}
+	}
+
+	// Verifica o bloco do corpo
+	para _, filho := intervalo fn.Filhos {
+		se filho.Tipo == NoTipoBloco {
+			a.verificarBloco(filho)
+		}
+	}
+
+	a.EscopoAtual = a.EscopoGlobal
+	a.FuncaoAtual = nulo
+}
+
+// verificarBloco percorre os nós de um bloco de código criando escopo léxico
+funcao (a *AnalisadorSemantico) verificarBloco(bloco *NoAST) {
+	escopoBloco := NovoEscopo(a.EscopoAtual)
+	a.EscopoAtual = escopoBloco
+
+	para _, no := intervalo bloco.Filhos {
+		escolha no.Tipo {
+		caso NoTipoVariavel:
+			a.verificarDeclaracaoVariavel(no)
+
+		caso NoTipoExpressao:
+			a.verificarExpressaoInstrucao(no)
+
+		caso NoTipoCondicional:
+			a.verificarCondicional(no)
+
+		caso NoTipoLaco:
+			a.verificarLaco(no)
+
+		caso NoTipoRetorno:
+			a.verificarRetorno(no)
+
+		caso NoTipoBloco:
+			a.verificarBloco(no)
+		}
+	}
+
+	a.EscopoAtual = a.EscopoAtual.Pai
+}
+
+// verificarDeclaracaoVariavel valida nós de variável explícita (var x tipo = val)
+funcao (a *AnalisadorSemantico) verificarDeclaracaoVariavel(no *NoAST) {
+	nome := no.Nome
+	se a.EscopoAtual.ResolverLocal(nome) != nulo {
+		a.registrarErro(no.Linha, formatar.Formatar("variável '%s' já declarada neste escopo", nome))
+		retornar
+	}
+
+	s := NovoSimbolo(nome, no.TipoDado, "variavel", no.Linha)
+	a.EscopoAtual.Definir(s)
+}
+
+// verificarExpressaoInstrucao valida atribuições e chamadas soltas
+funcao (a *AnalisadorSemantico) verificarExpressaoInstrucao(no *NoAST) {
+	expr := cordas.ApararEspaco(no.Valor)
+	se expr == "" {
+		retornar
+	}
+
+	// 1. Declaração curta de variável: var := valor
+	se cordas.Contem(expr, ":=") {
+		partes := cordas.Dividir(expr, ":=")
+		se tamanho(partes) >= 2 {
+			nomeVar := cordas.ApararEspaco(partes[0])
+			se a.EscopoAtual.ResolverLocal(nomeVar) != nulo {
+				a.registrarErro(no.Linha, formatar.Formatar("variável '%s' já declarada neste escopo local", nomeVar))
+			} senao {
+				// Deduz tipo se for literal óbvio
+				tipoDeduzido := a.deduzirTipo(cordas.ApararEspaco(partes[1]))
+				s := NovoSimbolo(nomeVar, tipoDeduzido, "variavel", no.Linha)
+				a.EscopoAtual.Definir(s)
+			}
+		}
+		retornar
+	}
+
+	// 2. Atribuição simples: var = valor
+	se cordas.Contem(expr, "=") && !cordas.Contem(expr, "==") && !cordas.Contem(expr, "!=") && !cordas.Contem(expr, "<=") && !cordas.Contem(expr, ">=") {
+		partes := cordas.Dividir(expr, "=")
+		se tamanho(partes) >= 2 {
+			nomeVar := cordas.ApararEspaco(partes[0])
+			// Se não for acesso de campo (obj.campo) nem índice (lista[i])
+			se !cordas.Contem(nomeVar, ".") && !cordas.Contem(nomeVar, "[") {
+				se a.EscopoAtual.Resolver(nomeVar) == nulo {
+					a.registrarErro(no.Linha, formatar.Formatar("variável '%s' não declarada antes da atribuição", nomeVar))
+				}
+			}
+		}
+		retornar
+	}
+
+	// 3. Chamada de função isolada: func(arg)
+	idxAbre := cordas.Indice(expr, "(")
+	idxFecha := cordas.UltimoIndice(expr, ")")
+	se idxAbre > 0 && idxFecha == tamanho(expr)-1 {
+		nomeChamada := cordas.ApararEspaco(expr[:idxAbre])
+		// Se não for chamada de método ou pacote externo (ex: formatar.ImprimirLinha)
+		se !cordas.Contem(nomeChamada, ".") {
+			simboloFn := a.EscopoAtual.Resolver(nomeChamada)
+			se simboloFn == nulo {
+				a.registrarErro(no.Linha, formatar.Formatar("função '%s' não declarada", nomeChamada))
+			} senao se simboloFn.Categoria == "funcao" && tamanho(simboloFn.Params) > 0 {
+				argsTexto := cordas.ApararEspaco(expr[idxAbre+1 : idxFecha])
+				numArgs := 0
+				se argsTexto != "" {
+					args := cordas.Dividir(argsTexto, ",")
+					numArgs = tamanho(args)
+				}
+				se numArgs != tamanho(simboloFn.Params) {
+					a.registrarErro(no.Linha, formatar.Formatar("função '%s' espera %d argumentos, mas recebeu %d", nomeChamada, tamanho(simboloFn.Params), numArgs))
+				}
+			}
+		}
+	}
+}
+
+// verificarCondicional valida blocos se / senao
+funcao (a *AnalisadorSemantico) verificarCondicional(no *NoAST) {
+	para _, filho := intervalo no.Filhos {
+		se filho.Tipo == NoTipoBloco {
+			a.verificarBloco(filho)
+		} senao se filho.Tipo == NoTipoCondicional {
+			a.verificarCondicional(filho)
+		}
+	}
+}
+
+// verificarLaco valida o corpo de um laço para
+funcao (a *AnalisadorSemantico) verificarLaco(no *NoAST) {
+	escopoLaco := NovoEscopo(a.EscopoAtual)
+	a.EscopoAtual = escopoLaco
+
+	// Se houver declaração na cláusula do laço (ex: para i := 0; ...)
+	clausula := cordas.ApararEspaco(no.Valor)
+	se cordas.Contem(clausula, ":=") {
+		partes := cordas.Dividir(clausula, ":=")
+		se tamanho(partes) >= 2 {
+			nomeVar := cordas.ApararEspaco(partes[0])
+			s := NovoSimbolo(nomeVar, "inteiro", "variavel", no.Linha)
+			a.EscopoAtual.Definir(s)
+		}
+	}
+
+	para _, filho := intervalo no.Filhos {
+		se filho.Tipo == NoTipoBloco {
+			a.verificarBloco(filho)
+		}
+	}
+
+	a.EscopoAtual = a.EscopoAtual.Pai
+}
+
+// verificarRetorno valida se a função possui tipo de retorno compatível
+funcao (a *AnalisadorSemantico) verificarRetorno(no *NoAST) {
+	se a.FuncaoAtual == nulo {
+		a.registrarErro(no.Linha, "instrução 'retornar' fora de qualquer função")
+		retornar
+	}
+
+	valorRetorno := cordas.ApararEspaco(no.Valor)
+	retornoEsperado := cordas.ApararEspaco(a.FuncaoAtual.Retorno)
+
+	se retornoEsperado == "" || retornoEsperado == "vazio" {
+		se valorRetorno != "" {
+			a.registrarErro(no.Linha, formatar.Formatar("função '%s' não deve retornar valores", a.FuncaoAtual.Nome))
+		}
+	} senao {
+		se valorRetorno == "" {
+			a.registrarErro(no.Linha, formatar.Formatar("função '%s' deve retornar um valor do tipo '%s'", a.FuncaoAtual.Nome, retornoEsperado))
+		}
+	}
+}
+
+// deduzirTipo tenta identificar o tipo do literal
+funcao (a *AnalisadorSemantico) deduzirTipo(expr texto) texto {
+	se cordas.TemPrefixo(expr, "\"") && cordas.TemSufixo(expr, "\"") {
+		retornar "texto"
+	}
+	se expr == "verdadeiro" || expr == "falso" {
+		retornar "booleano"
+	}
+	se cordas.Contem(expr, ".") && !cordas.Contem(expr, " ") {
+		retornar "decimal64"
+	}
+	retornar "inteiro"
+}
+
+// ValidarAST executa a verificação semântica e imprime os diagnósticos encontrados
+funcao ValidarAST(raiz *NoAST) ([]texto, []texto) {
+	analisador := NovoAnalisadorSemantico()
+	erros := analisador.Analisar(raiz)
+	retornar erros, analisador.Avisos
+}
