@@ -65,13 +65,13 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
 5. **[`compilador/formatador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/formatador.vamos)**:
    - Formatador oficial de código escrito em VAMOS-LANG (`FormatarCodigo`), com indentação automática e preservação de raw strings.
 6. **[`compilador/bytecode.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/bytecode.vamos)**:
-   - Especificação de opcodes (`OpConstante`, `OpObterGlobal`, `OpDefinirGlobal`, `OpSomar`, `OpSubtrair`, `OpMultiplicar`, `OpDividir`, `OpIgual`, `OpSalto`, `OpSaltoSeFalso`, `OpImprimirLinha`, `OpParar`).
-   - Tabela de constantes, pool de identificadores e disassembler legível em Assembly VVM.
+   - Especificação de opcodes (`OpConstante`, `OpObterGlobal`, `OpDefinirGlobal`, `OpObterLocal`, `OpDefinirLocal`, `OpSomar`, `OpSubtrair`, `OpMultiplicar`, `OpDividir`, `OpIgual`, `OpSalto`, `OpSaltoSeFalso`, `OpImprimirLinha`, `OpChamar`, `OpRetornar`, `OpTamanho`, `OpCriarLista`, `OpAnexar`, `OpObterIndice`, `OpDefinirIndice`, `OpParar`).
+   - Tabela de constantes, pool de identificadores, tabela de funções e disassembler legível em Assembly VVM.
    - Serialização e desserialização binária/textual padronizada para arquivos de bytecode `.vamosb`.
 7. **[`compilador/vm.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/vm.vamos)**:
-   - Máquina Virtual VVM baseada em pilha com ponteiro de instruções (`ip`), tabela global de símbolos e avaliador polimórfico de expressões aritméticas e lógicas.
+   - Máquina Virtual VVM baseada em pilha com ponteiro de instruções (`ip`), call stack (`QuadroChamada`), escopo local isolado, recursão e suporte completo a vetores/fatias dinâmicas.
 8. **[`compilador/emissor.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/emissor.vamos)**:
-   - Emissor direto de bytecode a partir da AST: gera código para variáveis, avaliações aritméticas encadeadas, condicionais com ramificações de saltos e laços `para`.
+   - Emissor direto de bytecode a partir da AST: compila funções com prólogo/epílogo, avaliação de expressões com precedência e parênteses (`dividirForaParenteses`), condicionais, laços `para`, literais de lista (`[]tipo{...}`) e indexação (`lista[i]`).
 9. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
    - Motor de emissão Go em VAMOS-LANG para geração de binários nativos de máquina.
 10. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:

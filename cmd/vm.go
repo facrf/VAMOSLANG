@@ -7,6 +7,42 @@ import (
 	"path/filepath"
 )
 
+// findVamosc localiza o executável do compilador nativo vamosc
+func findVamosc() (string, error) {
+	// 1. Procura no PATH do sistema
+	if p, err := exec.LookPath("vamosc"); err == nil {
+		return p, nil
+	}
+
+	// 2. Procura a partir do diretório atual de trabalho
+	cwd, _ := os.Getwd()
+	rootCwd := FindProjectRoot(cwd)
+	candidate := filepath.Join(rootCwd, "compilador", "vamosc")
+	if _, err := os.Stat(candidate); err == nil {
+		return candidate, nil
+	}
+
+	// 3. Procura a partir da localização do binário 'vamos'
+	if exe, err := os.Executable(); err == nil {
+		rootExe := FindProjectRoot(filepath.Dir(exe))
+		candidateExe := filepath.Join(rootExe, "compilador", "vamosc")
+		if _, err := os.Stat(candidateExe); err == nil {
+			return candidateExe, nil
+		}
+	}
+
+	// 4. Se existir código fonte compilador/main.vamos, compila sob demanda
+	mainVamos := filepath.Join(rootCwd, "compilador", "main.vamos")
+	if _, err := os.Stat(mainVamos); err == nil {
+		buildArgs := []string{"build", "-o", candidate, mainVamos}
+		if code := RunBuild(buildArgs); code == 0 {
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf("compilador auto-hospedado 'vamosc' não encontrado")
+}
+
 // RunVM executa código .vamos ou .vamosb diretamente na Máquina Virtual VVM
 func RunVM(args []string) int {
 	if len(args) == 0 {
@@ -15,15 +51,10 @@ func RunVM(args []string) int {
 		return 1
 	}
 
-	root := FindProjectRoot(args[0])
-	vamoscPath := filepath.Join(root, "compilador", "vamosc")
-
-	// Se o compilador vamosc ainda não foi construído, constrói automaticamente
-	if _, err := os.Stat(vamoscPath); err != nil {
-		buildArgs := []string{"build", "-o", vamoscPath, filepath.Join(root, "compilador", "main.vamos")}
-		if code := RunBuild(buildArgs); code != 0 {
-			return code
-		}
+	vamoscPath, err := findVamosc()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Erro: %v\n", err)
+		return 1
 	}
 
 	execArgs := append([]string{"vm"}, args...)
@@ -49,14 +80,10 @@ func RunBytecode(args []string) int {
 		return 1
 	}
 
-	root := FindProjectRoot(args[0])
-	vamoscPath := filepath.Join(root, "compilador", "vamosc")
-
-	if _, err := os.Stat(vamoscPath); err != nil {
-		buildArgs := []string{"build", "-o", vamoscPath, filepath.Join(root, "compilador", "main.vamos")}
-		if code := RunBuild(buildArgs); code != 0 {
-			return code
-		}
+	vamoscPath, err := findVamosc()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Erro: %v\n", err)
+		return 1
 	}
 
 	execArgs := append([]string{"bytecode"}, args...)

@@ -44,13 +44,21 @@ funcao principal() {
 	formatar.ImprimirLinha("Recursão na VVM - Fatorial de 5:")
 	formatar.ImprimirLinha(fat5)
 
-	// 4. Estrutura de Repetição
-	formatar.ImprimirLinha("Executando laço de repetição na pilha VVM:")
-	contador := 1
-	para contador <= 3 {
-		formatar.ImprimirLinha("Passo do laço:")
-		formatar.ImprimirLinha(contador)
-		contador = contador + 1
+	// 4. Listas, Fatias e Indexação Dinâmica
+	formatar.ImprimirLinha("Operações com listas na pilha VVM:")
+	linguagens := []texto{"Go", "VAMOS-LANG"}
+	linguagens = anexar(linguagens, "Bytecode VVM")
+	formatar.ImprimirLinha("Total de itens na lista:")
+	formatar.ImprimirLinha(tamanho(linguagens))
+	formatar.ImprimirLinha("Item no índice 1:")
+	formatar.ImprimirLinha(linguagens[1])
+
+	// 5. Estrutura de Repetição com Índice
+	formatar.ImprimirLinha("Percorrendo lista na VVM:")
+	idx := 0
+	para idx < tamanho(linguagens) {
+		formatar.ImprimirLinha(linguagens[idx])
+		idx = idx + 1
 	}
 
 	formatar.ImprimirLinha("VVM: Execução de bytecode finalizada com sucesso!")

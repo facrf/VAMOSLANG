@@ -504,7 +504,17 @@ funcao (p *AnalisadorSintatico) analisarInstrucao() (*NoAST, erro) {
 	se tok.Tipo == TokenPalavraChave && tok.Valor == "retornar" {
 		p.consumir()
 		valRetorno := ""
-		para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && !p.coincidir(TokenDelimitador, "}") {
+		nivelChaves := 0
+		para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha {
+			se p.coincidir(TokenDelimitador, "{") {
+				nivelChaves++
+			} senao se p.coincidir(TokenDelimitador, "}") {
+				se nivelChaves > 0 {
+					nivelChaves--
+				} senao {
+					interromper
+				}
+			}
 			valRetorno = valRetorno + p.consumir().Valor + " "
 		}
 		noRetorno := NovoNo(NoTipoRetorno, "Retorno", tok.Linha)
@@ -518,7 +528,17 @@ funcao (p *AnalisadorSintatico) analisarInstrucao() (*NoAST, erro) {
 		p.consumir()
 		nomeVar := p.consumir().Valor
 		resto := ""
-		para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && !p.coincidir(TokenDelimitador, "}") {
+		nivelChaves := 0
+		para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha {
+			se p.coincidir(TokenDelimitador, "{") {
+				nivelChaves++
+			} senao se p.coincidir(TokenDelimitador, "}") {
+				se nivelChaves > 0 {
+					nivelChaves--
+				} senao {
+					interromper
+				}
+			}
 			resto = resto + p.consumir().Valor + " "
 		}
 		tipoNo := NoTipoVariavel
@@ -533,7 +553,17 @@ funcao (p *AnalisadorSintatico) analisarInstrucao() (*NoAST, erro) {
 	// 5. Atribuição rápida (x := ...) ou Expressão/Chamada genérica em linha
 	linhaExpressao := ""
 	linhaNum := tok.Linha
-	para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && !p.coincidir(TokenDelimitador, "}") {
+	nivelChaves := 0
+	para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha {
+		se p.coincidir(TokenDelimitador, "{") {
+			nivelChaves++
+		} senao se p.coincidir(TokenDelimitador, "}") {
+			se nivelChaves > 0 {
+				nivelChaves--
+			} senao {
+				interromper
+			}
+		}
 		linhaExpressao = linhaExpressao + p.consumir().Valor + " "
 	}
 

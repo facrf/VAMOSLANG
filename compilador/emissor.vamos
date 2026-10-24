@@ -206,9 +206,8 @@ funcao (e *EmissorBytecode) emitirDeclaracaoVariavel(no *NoAST) {
 	se cordas.Contem(valStr, "=") {
 		partes := cordas.Dividir(valStr, "=")
 		se tamanho(partes) >= 2 {
-			literalVal := limparTextoLiteral(cordas.ApararEspaco(partes[1]))
-			idxConst := e.programa.AdicionarConstante(literalVal)
-			e.programa.Emitir(OpConstante, idxConst, no.Linha)
+			conteudo := cordas.ApararEspaco(partes[1])
+			e.emitirAvaliacaoExpressao(conteudo, no.Linha)
 			e.programa.Emitir(OpDefinirGlobal, idxVar, no.Linha)
 			retornar
 		}
@@ -304,7 +303,7 @@ funcao (e *EmissorBytecode) emitirExpressaoOuInstrucao(no *NoAST) {
 		}
 	}
 
-	// 2. Atribuição rápida (x := ...) ou atribuição simples (x = ...)
+	// 2. Atribuição de índice (lista[i] = ...) ou variável (x := ... / x = ...)
 	se cordas.Contem(expr, ":=") || cordas.Contem(expr, "=") {
 		sep := ":="
 		se !cordas.Contem(expr, ":=") {
@@ -312,10 +311,25 @@ funcao (e *EmissorBytecode) emitirExpressaoOuInstrucao(no *NoAST) {
 		}
 		partes := cordas.Dividir(expr, sep)
 		se tamanho(partes) >= 2 {
-			nomeVar := cordas.ApararEspaco(partes[0])
+			ladoEsq := cordas.ApararEspaco(partes[0])
 			conteudoValor := cordas.ApararEspaco(partes[1])
+
+			// Atribuição a elemento de lista: lista[i] = ...
+			se cordas.Contem(ladoEsq, "[") && cordas.TemSufixo(ladoEsq, "]") {
+				idxAbreCol := cordas.Indice(ladoEsq, "[")
+				nomeLista := cordas.ApararEspaco(ladoEsq[:idxAbreCol])
+				exprIdx := cordas.ApararEspaco(ladoEsq[idxAbreCol+1 : tamanho(ladoEsq)-1])
+				e.emitirAvaliacaoExpressao(nomeLista, no.Linha)
+				e.emitirAvaliacaoExpressao(exprIdx, no.Linha)
+				e.emitirAvaliacaoExpressao(conteudoValor, no.Linha)
+				idxVar := e.programa.AdicionarIdentificador(nomeLista)
+				e.programa.Emitir(OpDefinirIndice, idxVar, no.Linha)
+				e.programa.Emitir(OpDescartar, 0, no.Linha)
+				retornar
+			}
+
 			e.emitirAvaliacaoExpressao(conteudoValor, no.Linha)
-			idxVar := e.programa.AdicionarIdentificador(nomeVar)
+			idxVar := e.programa.AdicionarIdentificador(ladoEsq)
 			e.programa.Emitir(OpDefinirGlobal, idxVar, no.Linha)
 			retornar
 		}
@@ -472,6 +486,24 @@ funcao (e *EmissorBytecode) emitirAvaliacaoExpressao(expr texto, linha inteiro) 
 				retornar
 			}
 
+			// Helpers de lista / fatias
+			se nomeFn == "anexar" || nomeFn == "append" {
+				se conteudoArgs != "" {
+					args := dividirForaParenteses(conteudoArgs, ",")
+					se tamanho(args) >= 2 {
+						e.emitirAvaliacaoExpressao(cordas.ApararEspaco(args[0]), linha)
+						e.emitirAvaliacaoExpressao(cordas.ApararEspaco(args[1]), linha)
+						e.programa.Emitir(OpAnexar, 0, linha)
+						retornar
+					}
+				}
+			}
+
+			se nomeFn == "criar" || nomeFn == "make" {
+				e.programa.Emitir(OpCriarLista, 0, linha)
+				retornar
+			}
+
 			se conteudoArgs != "" {
 				args := dividirForaParenteses(conteudoArgs, ",")
 				para _, arg := intervalo args {
@@ -481,6 +513,43 @@ funcao (e *EmissorBytecode) emitirAvaliacaoExpressao(expr texto, linha inteiro) 
 
 			idxId := e.programa.AdicionarIdentificador(nomeFn)
 			e.programa.Emitir(OpChamar, idxId, linha)
+			retornar
+		}
+	}
+
+	// Literal de Lista/Fatia: [item0, ...] ou [ ] tipo { item0, ... }
+	se (cordas.TemPrefixo(limpa, "[") && cordas.TemSufixo(limpa, "]") && !cordas.Contem(limpa, "{")) ||
+		(cordas.Contem(limpa, "{") && cordas.TemSufixo(limpa, "}")) {
+
+		conteudoLista := ""
+		se cordas.Contem(limpa, "{") && cordas.TemSufixo(limpa, "}") {
+			idxChave := cordas.Indice(limpa, "{")
+			conteudoLista = cordas.ApararEspaco(limpa[idxChave+1 : tamanho(limpa)-1])
+		} senao {
+			conteudoLista = cordas.ApararEspaco(limpa[1 : tamanho(limpa)-1])
+		}
+
+		se conteudoLista == "" {
+			e.programa.Emitir(OpCriarLista, 0, linha)
+			retornar
+		}
+		itens := dividirForaParenteses(conteudoLista, ",")
+		para _, it := intervalo itens {
+			e.emitirAvaliacaoExpressao(cordas.ApararEspaco(it), linha)
+		}
+		e.programa.Emitir(OpCriarLista, tamanho(itens), linha)
+		retornar
+	}
+
+	// Acesso indexado: lista[i]
+	idxColAbre := cordas.Indice(limpa, "[")
+	se idxColAbre > 0 && cordas.TemSufixo(limpa, "]") {
+		nomeAlvo := cordas.ApararEspaco(limpa[:idxColAbre])
+		idxExpr := cordas.ApararEspaco(limpa[idxColAbre+1 : tamanho(limpa)-1])
+		se !cordas.Contem(nomeAlvo, " ") && !cordas.Contem(nomeAlvo, "+") && !cordas.Contem(nomeAlvo, "-") {
+			e.emitirAvaliacaoExpressao(nomeAlvo, linha)
+			e.emitirAvaliacaoExpressao(idxExpr, linha)
+			e.programa.Emitir(OpObterIndice, 0, linha)
 			retornar
 		}
 	}

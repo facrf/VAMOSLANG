@@ -5,6 +5,7 @@ pacote principal
 
 importar (
 	"conversao"
+	"cordas"
 	"erros"
 	"formatar"
 )
@@ -71,6 +72,61 @@ funcao (vm *MaquinaVirtual) espiarTopo() texto {
 // ehVerdadeiro verifica se o valor avalia para verdadeiro na lógica da VM
 funcao ehVerdadeiro(v texto) booleano {
 	retornar v != "falso" && v != "0" && v != "" && v != "nulo"
+}
+
+// extrairItensLista decodifica a representação de lista em texto para elementos individuais
+funcao extrairItensLista(lista texto) []texto {
+	itens := criar([]texto, 0)
+	se !cordas.TemPrefixo(lista, "[") || !cordas.TemSufixo(lista, "]") {
+		retornar itens
+	}
+	conteudo := cordas.ApararEspaco(lista[1 : tamanho(lista)-1])
+	se conteudo == "" {
+		retornar itens
+	}
+
+	tam := tamanho(conteudo)
+	inicio := 0
+	nivel := 0
+	emAspas := falso
+
+	para i := 0; i < tam; i++ {
+		resto := conteudo[i:]
+		se cordas.TemPrefixo(resto, "\"") {
+			emAspas = !emAspas
+		} senao se !emAspas {
+			se cordas.TemPrefixo(resto, "[") || cordas.TemPrefixo(resto, "(") {
+				nivel++
+			} senao se cordas.TemPrefixo(resto, "]") || cordas.TemPrefixo(resto, ")") {
+				se nivel > 0 {
+					nivel--
+				}
+			} senao se nivel == 0 && cordas.TemPrefixo(resto, ",") {
+				item := cordas.ApararEspaco(conteudo[inicio:i])
+				se cordas.TemPrefixo(item, "\"") && cordas.TemSufixo(item, "\"") && tamanho(item) >= 2 {
+					item = item[1 : tamanho(item)-1]
+				}
+				itens = anexar(itens, item)
+				inicio = i + 1
+			}
+		}
+	}
+
+	itemFinal := cordas.ApararEspaco(conteudo[inicio:])
+	se cordas.TemPrefixo(itemFinal, "\"") && cordas.TemSufixo(itemFinal, "\"") && tamanho(itemFinal) >= 2 {
+		itemFinal = itemFinal[1 : tamanho(itemFinal)-1]
+	}
+	itens = anexar(itens, itemFinal)
+	retornar itens
+}
+
+// formatarLista codifica elementos de uma fatia/vetor em texto representativo
+funcao formatarLista(itens []texto) texto {
+	elementos := criar([]texto, 0)
+	para _, it := intervalo itens {
+		elementos = anexar(elementos, formatar.Formatar("\"%s\"", it))
+	}
+	retornar "[" + cordas.Juntar(elementos, ", ") + "]"
 }
 
 // Interpretar executa as instruções de um ProgramaBytecode do início ao fim
@@ -309,7 +365,58 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 
 		caso OpTamanho:
 			val := vm.desempilhar()
-			vm.empilhar(conversao.InteiroParaTexto(tamanho(val)))
+			se cordas.TemPrefixo(val, "[") && cordas.TemSufixo(val, "]") {
+				itens := extrairItensLista(val)
+				vm.empilhar(conversao.InteiroParaTexto(tamanho(itens)))
+			} senao {
+				vm.empilhar(conversao.InteiroParaTexto(tamanho(val)))
+			}
+
+		caso OpCriarLista:
+			n := inst.Argumento
+			itens := criar([]texto, n)
+			para i := n - 1; i >= 0; i-- {
+				itens[i] = vm.desempilhar()
+			}
+			vm.empilhar(formatarLista(itens))
+
+		caso OpAnexar:
+			item := vm.desempilhar()
+			lista := vm.desempilhar()
+			itens := extrairItensLista(lista)
+			itens = anexar(itens, item)
+			vm.empilhar(formatarLista(itens))
+
+		caso OpObterIndice:
+			idxStr := vm.desempilhar()
+			lista := vm.desempilhar()
+			idx, _ := conversao.ParaInteiro(idxStr)
+			itens := extrairItensLista(lista)
+			val := ""
+			se idx >= 0 && idx < tamanho(itens) {
+				val = itens[idx]
+			}
+			vm.empilhar(val)
+
+		caso OpDefinirIndice:
+			novoVal := vm.desempilhar()
+			idxStr := vm.desempilhar()
+			lista := vm.desempilhar()
+			idx, _ := conversao.ParaInteiro(idxStr)
+			itens := extrairItensLista(lista)
+			se idx >= 0 && idx < tamanho(itens) {
+				itens[idx] = novoVal
+			}
+			listaAtualizada := formatarLista(itens)
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
+				nomeVar := prog.Identificadores[inst.Argumento]
+				se tamanho(vm.quadros) > 1 {
+					vm.quadros[tamanho(vm.quadros)-1].locais[nomeVar] = listaAtualizada
+				} senao {
+					vm.globais[nomeVar] = listaAtualizada
+				}
+			}
+			vm.empilhar(listaAtualizada)
 
 		caso OpParar:
 			interromper

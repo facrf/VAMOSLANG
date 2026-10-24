@@ -38,6 +38,10 @@ constante (
 	OpDescartar      inteiro = 22 // Descarta valor do topo da pilha
 	OpParar          inteiro = 23 // Encerra a execução da VM
 	OpTamanho        inteiro = 24 // Retorna o tamanho do valor no topo da pilha
+	OpCriarLista     inteiro = 25 // Cria uma lista com N itens da pilha
+	OpAnexar         inteiro = 26 // Anexa um item à lista
+	OpObterIndice    inteiro = 27 // Obtém elemento da lista pelo índice (lista[i])
+	OpDefinirIndice  inteiro = 28 // Atualiza elemento da lista pelo índice (lista[i] = val)
 )
 
 // ObterNomeOpcode retorna o mnemônico de uma instrução em texto
@@ -91,6 +95,14 @@ funcao ObterNomeOpcode(op inteiro) texto {
 		retornar "PARAR"
 	caso OpTamanho:
 		retornar "TAMANHO"
+	caso OpCriarLista:
+		retornar "CRIAR_LISTA"
+	caso OpAnexar:
+		retornar "ANEXAR"
+	caso OpObterIndice:
+		retornar "OBTER_INDICE"
+	caso OpDefinirIndice:
+		retornar "DEFINIR_INDICE"
 	padrao:
 		retornar "OP_DESCONHECIDO"
 	}
