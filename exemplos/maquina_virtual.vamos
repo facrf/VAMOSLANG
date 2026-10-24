@@ -11,17 +11,25 @@ importar (
 	"formatar"
 )
 
+funcao calcularPontuacao(base inteiro, bonus inteiro) inteiro {
+	retornar base * 4 + bonus
+}
+
+funcao fatorial(n inteiro) inteiro {
+	se n <= 1 {
+		retornar 1
+	}
+	retornar n * fatorial(n - 1)
+}
+
 funcao principal() {
 	formatar.ImprimirLinha("================================================")
 	formatar.ImprimirLinha("   DEMONSTRAÇÃO DA MÁQUINA VIRTUAL VVM         ")
 	formatar.ImprimirLinha("================================================")
 
-	// 1. Aritmética e Variáveis
-	base := 15
-	multiplicador := 4
-	resultado := base * multiplicador + 10
-
-	formatar.ImprimirLinha("Cálculo aritmético na VVM (15 * 4 + 10):")
+	// 1. Chamada de Função e Aritmética
+	resultado := calcularPontuacao(15, 10)
+	formatar.ImprimirLinha("Cálculo via função na VVM (15 * 4 + 10):")
 	formatar.ImprimirLinha(resultado)
 
 	// 2. Condicionais Relacionais
@@ -31,7 +39,12 @@ funcao principal() {
 		formatar.ImprimirLinha("Avaliação: resultado abaixo da meta.")
 	}
 
-	// 3. Estrutura de Repetição
+	// 3. Função Recursiva com Quadro de Pilha
+	fat5 := fatorial(5)
+	formatar.ImprimirLinha("Recursão na VVM - Fatorial de 5:")
+	formatar.ImprimirLinha(fat5)
+
+	// 4. Estrutura de Repetição
 	formatar.ImprimirLinha("Executando laço de repetição na pilha VVM:")
 	contador := 1
 	para contador <= 3 {

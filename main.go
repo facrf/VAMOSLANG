@@ -20,6 +20,10 @@ func main() {
 	switch command {
 	case "run", "rodar", "executar":
 		os.Exit(cmd.RunExecute(args))
+	case "vm", "executar-vm":
+		os.Exit(cmd.RunVM(args))
+	case "bytecode", "desassemblar":
+		os.Exit(cmd.RunBytecode(args))
 	case "build", "compilar", "construir":
 		os.Exit(cmd.RunBuild(args))
 	case "test", "testar", "teste":

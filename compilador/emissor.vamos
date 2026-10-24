@@ -27,15 +27,133 @@ funcao limparTextoLiteral(s texto) texto {
 	retornar s
 }
 
+// dividirForaParenteses divide uma expressão por um operador apenas no nível raiz (fora de parênteses e aspas)
+funcao dividirForaParenteses(s texto, op texto) []texto {
+	partes := criar([]texto, 0)
+	tamOp := tamanho(op)
+	nivel := 0
+	emAspas := falso
+	inicio := 0
+	tamS := tamanho(s)
+
+	para i := 0; i < tamS; i++ {
+		resto := s[i:]
+		se cordas.TemPrefixo(resto, "\"") {
+			emAspas = !emAspas
+		} senao se !emAspas {
+			se cordas.TemPrefixo(resto, "(") || cordas.TemPrefixo(resto, "[") {
+				nivel++
+			} senao se cordas.TemPrefixo(resto, ")") || cordas.TemPrefixo(resto, "]") {
+				se nivel > 0 {
+					nivel--
+				}
+			} senao se nivel == 0 && i+tamOp <= tamS && cordas.TemPrefixo(resto, op) {
+				partes = anexar(partes, s[inicio:i])
+				inicio = i + tamOp
+				i = i + tamOp - 1
+			}
+		}
+	}
+
+	partes = anexar(partes, s[inicio:])
+	retornar partes
+}
+
 // CompilarAST processa o nó raiz da AST e produz o programa em bytecode
 funcao (e *EmissorBytecode) CompilarAST(raiz *NoAST) *ProgramaBytecode {
 	se raiz == nulo {
 		retornar e.programa
 	}
 
-	e.visitarNo(raiz)
+	// 1. Variáveis e constantes globais
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoVariavel || filho.Tipo == NoTipoConstante {
+			e.visitarNo(filho)
+		}
+	}
+
+	// 2. Salto incondicional para a função principal
+	idxSaltoPrincipal := e.programa.Emitir(OpSalto, 0, raiz.Linha)
+
+	// 3. Emissão de funções auxiliares (que não são 'principal')
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoFuncao && filho.Nome != "principal" {
+			e.emitirFuncao(filho)
+		}
+	}
+
+	// 4. Ajusta endereço de salto para a função principal
+	enderecoPrincipal := tamanho(e.programa.Instrucoes)
+	e.programa.ModificarArgumento(idxSaltoPrincipal, enderecoPrincipal)
+	e.programa.Funcoes["principal"] = enderecoPrincipal
+
+	// 5. Corpo da função principal
+	achouPrincipal := falso
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoFuncao && filho.Nome == "principal" {
+			achouPrincipal = verdadeiro
+			para _, neto := intervalo filho.Filhos {
+				se neto.Tipo == NoTipoBloco {
+					e.visitarNo(neto)
+				}
+			}
+		}
+	}
+
+	// Se não houver 'principal' explícita, processa nós soltos de nível superior
+	se !achouPrincipal {
+		para _, filho := intervalo raiz.Filhos {
+			se filho.Tipo != NoTipoVariavel && filho.Tipo != NoTipoConstante && filho.Tipo != NoTipoFuncao {
+				e.visitarNo(filho)
+			}
+		}
+	}
+
 	e.programa.Emitir(OpParar, 0, raiz.Linha)
 	retornar e.programa
+}
+
+// emitirFuncao compila uma função nomeada com seus parâmetros e bloco
+funcao (e *EmissorBytecode) emitirFuncao(no *NoAST) {
+	e.programa.Funcoes[no.Nome] = tamanho(e.programa.Instrucoes)
+
+	// Coleta parâmetros
+	params := criar([]texto, 0)
+	para _, filho := intervalo no.Filhos {
+		se filho.Tipo == NoTipoParametro {
+			params = anexar(params, filho.Nome)
+		}
+	}
+
+	// Desempilha parâmetros em ordem reversa
+	para i := tamanho(params) - 1; i >= 0; i-- {
+		idxParam := e.programa.AdicionarIdentificador(params[i])
+		e.programa.Emitir(OpDefinirLocal, idxParam, no.Linha)
+	}
+
+	// Visita os blocos internos da função
+	para _, filho := intervalo no.Filhos {
+		se filho.Tipo == NoTipoBloco {
+			e.visitarNo(filho)
+		}
+	}
+
+	// Retorno padrão vazio caso não haja instrução explícita
+	idxVazio := e.programa.AdicionarConstante("")
+	e.programa.Emitir(OpConstante, idxVazio, no.Linha)
+	e.programa.Emitir(OpRetornar, 0, no.Linha)
+}
+
+// emitirRetorno processa a instrução de retorno da função
+funcao (e *EmissorBytecode) emitirRetorno(no *NoAST) {
+	val := cordas.ApararEspaco(no.Valor)
+	se val != "" {
+		e.emitirAvaliacaoExpressao(val, no.Linha)
+	} senao {
+		idxVazio := e.programa.AdicionarConstante("")
+		e.programa.Emitir(OpConstante, idxVazio, no.Linha)
+	}
+	e.programa.Emitir(OpRetornar, 0, no.Linha)
 }
 
 // visitarNo percorre recursivamente nós da AST
@@ -51,7 +169,6 @@ funcao (e *EmissorBytecode) visitarNo(no *NoAST) {
 		}
 
 	caso NoTipoFuncao:
-		// Se for 'principal' ou função comum, visita seu corpo
 		para _, filho := intervalo no.Filhos {
 			se filho.Tipo == NoTipoBloco {
 				e.visitarNo(filho)
@@ -74,6 +191,9 @@ funcao (e *EmissorBytecode) visitarNo(no *NoAST) {
 
 	caso NoTipoExpressao:
 		e.emitirExpressaoOuInstrucao(no)
+
+	caso NoTipoRetorno:
+		e.emitirRetorno(no)
 	}
 }
 
@@ -200,6 +320,18 @@ funcao (e *EmissorBytecode) emitirExpressaoOuInstrucao(no *NoAST) {
 			retornar
 		}
 	}
+
+	// 3. Chamada avulsa de função: fn(...)
+	idxAbreFn := cordas.Indice(expr, "(")
+	idxFechaFn := cordas.UltimoIndice(expr, ")")
+	se idxAbreFn > 0 && idxFechaFn == tamanho(expr)-1 && !cordas.Contem(expr, ":=") && !cordas.Contem(expr, "=") {
+		nomeFn := cordas.ApararEspaco(expr[:idxAbreFn])
+		se !cordas.Contem(nomeFn, " ") {
+			e.emitirAvaliacaoExpressao(expr, no.Linha)
+			e.programa.Emitir(OpDescartar, 0, no.Linha)
+			retornar
+		}
+	}
 }
 
 // emitirAvaliacaoExpressao decompõe expressões aritméticas ou literais e gera instruções na pilha
@@ -213,92 +345,142 @@ funcao (e *EmissorBytecode) emitirAvaliacaoExpressao(expr texto, linha inteiro) 
 		retornar
 	}
 
-	// Comparações relacionais
-	se cordas.Contem(limpa, ">=") {
-		p := cordas.Dividir(limpa, ">=")
-		e.emitirAvaliacaoExpressao(p[0], linha)
-		e.emitirAvaliacaoExpressao(p[1], linha)
+	// Remoção de parênteses externos envolventes: (expr)
+	se cordas.TemPrefixo(limpa, "(") && cordas.TemSufixo(limpa, ")") {
+		nivel := 0
+		fechaNoFim := verdadeiro
+		para i := 0; i < tamanho(limpa)-1; i++ {
+			resto := limpa[i:]
+			se cordas.TemPrefixo(resto, "(") {
+				nivel++
+			} senao se cordas.TemPrefixo(resto, ")") {
+				nivel--
+				se nivel == 0 {
+					fechaNoFim = falso
+					interromper
+				}
+			}
+		}
+		se fechaNoFim {
+			e.emitirAvaliacaoExpressao(cordas.ApararEspaco(limpa[1:tamanho(limpa)-1]), linha)
+			retornar
+		}
+	}
+
+	// Comparações relacionais fora de parênteses
+	partesRel := dividirForaParenteses(limpa, ">=")
+	se tamanho(partesRel) >= 2 {
+		e.emitirAvaliacaoExpressao(partesRel[0], linha)
+		e.emitirAvaliacaoExpressao(partesRel[1], linha)
 		e.programa.Emitir(OpMaiorIgual, 0, linha)
 		retornar
 	}
-	se cordas.Contem(limpa, "<=") {
-		p := cordas.Dividir(limpa, "<=")
-		e.emitirAvaliacaoExpressao(p[0], linha)
-		e.emitirAvaliacaoExpressao(p[1], linha)
+	partesRel = dividirForaParenteses(limpa, "<=")
+	se tamanho(partesRel) >= 2 {
+		e.emitirAvaliacaoExpressao(partesRel[0], linha)
+		e.emitirAvaliacaoExpressao(partesRel[1], linha)
 		e.programa.Emitir(OpMenorIgual, 0, linha)
 		retornar
 	}
-	se cordas.Contem(limpa, "==") {
-		p := cordas.Dividir(limpa, "==")
-		e.emitirAvaliacaoExpressao(p[0], linha)
-		e.emitirAvaliacaoExpressao(p[1], linha)
+	partesRel = dividirForaParenteses(limpa, "==")
+	se tamanho(partesRel) >= 2 {
+		e.emitirAvaliacaoExpressao(partesRel[0], linha)
+		e.emitirAvaliacaoExpressao(partesRel[1], linha)
 		e.programa.Emitir(OpIgual, 0, linha)
 		retornar
 	}
-	se cordas.Contem(limpa, "!=") {
-		p := cordas.Dividir(limpa, "!=")
-		e.emitirAvaliacaoExpressao(p[0], linha)
-		e.emitirAvaliacaoExpressao(p[1], linha)
+	partesRel = dividirForaParenteses(limpa, "!=")
+	se tamanho(partesRel) >= 2 {
+		e.emitirAvaliacaoExpressao(partesRel[0], linha)
+		e.emitirAvaliacaoExpressao(partesRel[1], linha)
 		e.programa.Emitir(OpDiferente, 0, linha)
 		retornar
 	}
-	se cordas.Contem(limpa, ">") {
-		p := cordas.Dividir(limpa, ">")
-		e.emitirAvaliacaoExpressao(p[0], linha)
-		e.emitirAvaliacaoExpressao(p[1], linha)
+	partesRel = dividirForaParenteses(limpa, ">")
+	se tamanho(partesRel) >= 2 {
+		e.emitirAvaliacaoExpressao(partesRel[0], linha)
+		e.emitirAvaliacaoExpressao(partesRel[1], linha)
 		e.programa.Emitir(OpMaior, 0, linha)
 		retornar
 	}
-	se cordas.Contem(limpa, "<") {
-		p := cordas.Dividir(limpa, "<")
-		e.emitirAvaliacaoExpressao(p[0], linha)
-		e.emitirAvaliacaoExpressao(p[1], linha)
+	partesRel = dividirForaParenteses(limpa, "<")
+	se tamanho(partesRel) >= 2 {
+		e.emitirAvaliacaoExpressao(partesRel[0], linha)
+		e.emitirAvaliacaoExpressao(partesRel[1], linha)
 		e.programa.Emitir(OpMenor, 0, linha)
 		retornar
 	}
 
-	// Operações aritméticas
-	se cordas.Contem(limpa, "+") {
-		partes := cordas.Dividir(limpa, "+")
-		se tamanho(partes) >= 2 {
-			e.emitirAvaliacaoExpressao(partes[0], linha)
-			para i := 1; i < tamanho(partes); i++ {
-				e.emitirAvaliacaoExpressao(partes[i], linha)
-				e.programa.Emitir(OpSomar, 0, linha)
-			}
-			retornar
+	// Operações aritméticas fora de parênteses
+	partesSoma := dividirForaParenteses(limpa, "+")
+	se tamanho(partesSoma) >= 2 {
+		e.emitirAvaliacaoExpressao(partesSoma[0], linha)
+		para i := 1; i < tamanho(partesSoma); i++ {
+			e.emitirAvaliacaoExpressao(partesSoma[i], linha)
+			e.programa.Emitir(OpSomar, 0, linha)
 		}
+		retornar
 	}
-	se cordas.Contem(limpa, "-") {
-		partes := cordas.Dividir(limpa, "-")
-		se tamanho(partes) >= 2 {
-			e.emitirAvaliacaoExpressao(partes[0], linha)
-			para i := 1; i < tamanho(partes); i++ {
-				e.emitirAvaliacaoExpressao(partes[i], linha)
-				e.programa.Emitir(OpSubtrair, 0, linha)
-			}
-			retornar
+	partesSub := dividirForaParenteses(limpa, "-")
+	se tamanho(partesSub) >= 2 {
+		e.emitirAvaliacaoExpressao(partesSub[0], linha)
+		para i := 1; i < tamanho(partesSub); i++ {
+			e.emitirAvaliacaoExpressao(partesSub[i], linha)
+			e.programa.Emitir(OpSubtrair, 0, linha)
 		}
+		retornar
 	}
-	se cordas.Contem(limpa, "*") {
-		partes := cordas.Dividir(limpa, "*")
-		se tamanho(partes) >= 2 {
-			e.emitirAvaliacaoExpressao(partes[0], linha)
-			para i := 1; i < tamanho(partes); i++ {
-				e.emitirAvaliacaoExpressao(partes[i], linha)
-				e.programa.Emitir(OpMultiplicar, 0, linha)
-			}
-			retornar
+	partesMul := dividirForaParenteses(limpa, "*")
+	se tamanho(partesMul) >= 2 {
+		e.emitirAvaliacaoExpressao(partesMul[0], linha)
+		para i := 1; i < tamanho(partesMul); i++ {
+			e.emitirAvaliacaoExpressao(partesMul[i], linha)
+			e.programa.Emitir(OpMultiplicar, 0, linha)
 		}
+		retornar
 	}
-	se cordas.Contem(limpa, "/") {
-		partes := cordas.Dividir(limpa, "/")
-		se tamanho(partes) >= 2 {
-			e.emitirAvaliacaoExpressao(partes[0], linha)
-			para i := 1; i < tamanho(partes); i++ {
-				e.emitirAvaliacaoExpressao(partes[i], linha)
-				e.programa.Emitir(OpDividir, 0, linha)
+	partesDiv := dividirForaParenteses(limpa, "/")
+	se tamanho(partesDiv) >= 2 {
+		e.emitirAvaliacaoExpressao(partesDiv[0], linha)
+		para i := 1; i < tamanho(partesDiv); i++ {
+			e.emitirAvaliacaoExpressao(partesDiv[i], linha)
+			e.programa.Emitir(OpDividir, 0, linha)
+		}
+		retornar
+	}
+
+	// Chamada de função: func(arg1, arg2)
+	idxAbre := cordas.Indice(limpa, "(")
+	idxFecha := cordas.UltimoIndice(limpa, ")")
+	se idxAbre > 0 && idxFecha == tamanho(limpa)-1 {
+		nomeFn := cordas.ApararEspaco(limpa[:idxAbre])
+		se !cordas.Contem(nomeFn, " ") && !cordas.Contem(nomeFn, "+") && !cordas.Contem(nomeFn, "-") &&
+			!cordas.Contem(nomeFn, "*") && !cordas.Contem(nomeFn, "/") && !cordas.Contem(nomeFn, "\"") {
+
+			conteudoArgs := cordas.ApararEspaco(limpa[idxAbre+1 : idxFecha])
+
+			// Tratamento especial para helpers internos
+			se nomeFn == "conversao.InteiroParaTexto" || nomeFn == "conversao.ParaInteiro" ||
+				nomeFn == "strconv.Itoa" || nomeFn == "strconv.Atoi" {
+				e.emitirAvaliacaoExpressao(conteudoArgs, linha)
+				retornar
 			}
+
+			se nomeFn == "tamanho" || nomeFn == "len" {
+				e.emitirAvaliacaoExpressao(conteudoArgs, linha)
+				e.programa.Emitir(OpTamanho, 0, linha)
+				retornar
+			}
+
+			se conteudoArgs != "" {
+				args := dividirForaParenteses(conteudoArgs, ",")
+				para _, arg := intervalo args {
+					e.emitirAvaliacaoExpressao(cordas.ApararEspaco(arg), linha)
+				}
+			}
+
+			idxId := e.programa.AdicionarIdentificador(nomeFn)
+			e.programa.Emitir(OpChamar, idxId, linha)
 			retornar
 		}
 	}

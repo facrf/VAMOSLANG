@@ -389,9 +389,14 @@ tipo Usuario estrutura {
 	Idade inteiro
 }
 
+funcao calcular(x inteiro, y inteiro) inteiro {
+	retornar x + y
+}
+
 funcao principal() {
 	u := Usuario{Nome: "VAMOS", Idade: 1}
-	se u.Idade > 0 {
+	total := calcular(10, 32)
+	se total == 42 {
 		formatar.ImprimirLinha("Compilador VAMOS compilando a si mesmo!")
 	}
 }

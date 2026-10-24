@@ -9,22 +9,38 @@ importar (
 	"formatar"
 )
 
+// QuadroChamada armazena o escopo de variáveis e retorno de uma função ativa
+tipo QuadroChamada estrutura {
+	ipRetorno  inteiro
+	locais     mapa[texto]texto
+	nomeFuncao texto
+}
+
 // MaquinaVirtual executa as instruções de bytecode na pilha
 tipo MaquinaVirtual estrutura {
 	pilha    []texto
 	topo     inteiro
 	globais  mapa[texto]texto
+	quadros  []QuadroChamada
 	ip       inteiro
 }
 
 // NovaMaquinaVirtual cria uma nova instância de execução da VM
 funcao NovaMaquinaVirtual() *MaquinaVirtual {
-	retornar &MaquinaVirtual{
-		pilha:   criar([]texto, 1024),
+	vm := &MaquinaVirtual{
+		pilha:   criar([]texto, 2048),
 		topo:    0,
 		globais: criar(mapa[texto]texto),
+		quadros: criar([]QuadroChamada, 0),
 		ip:      0,
 	}
+	base := QuadroChamada{
+		ipRetorno:  -1,
+		locais:     criar(mapa[texto]texto),
+		nomeFuncao: "principal",
+	}
+	vm.quadros = anexar(vm.quadros, base)
+	retornar vm
 }
 
 // empilhar insere um valor no topo da pilha de execução
@@ -60,6 +76,15 @@ funcao ehVerdadeiro(v texto) booleano {
 // Interpretar executa as instruções de um ProgramaBytecode do início ao fim
 funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 	vm.ip = 0
+	vm.topo = 0
+	vm.quadros = criar([]QuadroChamada, 0)
+	base := QuadroChamada{
+		ipRetorno:  -1,
+		locais:     criar(mapa[texto]texto),
+		nomeFuncao: "principal",
+	}
+	vm.quadros = anexar(vm.quadros, base)
+
 	totalInstrucoes := tamanho(prog.Instrucoes)
 
 	para vm.ip < totalInstrucoes {
@@ -78,15 +103,60 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 			val := vm.desempilhar()
 			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
 				nome := prog.Identificadores[inst.Argumento]
-				vm.globais[nome] = val
+				se tamanho(vm.quadros) > 1 {
+					vm.quadros[tamanho(vm.quadros)-1].locais[nome] = val
+				} senao {
+					vm.globais[nome] = val
+				}
 			}
 
 		caso OpObterGlobal:
 			val := ""
 			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
 				nome := prog.Identificadores[inst.Argumento]
-				se v, ok := vm.globais[nome]; ok {
-					val = v
+				achou := falso
+				se tamanho(vm.quadros) > 0 {
+					quadro := vm.quadros[tamanho(vm.quadros)-1]
+					se v, ok := quadro.locais[nome]; ok {
+						val = v
+						achou = verdadeiro
+					}
+				}
+				se !achou {
+					se v, ok := vm.globais[nome]; ok {
+						val = v
+					}
+				}
+			}
+			vm.empilhar(val)
+
+		caso OpDefinirLocal:
+			val := vm.desempilhar()
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
+				nome := prog.Identificadores[inst.Argumento]
+				se tamanho(vm.quadros) > 0 {
+					vm.quadros[tamanho(vm.quadros)-1].locais[nome] = val
+				} senao {
+					vm.globais[nome] = val
+				}
+			}
+
+		caso OpObterLocal:
+			val := ""
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
+				nome := prog.Identificadores[inst.Argumento]
+				achou := falso
+				se tamanho(vm.quadros) > 0 {
+					quadro := vm.quadros[tamanho(vm.quadros)-1]
+					se v, ok := quadro.locais[nome]; ok {
+						val = v
+						achou = verdadeiro
+					}
+				}
+				se !achou {
+					se v, ok := vm.globais[nome]; ok {
+						val = v
+					}
 				}
 			}
 			vm.empilhar(val)
@@ -209,6 +279,37 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 
 		caso OpDescartar:
 			vm.desempilhar()
+
+		caso OpChamar:
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
+				nomeFunc := prog.Identificadores[inst.Argumento]
+				enderecoDestino, ok := prog.Funcoes[nomeFunc]
+				se !ok {
+					retornar erros.Novo(formatar.Formatar("função '%s' não encontrada na linha %d", nomeFunc, inst.Linha))
+				}
+				novoQuadro := QuadroChamada{
+					ipRetorno:  vm.ip,
+					locais:     criar(mapa[texto]texto),
+					nomeFuncao: nomeFunc,
+				}
+				vm.quadros = anexar(vm.quadros, novoQuadro)
+				vm.ip = enderecoDestino
+			}
+
+		caso OpRetornar:
+			valRetorno := vm.desempilhar()
+			se tamanho(vm.quadros) <= 1 {
+				vm.empilhar(valRetorno)
+				interromper
+			}
+			ultimoQuadro := vm.quadros[tamanho(vm.quadros)-1]
+			vm.quadros = vm.quadros[:tamanho(vm.quadros)-1]
+			vm.ip = ultimoQuadro.ipRetorno
+			vm.empilhar(valRetorno)
+
+		caso OpTamanho:
+			val := vm.desempilhar()
+			vm.empilhar(conversao.InteiroParaTexto(tamanho(val)))
 
 		caso OpParar:
 			interromper

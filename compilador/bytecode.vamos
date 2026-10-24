@@ -37,6 +37,7 @@ constante (
 	OpRetornar       inteiro = 21 // Retorna de função
 	OpDescartar      inteiro = 22 // Descarta valor do topo da pilha
 	OpParar          inteiro = 23 // Encerra a execução da VM
+	OpTamanho        inteiro = 24 // Retorna o tamanho do valor no topo da pilha
 )
 
 // ObterNomeOpcode retorna o mnemônico de uma instrução em texto
@@ -88,6 +89,8 @@ funcao ObterNomeOpcode(op inteiro) texto {
 		retornar "DESCARTAR"
 	caso OpParar:
 		retornar "PARAR"
+	caso OpTamanho:
+		retornar "TAMANHO"
 	padrao:
 		retornar "OP_DESCONHECIDO"
 	}
@@ -102,9 +105,10 @@ tipo Instrucao estrutura {
 
 // ProgramaBytecode encapsula um programa compilado para a VVM
 tipo ProgramaBytecode estrutura {
-	Constantes  []texto
-	Instrucoes  []Instrucao
+	Constantes      []texto
+	Instrucoes      []Instrucao
 	Identificadores []texto
+	Funcoes         mapa[texto]inteiro
 }
 
 // NovoProgramaBytecode instancia um programa vazio
@@ -113,6 +117,7 @@ funcao NovoProgramaBytecode() *ProgramaBytecode {
 		Constantes:      criar([]texto, 0),
 		Instrucoes:      criar([]Instrucao, 0),
 		Identificadores: criar([]texto, 0),
+		Funcoes:         criar(mapa[texto]inteiro),
 	}
 }
 
@@ -184,6 +189,16 @@ funcao (p *ProgramaBytecode) Desassemblar() texto {
 			argStr = formatar.Formatar("%d (%s)", inst.Argumento, nome)
 		} senao se inst.Opcode == OpSalto || inst.Opcode == OpSaltoSeFalso {
 			argStr = formatar.Formatar("-> endereco %04d", inst.Argumento)
+		} senao se inst.Opcode == OpChamar {
+			nome := "<fn>"
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(p.Identificadores) {
+				nome = p.Identificadores[inst.Argumento]
+			}
+			endFn := 0
+			se e, ok := p.Funcoes[nome]; ok {
+				endFn = e
+			}
+			argStr = formatar.Formatar("%s (endereco %04d)", nome, endFn)
 		} senao se inst.Argumento != 0 {
 			argStr = formatar.Formatar("%d", inst.Argumento)
 		}
@@ -208,6 +223,11 @@ funcao (p *ProgramaBytecode) Serializar() texto {
 	linhas = anexar(linhas, formatar.Formatar("[IDENTIFICADORES:%d]", tamanho(p.Identificadores)))
 	para _, id := intervalo p.Identificadores {
 		linhas = anexar(linhas, "I:" + id)
+	}
+
+	linhas = anexar(linhas, formatar.Formatar("[FUNCOES:%d]", tamanho(p.Funcoes)))
+	para nome, endFn := intervalo p.Funcoes {
+		linhas = anexar(linhas, formatar.Formatar("F:%s %d", nome, endFn))
 	}
 
 	linhas = anexar(linhas, formatar.Formatar("[INSTRUCOES:%d]", tamanho(p.Instrucoes)))
@@ -244,6 +264,13 @@ funcao DesserializarBytecode(dados texto) (*ProgramaBytecode, erro) {
 			prog.Constantes = anexar(prog.Constantes, desescapado)
 		} senao se cordas.TemPrefixo(linha, "I:") {
 			prog.Identificadores = anexar(prog.Identificadores, linha[2:])
+		} senao se cordas.TemPrefixo(linha, "F:") {
+			partes := cordas.Dividir(cordas.ApararEspaco(linha[2:]), " ")
+			se tamanho(partes) >= 2 {
+				nomeFn := partes[0]
+				endFn, _ := conversao.ParaInteiro(partes[1])
+				prog.Funcoes[nomeFn] = endFn
+			}
 		} senao se cordas.TemPrefixo(linha, "X:") {
 			partes := cordas.Dividir(cordas.ApararEspaco(linha[2:]), " ")
 			se tamanho(partes) >= 3 {

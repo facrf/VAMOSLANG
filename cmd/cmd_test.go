@@ -121,3 +121,17 @@ func TestPrepareWorkspace(t *testing.T) {
 		t.Errorf("go.mod não encontrado no workspace temporário")
 	}
 }
+
+func TestRunVMAndBytecode(t *testing.T) {
+	root := FindProjectRoot(".")
+	exemploPath := filepath.Join(root, "exemplos", "maquina_virtual.vamos")
+	codeVM := RunVM([]string{exemploPath})
+	if codeVM != 0 {
+		t.Errorf("RunVM retornou código de erro: %d", codeVM)
+	}
+
+	codeBytecode := RunBytecode([]string{exemploPath})
+	if codeBytecode != 0 {
+		t.Errorf("RunBytecode retornou código de erro: %d", codeBytecode)
+	}
+}
