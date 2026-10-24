@@ -112,6 +112,7 @@ var TypesAndBuiltinsMap = map[string]string{
 	"runa":              "rune",
 	"caractere":         "rune",
 	"qualquer":          "any",
+	"comparavel":        "comparable",
 	"erro":              "error",
 
 	// Constantes e Valores Literais
@@ -162,6 +163,7 @@ var ReverseTypesAndBuiltinsMap = map[string]string{
 	"byte":        "byte",
 	"rune":        "runa",
 	"any":         "qualquer",
+	"comparable":  "comparavel",
 	"error":       "erro",
 	"true":        "verdadeiro",
 	"false":       "falso",
@@ -212,6 +214,10 @@ var StdlibImportPathsMap = map[string]string{
 	"md5":                 "crypto/md5",
 	"matematica/aleatorio": "math/rand",
 	"aleatorio":           "math/rand",
+	"sincronizar/atomico": "sync/atomic",
+	"atomico":             "sync/atomic",
+	"redes/url":           "net/url",
+	"url":                 "net/url",
 	"servidor":            "vamos/pacotes/servidor",
 }
 
@@ -237,6 +243,8 @@ var ReverseStdlibImportsMap = map[string]string{
 	"crypto/sha256": "cripto/sha256",
 	"crypto/md5":    "cripto/md5",
 	"math/rand":     "matematica/aleatorio",
+	"sync/atomic":   "sincronizar/atomico",
+	"net/url":       "redes/url",
 }
 
 // StdlibIdentMap mapeia os identificadores de pacotes em código (ex: servidor_http. -> http., formatar. -> fmt.).
@@ -255,6 +263,9 @@ var StdlibIdentMap = map[string]string{
 	"os":                  "os",
 	"sincronizar":         "sync",
 	"sync":                "sync",
+	"atomico":             "atomic",
+	"atomic":              "atomic",
+	"url":                 "url",
 	"erros":               "errors",
 	"errors":              "errors",
 	"io":                  "io",
@@ -314,6 +325,7 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"Hora":                "Hour",
 		"Duracao":             "Duration",
 		"Desde":               "Since",
+		"Ate":                 "Until",
 		"Apos":                "After",
 		"NovoTemporizador":    "NewTimer",
 		"NovoTique":           "NewTicker",
@@ -354,6 +366,10 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"Contar":         "Count",
 		"Comparar":       "Compare",
 		"IgualDobra":     "EqualFold",
+		"Cortar":         "Cut",
+		"CortarPrefixo":  "CutPrefix",
+		"CortarSufixo":   "CutSuffix",
+		"Clonar":         "Clone",
 	},
 	"sync": {
 		"GrupoEspera":         "WaitGroup",
@@ -523,6 +539,38 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"MiddlewareRegistrador": "MiddlewareRegistrador",
 		"MiddlewareCORS":        "MiddlewareCORS",
 	},
+	"atomic": {
+		"CarregarInteiro64":        "LoadInt64",
+		"CarregarInteiro32":        "LoadInt32",
+		"CarregarUinteiro64":       "LoadUint64",
+		"CarregarUinteiro32":       "LoadUint32",
+		"CarregarPonteiro":         "LoadPointer",
+		"ArmazenarInteiro64":       "StoreInt64",
+		"ArmazenarInteiro32":       "StoreInt32",
+		"ArmazenarUinteiro64":      "StoreUint64",
+		"ArmazenarUinteiro32":      "StoreUint32",
+		"AdicionarInteiro64":       "AddInt64",
+		"AdicionarInteiro32":       "AddInt32",
+		"AdicionarUinteiro64":      "AddUint64",
+		"AdicionarUinteiro32":      "AddUint32",
+		"TrocarInteiro64":          "SwapInt64",
+		"TrocarInteiro32":          "SwapInt32",
+		"CompararETrocarInteiro64": "CompareAndSwapInt64",
+		"CompararETrocarInteiro32": "CompareAndSwapInt32",
+		"Valor":                    "Value",
+		"Ponteiro":                 "Pointer",
+		"Inteiro64":                "Int64",
+		"Inteiro32":                "Int32",
+		"Booleano":                 "Bool",
+	},
+	"url": {
+		"Analisar":           "Parse",
+		"AnalisarRequisicao": "ParseRequestURI",
+		"ConsultaEscape":     "QueryEscape",
+		"ConsultaDesescape":  "QueryUnescape",
+		"CaminhoEscape":      "PathEscape",
+		"CaminhoDesescape":   "PathUnescape",
+	},
 }
 
 // MethodAliasesMap mapeia nomes de métodos de objetos e interfaces em PT-BR para Go.
@@ -569,6 +617,9 @@ var MethodAliasesMap = map[string]string{
 	"Escanear":         "Scan",
 	"Proximo":          "Next",
 	"ObterTexto":       "Text",
+	"Prazo":            "Deadline",
+	"Cancelar":         "Cancel",
+	"Codificar":        "Encode",
 }
 
 // ReverseMethodAliasesMap mapeia métodos Go para PT-BR.
@@ -593,7 +644,10 @@ var ReverseMethodAliasesMap = map[string]string{
 	"Commit":       "Confirmar",
 	"Rollback":     "Reverter",
 	"Prepare":      "Preparar",
-	"Sum":          "Soma",
-	"Scan":         "Escanear",
-	"Next":         "Proximo",
+	"Sum":            "Soma",
+	"Scan":           "Escanear",
+	"Next":           "Proximo",
+	"Deadline":       "Prazo",
+	"Cancel":         "Cancelar",
+	"Encode":         "Codificar",
 }

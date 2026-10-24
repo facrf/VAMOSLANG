@@ -1,4 +1,4 @@
-.PHONY: all build test run-examples run-games check wasm clean install docker-build
+.PHONY: all build test run-examples run-games check wasm clean install docker-build bootstrap
 
 BINARY_NAME=vamos
 
@@ -36,6 +36,9 @@ run-examples: build
 	@echo ""
 	@echo "==> Testando exemplo 'uuid_externo.vamos' (Pacotes Go Externos):"
 	./$(BINARY_NAME) run exemplos/uuid_externo.vamos
+	@echo ""
+	@echo "==> Testando exemplo 'genericos.vamos' (Tipos Genéricos e Restrições):"
+	./$(BINARY_NAME) run exemplos/genericos.vamos
 
 check: build
 	@echo "==> 1. Verificando formatação de código..."
@@ -66,9 +69,23 @@ run-games: build
 	@echo "==> Executando demonstração do Jogo de Damas:"
 	./$(BINARY_NAME) run jogos/damas.vamos --demo
 
+bootstrap: build
+	@echo "==> 1. Compilando o compilador auto-hospedado (G1) 'compilador/vamosc'..."
+	./$(BINARY_NAME) build -o compilador/vamosc compilador/main.vamos
+	@echo "==> 2. Executando auto-teste de integridade em VAMOS-LANG..."
+	./compilador/vamosc --auto-teste
+	@echo "==> 3. Gerando AST de 'exemplos/ola_mundo.vamos' com o parser auto-hospedado..."
+	./compilador/vamosc --ast exemplos/ola_mundo.vamos
+	@echo "==> 4. Transpilando 'exemplos/ola_mundo.vamos' com o compilador auto-hospedado..."
+	./compilador/vamosc --transpilar exemplos/ola_mundo.vamos -o /tmp/saida_bootstrap.go
+	@go run /tmp/saida_bootstrap.go
+	@rm -f /tmp/saida_bootstrap.go
+	@echo "✓ Etapas 1 e 2 do Bootstrapping validadas com sucesso!"
+
 clean:
 	@echo "==> Limpando arquivos compilados..."
 	rm -f $(BINARY_NAME)
+	rm -f compilador/vamosc
 	rm -f bin_*
 	rm -f exemplos/*.go
 

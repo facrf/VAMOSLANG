@@ -1,0 +1,105 @@
+// Exemplo: Tipos Genéricos (Generics) em VAMOS-LANG
+// Demonstra o uso de parâmetros de tipo com restrições 'qualquer' (any), 'comparavel' (comparable) e aproximação (~).
+
+pacote principal
+
+importar (
+	"formatar"
+	"cordas"
+)
+
+// Restrição personalizada utilizando união de tipos com operador de aproximação (~)
+tipo Numerico interface {
+	~inteiro | ~inteiro64 | ~decimal64
+}
+
+// Estrutura genérica (Pilha) capaz de armazenar qualquer tipo de dado
+tipo Pilha[T qualquer] estrutura {
+	elementos []T
+}
+
+// Empilhar insere um novo elemento no topo da pilha
+funcao (p *Pilha[T]) Empilhar(item T) {
+	p.elementos = anexar(p.elementos, item)
+}
+
+// Desempilhar remove e retorna o elemento do topo da pilha
+funcao (p *Pilha[T]) Desempilhar() (T, booleano) {
+	se tamanho(p.elementos) == 0 {
+		variavel zero T
+		retornar zero, falso
+	}
+	indice := tamanho(p.elementos) - 1
+	item := p.elementos[indice]
+	p.elementos = p.elementos[:indice]
+	retornar item, verdadeiro
+}
+
+// Tamanho retorna a quantidade atual de itens na pilha
+funcao (p *Pilha[T]) Tamanho() inteiro {
+	retornar tamanho(p.elementos)
+}
+
+// EncontrarIndice busca o primeiro índice de um valor em qualquer fatia comparável
+funcao EncontrarIndice[T comparavel](colecao []T, item T) inteiro {
+	para i, val := intervalo colecao {
+		se val == item {
+			retornar i
+		}
+	}
+	retornar -1
+}
+
+// CalcularSoma soma dois valores de qualquer tipo numérico restrito
+funcao CalcularSoma[T Numerico](a T, b T) T {
+	retornar a + b
+}
+
+// Mapear aplica uma função transformadora sobre uma fatia genérica
+funcao Mapear[T qualquer, R qualquer](entrada []T, transformador funcao(T) R) []R {
+	resultado := criar([]R, 0, tamanho(entrada))
+	para _, v := intervalo entrada {
+		resultado = anexar(resultado, transformador(v))
+	}
+	retornar resultado
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("      VAMOS-LANG: Tipos Genéricos (Generics)    ")
+	formatar.ImprimirLinha("================================================")
+
+	// 1. Pilha Genérica de Textos
+	pilhaNomes := Pilha[texto]{}
+	pilhaNomes.Empilhar("São Paulo")
+	pilhaNomes.Empilhar("Rio de Janeiro")
+	pilhaNomes.Empilhar("Belo Horizonte")
+
+	formatar.ImprimirFormatado("Total na pilha de cidades: %d itens\n", pilhaNomes.Tamanho())
+	topo, ok := pilhaNomes.Desempilhar()
+	se ok {
+		formatar.ImprimirFormatado("Desempilhado do topo: %s\n", topo)
+	}
+
+	// 2. Busca genérica com restrição 'comparavel'
+	linguagens := []texto{"Go", "Python", "VAMOS-LANG", "Rust"}
+	posicao := EncontrarIndice(linguagens, "VAMOS-LANG")
+	formatar.ImprimirFormatado("Posição de 'VAMOS-LANG' na lista: %d\n", posicao)
+
+	// 3. Operação com restrição personalizada 'Numerico'
+	somaInteiros := CalcularSoma(150, 350)
+	somaDecimais := CalcularSoma(42.5, 57.5)
+	formatar.ImprimirFormatado("Soma de inteiros genéricos: %d\n", somaInteiros)
+	formatar.ImprimirFormatado("Soma de decimais genéricos: %.2f\n", somaDecimais)
+
+	// 4. Mapeamento de tipos T -> R
+	numeros := []inteiro{1, 2, 3, 4, 5}
+	textosFormatados := Mapear(numeros, funcao(n inteiro) texto {
+		retornar formatar.Formatar("Item #%d", n*10)
+	})
+	formatar.ImprimirFormatado("Lista mapeada: [%s]\n", cordas.Juntar(textosFormatados, ", "))
+
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("✓ Demonstração de Generics executada com êxito!")
+	formatar.ImprimirLinha("================================================")
+}

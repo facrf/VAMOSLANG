@@ -1,0 +1,333 @@
+// Pacote compilador - Motor de Transpilação Auto-Hospedado (Self-Hosted Transpiler) em VAMOS-LANG
+// Converte a lista de tokens em código Go nativo diretamente a partir de código escrito em VAMOS.
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+)
+
+// Transpilador processa os tokens e sintetiza o código Go final
+tipo Transpilador estrutura {
+	tokens  []Token
+	pos     inteiro
+	tamanho inteiro
+}
+
+// NovoTranspilador cria uma instância do transpilador
+funcao NovoTranspilador(tokens []Token) *Transpilador {
+	retornar &Transpilador{
+		tokens:  tokens,
+		pos:     0,
+		tamanho: tamanho(tokens),
+	}
+}
+
+// espiar retorna o token no deslocamento relativo
+funcao (t *Transpilador) espiar(offset inteiro) Token {
+	idx := t.pos + offset
+	se idx >= t.tamanho {
+		retornar Token{Tipo: TokenFimArquivo}
+	}
+	retornar t.tokens[idx]
+}
+
+// proximo consome e retorna o token atual
+funcao (t *Transpilador) proximo() Token {
+	se t.pos >= t.tamanho {
+		retornar Token{Tipo: TokenFimArquivo}
+	}
+	tok := t.tokens[t.pos]
+	t.pos++
+	retornar tok
+}
+
+// mapearMetodoPacote traduz chamadas conhecidas como formatar.ImprimirLinha -> fmt.Println
+funcao mapearMetodoPacote(pacoteIdent texto, metodoIdent texto) (texto, texto, booleano) {
+	se pacoteIdent == "formatar" || pacoteIdent == "fmt" {
+		escolha metodoIdent {
+		caso "ImprimirLinha":
+			retornar "fmt", "Println", verdadeiro
+		caso "ImprimirFormatado":
+			retornar "fmt", "Printf", verdadeiro
+		caso "Imprimir":
+			retornar "fmt", "Print", verdadeiro
+		caso "Formatar":
+			retornar "fmt", "Sprintf", verdadeiro
+		caso "FormatarLinha":
+			retornar "fmt", "Sprintln", verdadeiro
+		caso "CriarErro", "ErroFormatado":
+			retornar "fmt", "Errorf", verdadeiro
+		caso "Escanear":
+			retornar "fmt", "Scan", verdadeiro
+		caso "EscanearLinha":
+			retornar "fmt", "Scanln", verdadeiro
+		}
+	}
+
+	se pacoteIdent == "tempo" || pacoteIdent == "time" {
+		escolha metodoIdent {
+		caso "Dormir":
+			retornar "time", "Sleep", verdadeiro
+		caso "Agora":
+			retornar "time", "Now", verdadeiro
+		caso "Segundo":
+			retornar "time", "Second", verdadeiro
+		caso "Milissegundo":
+			retornar "time", "Millisecond", verdadeiro
+		caso "Duracao":
+			retornar "time", "Duration", verdadeiro
+		caso "Desde":
+			retornar "time", "Since", verdadeiro
+		caso "Ate":
+			retornar "time", "Until", verdadeiro
+		}
+	}
+
+	se pacoteIdent == "cordas" || pacoteIdent == "textos" || pacoteIdent == "strings" {
+		escolha metodoIdent {
+		caso "Contem":
+			retornar "strings", "Contains", verdadeiro
+		caso "Dividir":
+			retornar "strings", "Split", verdadeiro
+		caso "Juntar":
+			retornar "strings", "Join", verdadeiro
+		caso "ParaMaiusculas":
+			retornar "strings", "ToUpper", verdadeiro
+		caso "ParaMinusculas":
+			retornar "strings", "ToLower", verdadeiro
+		caso "Substituir":
+			retornar "strings", "Replace", verdadeiro
+		caso "SubstituirTudo":
+			retornar "strings", "ReplaceAll", verdadeiro
+		caso "TemPrefixo":
+			retornar "strings", "HasPrefix", verdadeiro
+		caso "TemSufixo":
+			retornar "strings", "HasSuffix", verdadeiro
+		caso "Aparar":
+			retornar "strings", "Trim", verdadeiro
+		caso "ApararEspaco":
+			retornar "strings", "TrimSpace", verdadeiro
+		}
+	}
+
+	se pacoteIdent == "so" || pacoteIdent == "sistema" || pacoteIdent == "os" {
+		escolha metodoIdent {
+		caso "Sair":
+			retornar "os", "Exit", verdadeiro
+		caso "Argumentos":
+			retornar "os", "Args", verdadeiro
+		caso "LerArquivo":
+			retornar "os", "ReadFile", verdadeiro
+		caso "EscreverArquivo":
+			retornar "os", "WriteFile", verdadeiro
+		caso "ObterVariavelAmbiente":
+			retornar "os", "Getenv", verdadeiro
+		}
+	}
+
+	se pacoteIdent == "atomico" || pacoteIdent == "atomic" {
+		escolha metodoIdent {
+		caso "CarregarInteiro64":
+			retornar "atomic", "LoadInt64", verdadeiro
+		caso "ArmazenarInteiro64":
+			retornar "atomic", "StoreInt64", verdadeiro
+		caso "AdicionarInteiro64":
+			retornar "atomic", "AddInt64", verdadeiro
+		}
+	}
+
+	se pacoteIdent == "url" {
+		escolha metodoIdent {
+		caso "Analisar":
+			retornar "url", "Parse", verdadeiro
+		caso "ConsultaEscape":
+			retornar "url", "QueryEscape", verdadeiro
+		caso "ConsultaDesescape":
+			retornar "url", "QueryUnescape", verdadeiro
+		}
+	}
+
+	se pacoteIdent == "erros" || pacoteIdent == "errors" {
+		se metodoIdent == "Novo" {
+			retornar "errors", "New", verdadeiro
+		}
+	}
+
+	retornar pacoteIdent, metodoIdent, falso
+}
+
+// traduzirMetodoObjeto traduz métodos encadeados em instâncias de objetos
+funcao traduzirMetodoObjeto(metodo texto) (texto, booleano) {
+	escolha metodo {
+	caso "Formato", "Formatar":
+		retornar "Format", verdadeiro
+	caso "Concluido", "Feito":
+		retornar "Done", verdadeiro
+	caso "Esperar":
+		retornar "Wait", verdadeiro
+	caso "Bloquear":
+		retornar "Lock", verdadeiro
+	caso "Desbloquear":
+		retornar "Unlock", verdadeiro
+	caso "Fechar":
+		retornar "Close", verdadeiro
+	caso "Ler":
+		retornar "Read", verdadeiro
+	caso "Escrever":
+		retornar "Write", verdadeiro
+	caso "Texto":
+		retornar "String", verdadeiro
+	caso "Erro":
+		retornar "Error", verdadeiro
+	caso "Adicionar":
+		retornar "Add", verdadeiro
+	caso "Prazo":
+		retornar "Deadline", verdadeiro
+	caso "Cancelar":
+		retornar "Cancel", verdadeiro
+	caso "Codificar":
+		retornar "Encode", verdadeiro
+	padrao:
+		retornar metodo, falso
+	}
+}
+
+// Transpilar executa a conversão do código para Go
+funcao (t *Transpilador) Transpilar() texto {
+	linhas := criar([]texto, 0)
+	sb := criar([]texto, 0)
+
+	para t.pos < t.tamanho {
+		tok := t.espiar(0)
+		se tok.Tipo == TokenFimArquivo {
+			interromper
+		}
+
+		// Preservação de espaços, novas linhas, comentários e literais
+		se tok.Tipo == TokenEspaco || tok.Tipo == TokenQuebraLinha || tok.Tipo == TokenComentario ||
+			tok.Tipo == TokenTextoBruto || tok.Tipo == TokenRuna || tok.Tipo == TokenNumero {
+			sb = anexar(sb, t.proximo().Valor)
+			continuar
+		}
+
+		// Bloco de Importação
+		se tok.Tipo == TokenPalavraChave && tok.Valor == "importar" {
+			t.proximo()
+			sb = anexar(sb, "import")
+			emParenteses := falso
+
+			para t.pos < t.tamanho {
+				itok := t.espiar(0)
+				se itok.Tipo == TokenFimArquivo {
+					interromper
+				}
+				se itok.Tipo == TokenEspaco || itok.Tipo == TokenComentario {
+					sb = anexar(sb, t.proximo().Valor)
+					continuar
+				}
+				se itok.Tipo == TokenDelimitador && itok.Valor == "(" {
+					emParenteses = verdadeiro
+					sb = anexar(sb, t.proximo().Valor)
+					continuar
+				}
+				se itok.Tipo == TokenDelimitador && itok.Valor == ")" {
+					emParenteses = falso
+					sb = anexar(sb, t.proximo().Valor)
+					interromper
+				}
+				se itok.Tipo == TokenQuebraLinha {
+					sb = anexar(sb, t.proximo().Valor)
+					se !emParenteses {
+						interromper
+					}
+					continuar
+				}
+				se itok.Tipo == TokenTexto {
+					val := t.proximo().Valor
+					se tamanho(val) >= 2 && cordas.TemPrefixo(val, "\"") && cordas.TemSufixo(val, "\"") {
+						conteudo := val[1 : tamanho(val)-1]
+						traduzido := TraduzirCaminhoImport(conteudo)
+						sb = anexar(sb, formatar.Formatar("\"%s\"", traduzido))
+					} senao {
+						sb = anexar(sb, val)
+					}
+					se !emParenteses {
+						interromper
+					}
+					continuar
+				}
+				sb = anexar(sb, t.proximo().Valor)
+			}
+			continuar
+		}
+
+		// Palavra-chave 'pacote' -> 'package'
+		se tok.Tipo == TokenPalavraChave && tok.Valor == "pacote" {
+			t.proximo()
+			sb = anexar(sb, "package")
+			continuar
+		}
+
+		// Palavras-chave em geral
+		se tok.Tipo == TokenPalavraChave {
+			sb = anexar(sb, TraduzirPalavraChave(t.proximo().Valor))
+			continuar
+		}
+
+		// Texto literal (fora de import)
+		se tok.Tipo == TokenTexto {
+			sb = anexar(sb, t.proximo().Valor)
+			continuar
+		}
+
+		// Chamada de método qualificado: pacote.Metodo
+		se tok.Tipo == TokenIdentificador {
+			prox1 := t.espiar(1)
+			se prox1.Tipo == TokenDelimitador && prox1.Valor == "." {
+				prox2 := t.espiar(2)
+				se prox2.Tipo == TokenIdentificador {
+					pkgGo, metGo, ok := mapearMetodoPacote(tok.Valor, prox2.Valor)
+					se ok {
+						t.proximo() // consome pacote
+						t.proximo() // consome '.'
+						t.proximo() // consome metodo
+						sb = anexar(sb, formatar.Formatar("%s.%s", pkgGo, metGo))
+						continuar
+					}
+				}
+			}
+
+			// Tipos e Builtins ou Identificador Comum
+			tipoGo, okTipo := TraduzirTipoOuBuiltin(tok.Valor)
+			se okTipo {
+				t.proximo()
+				sb = anexar(sb, tipoGo)
+			} senao {
+				sb = anexar(sb, t.proximo().Valor)
+			}
+			continuar
+		}
+
+		// Método de objeto após '.'
+		se tok.Tipo == TokenDelimitador && tok.Valor == "." {
+			prox := t.espiar(1)
+			se prox.Tipo == TokenIdentificador {
+				metodoGo, okMetodo := traduzirMetodoObjeto(prox.Valor)
+				se okMetodo {
+					t.proximo() // consome '.'
+					t.proximo() // consome metodo
+					sb = anexar(sb, formatar.Formatar(".%s", metodoGo))
+					continuar
+				}
+			}
+		}
+
+		// Operadores e delimitadores
+		sb = anexar(sb, t.proximo().Valor)
+	}
+
+	linhas = anexar(linhas, cordas.Juntar(sb, ""))
+	retornar cordas.Juntar(linhas, "")
+}

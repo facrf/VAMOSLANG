@@ -1,0 +1,261 @@
+// Pacote compilador - Núcleo do Compilador Auto-Hospedado (Self-Hosted) em VAMOS-LANG
+// Definições de unidades léxicas (tokens), palavras-chave e símbolos da linguagem.
+
+pacote principal
+
+// Tipos de Tokens
+constante (
+	TokenFimArquivo    inteiro = 0
+	TokenErro          inteiro = 1
+	TokenEspaco        inteiro = 2
+	TokenQuebraLinha   inteiro = 3
+	TokenComentario    inteiro = 4
+	TokenIdentificador inteiro = 5
+	TokenPalavraChave  inteiro = 6
+	TokenTexto         inteiro = 7
+	TokenTextoBruto    inteiro = 8
+	TokenRuna          inteiro = 9
+	TokenNumero        inteiro = 10
+	TokenOperador      inteiro = 11
+	TokenDelimitador   inteiro = 12
+)
+
+// Token representa uma unidade léxica com posição no código-fonte
+tipo Token estrutura {
+	Tipo   inteiro
+	Valor  texto
+	Linha  inteiro
+	Coluna inteiro
+}
+
+// ObterNomeToken retorna a representação legível do tipo de token
+funcao ObterNomeToken(tipoToken inteiro) texto {
+	escolha tipoToken {
+	caso TokenFimArquivo:
+		retornar "FIM_ARQUIVO"
+	caso TokenErro:
+		retornar "ERRO"
+	caso TokenEspaco:
+		retornar "ESPACO"
+	caso TokenQuebraLinha:
+		retornar "QUEBRA_LINHA"
+	caso TokenComentario:
+		retornar "COMENTARIO"
+	caso TokenIdentificador:
+		retornar "IDENTIFICADOR"
+	caso TokenPalavraChave:
+		retornar "PALAVRA_CHAVE"
+	caso TokenTexto:
+		retornar "TEXTO"
+	caso TokenTextoBruto:
+		retornar "TEXTO_BRUTO"
+	caso TokenRuna:
+		retornar "RUNA"
+	caso TokenNumero:
+		retornar "NUMERO"
+	caso TokenOperador:
+		retornar "OPERADOR"
+	caso TokenDelimitador:
+		retornar "DELIMITADOR"
+	padrao:
+		retornar "DESCONHECIDO"
+	}
+}
+
+// EhPalavraChave verifica se um identificador é uma palavra reservada do VAMOS-LANG
+funcao EhPalavraChave(palavra texto) booleano {
+	escolha palavra {
+	caso "pacote", "principal", "importar", "funcao", "variavel", "constante",
+		"tipo", "estrutura", "interface", "mapa", "canal", "se", "senao",
+		"para", "intervalo", "escolha", "caso", "padrao", "prosseguir",
+		"interromper", "continuar", "ir_para", "retornar", "disparar",
+		"adiar", "selecionar":
+		retornar verdadeiro
+	padrao:
+		retornar falso
+	}
+}
+
+// TraduzirPalavraChave traduz a palavra-chave de VAMOS para Go
+funcao TraduzirPalavraChave(palavra texto) texto {
+	escolha palavra {
+	caso "pacote":
+		retornar "package"
+	caso "principal":
+		retornar "main"
+	caso "importar":
+		retornar "import"
+	caso "funcao":
+		retornar "func"
+	caso "variavel":
+		retornar "var"
+	caso "constante":
+		retornar "const"
+	caso "tipo":
+		retornar "type"
+	caso "estrutura":
+		retornar "struct"
+	caso "interface":
+		retornar "interface"
+	caso "mapa":
+		retornar "map"
+	caso "canal":
+		retornar "chan"
+	caso "se":
+		retornar "if"
+	caso "senao":
+		retornar "else"
+	caso "para":
+		retornar "for"
+	caso "intervalo":
+		retornar "range"
+	caso "escolha":
+		retornar "switch"
+	caso "caso":
+		retornar "case"
+	caso "padrao":
+		retornar "default"
+	caso "prosseguir":
+		retornar "fallthrough"
+	caso "interromper":
+		retornar "break"
+	caso "continuar":
+		retornar "continue"
+	caso "ir_para":
+		retornar "goto"
+	caso "retornar":
+		retornar "return"
+	caso "disparar":
+		retornar "go"
+	caso "adiar":
+		retornar "defer"
+	caso "selecionar":
+		retornar "select"
+	padrao:
+		retornar palavra
+	}
+}
+
+// TraduzirTipoOuBuiltin traduz tipos primitivos, restrições e funções nativas de VAMOS para Go
+funcao TraduzirTipoOuBuiltin(ident texto) (texto, booleano) {
+	escolha ident {
+	caso "texto":
+		retornar "string", verdadeiro
+	caso "inteiro":
+		retornar "int", verdadeiro
+	caso "inteiro8":
+		retornar "int8", verdadeiro
+	caso "inteiro16":
+		retornar "int16", verdadeiro
+	caso "inteiro32":
+		retornar "int32", verdadeiro
+	caso "inteiro64":
+		retornar "int64", verdadeiro
+	caso "uinteiro":
+		retornar "uint", verdadeiro
+	caso "uinteiro8":
+		retornar "uint8", verdadeiro
+	caso "uinteiro16":
+		retornar "uint16", verdadeiro
+	caso "uinteiro32":
+		retornar "uint32", verdadeiro
+	caso "uinteiro64":
+		retornar "uint64", verdadeiro
+	caso "decimal", "decimal64":
+		retornar "float64", verdadeiro
+	caso "decimal32":
+		retornar "float32", verdadeiro
+	caso "booleano":
+		retornar "bool", verdadeiro
+	caso "byte":
+		retornar "byte", verdadeiro
+	caso "runa", "caractere":
+		retornar "rune", verdadeiro
+	caso "qualquer":
+		retornar "any", verdadeiro
+	caso "comparavel":
+		retornar "comparable", verdadeiro
+	caso "erro":
+		retornar "error", verdadeiro
+	caso "verdadeiro":
+		retornar "true", verdadeiro
+	caso "falso":
+		retornar "false", verdadeiro
+	caso "nulo":
+		retornar "nil", verdadeiro
+	caso "criar":
+		retornar "make", verdadeiro
+	caso "novo":
+		retornar "new", verdadeiro
+	caso "adicionar", "anexar":
+		retornar "append", verdadeiro
+	caso "tamanho":
+		retornar "len", verdadeiro
+	caso "capacidade":
+		retornar "cap", verdadeiro
+	caso "fechar":
+		retornar "close", verdadeiro
+	caso "copiar":
+		retornar "copy", verdadeiro
+	caso "excluir", "deletar":
+		retornar "delete", verdadeiro
+	caso "panico":
+		retornar "panic", verdadeiro
+	caso "recuperar":
+		retornar "recover", verdadeiro
+	padrao:
+		retornar ident, falso
+	}
+}
+
+// TraduzirCaminhoImport traduz caminhos de importação da stdlib PT-BR para caminhos Go
+funcao TraduzirCaminhoImport(caminho texto) texto {
+	escolha caminho {
+	caso "formatar":
+		retornar "fmt"
+	caso "tempo":
+		retornar "time"
+	caso "matematica":
+		retornar "math"
+	caso "cordas", "textos":
+		retornar "strings"
+	caso "so", "sistema":
+		retornar "os"
+	caso "sincronizar":
+		retornar "sync"
+	caso "sincronizar/atomico", "atomico":
+		retornar "sync/atomic"
+	caso "redes/url", "url":
+		retornar "net/url"
+	caso "erros":
+		retornar "errors"
+	caso "io":
+		retornar "io"
+	caso "leitor":
+		retornar "bufio"
+	caso "json":
+		retornar "encoding/json"
+	caso "servidor_http", "http":
+		retornar "net/http"
+	caso "contexto":
+		retornar "context"
+	caso "registrador":
+		retornar "log"
+	caso "caminho":
+		retornar "path/filepath"
+	caso "ordenacao":
+		retornar "sort"
+	caso "banco_dados", "banco/sql":
+		retornar "database/sql"
+	caso "conversao":
+		retornar "strconv"
+	caso "cripto/sha256", "sha256":
+		retornar "crypto/sha256"
+	caso "matematica/aleatorio", "aleatorio":
+		retornar "math/rand"
+	caso "servidor":
+		retornar "vamos/pacotes/servidor"
+	padrao:
+		retornar caminho
+	}
+}

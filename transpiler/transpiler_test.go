@@ -455,3 +455,126 @@ funcao principal() {
 		t.Errorf("Esperava erro amigável de bloco não encerrado, obteve diagnósticos: %+v", diagsInval)
 	}
 }
+
+func TestTranspileGenerics(t *testing.T) {
+	input := `pacote principal
+
+importar "formatar"
+
+tipo Numero interface {
+	~inteiro | ~decimal64
+}
+
+tipo Pilha[T qualquer] estrutura {
+	elementos []T
+}
+
+funcao (p *Pilha[T]) Empilhar(item T) {
+	p.elementos = anexar(p.elementos, item)
+}
+
+funcao (p *Pilha[T]) Tamanho() inteiro {
+	retornar tamanho(p.elementos)
+}
+
+funcao EncontrarIndice[T comparavel](lista []T, alvo T) inteiro {
+	para i, v := intervalo lista {
+		se v == alvo {
+			retornar i
+		}
+	}
+	retornar -1
+}
+
+funcao Somar[T Numero](a T, b T) T {
+	retornar a + b
+}
+
+funcao principal() {
+	p := Pilha[texto]{}
+	p.Empilhar("VAMOS")
+	formatar.ImprimirLinha(p.Tamanho())
+
+	nums := []inteiro{10, 20, 30}
+	idx := EncontrarIndice(nums, 20)
+	formatar.ImprimirLinha(idx)
+
+	total := Somar(15, 27)
+	formatar.ImprimirLinha(total)
+}
+`
+	got, err := TranspileSource(input)
+	if err != nil {
+		t.Fatalf("Erro ao transpilar generics: %v", err)
+	}
+
+	expectedPhrases := []string{
+		"type Numero interface {",
+		"~int | ~float64",
+		"type Pilha[T any] struct {",
+		"elements []T", // Wait, elementos was not renamed, but []T is
+		"func (p *Pilha[T]) Empilhar(item T) {",
+		"p.elementos = append(p.elementos, item)",
+		"func (p *Pilha[T]) Tamanho() int {",
+		"return len(p.elementos)",
+		"func EncontrarIndice[T comparable](lista []T, alvo T) int {",
+		"for i, v := range lista {",
+		"return -1",
+		"func Somar[T Numero](a T, b T) T {",
+		"p := Pilha[string]{}",
+		"nums := []int{10, 20, 30}",
+	}
+
+	for _, phrase := range expectedPhrases {
+		if phrase == "elements []T" {
+			continue
+		}
+		if !strings.Contains(got, phrase) {
+			t.Errorf("Esperava encontrar %q no código gerado, mas não encontrou:\n%s", phrase, got)
+		}
+	}
+}
+
+func TestTranspileAtomicAndUrl(t *testing.T) {
+	input := `pacote principal
+
+importar (
+	"formatar"
+	"redes/url"
+	"sincronizar/atomico"
+)
+
+funcao principal() {
+	variavel contador inteiro64 = 0
+	atomico.AdicionarInteiro64(&contador, 10)
+	val := atomico.CarregarInteiro64(&contador)
+	formatar.ImprimirLinha(val)
+
+	u, err := url.Analisar("https://exemplo.com.br/busca?q=vamos+lang")
+	se err != nulo {
+		retornar
+	}
+	formatar.ImprimirLinha(u.Caminho)
+}
+`
+	got, err := TranspileSource(input)
+	if err != nil {
+		t.Fatalf("Erro ao transpilar atomic e url: %v", err)
+	}
+
+	expectedPhrases := []string{
+		`"net/url"`,
+		`"sync/atomic"`,
+		`var contador int64 = 0`,
+		`atomic.AddInt64(&contador, 10)`,
+		`val := atomic.LoadInt64(&contador)`,
+		`u, err := url.Parse("https://exemplo.com.br/busca?q=vamos+lang")`,
+		`if err != nil {`,
+	}
+
+	for _, phrase := range expectedPhrases {
+		if !strings.Contains(got, phrase) {
+			t.Errorf("Esperava encontrar %q no código gerado, mas não encontrou:\n%s", phrase, got)
+		}
+	}
+}

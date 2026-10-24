@@ -1,0 +1,145 @@
+// Pacote compilador - Árvore Sintática Abstrata (AST) em VAMOS-LANG
+// Modela a estrutura hierárquica do código após o processo de análise sintática.
+
+pacote principal
+
+importar (
+	"formatar"
+)
+
+// Categorias gramaticais dos nós da AST
+constante (
+	NoTipoPacote           inteiro = 1
+	NoTipoPrograma         inteiro = 2
+	NoTipoImportacao       inteiro = 3
+	NoTipoFuncao           inteiro = 4
+	NoTipoParametro        inteiro = 5
+	NoTipoTipoDecl         inteiro = 6
+	NoTipoEstrutura        inteiro = 7
+	NoTipoCampo            inteiro = 8
+	NoTipoInterface        inteiro = 9
+	NoTipoMetodoAssinatura inteiro = 10
+	NoTipoVariavel         inteiro = 11
+	NoTipoConstante        inteiro = 12
+	NoTipoBloco            inteiro = 13
+	NoTipoCondicional      inteiro = 14
+	NoTipoLaco             inteiro = 15
+	NoTipoRetorno          inteiro = 16
+	NoTipoChamada          inteiro = 17
+	NoTipoAtribuicao       inteiro = 18
+	NoTipoExpressao        inteiro = 19
+)
+
+// ObterNomeNoTipo retorna a descrição em texto do tipo de nó
+funcao ObterNomeNoTipo(tipoNo inteiro) texto {
+	escolha tipoNo {
+	caso NoTipoPacote:
+		retornar "Pacote"
+	caso NoTipoPrograma:
+		retornar "Programa"
+	caso NoTipoImportacao:
+		retornar "Importacao"
+	caso NoTipoFuncao:
+		retornar "Funcao"
+	caso NoTipoParametro:
+		retornar "Parametro"
+	caso NoTipoTipoDecl:
+		retornar "DeclaracaoTipo"
+	caso NoTipoEstrutura:
+		retornar "Estrutura"
+	caso NoTipoCampo:
+		retornar "Campo"
+	caso NoTipoInterface:
+		retornar "Interface"
+	caso NoTipoMetodoAssinatura:
+		retornar "AssinaturaMetodo"
+	caso NoTipoVariavel:
+		retornar "Variavel"
+	caso NoTipoConstante:
+		retornar "Constante"
+	caso NoTipoBloco:
+		retornar "Bloco"
+	caso NoTipoCondicional:
+		retornar "Condicional"
+	caso NoTipoLaco:
+		retornar "Laco"
+	caso NoTipoRetorno:
+		retornar "Retorno"
+	caso NoTipoChamada:
+		retornar "Chamada"
+	caso NoTipoAtribuicao:
+		retornar "Atribuicao"
+	caso NoTipoExpressao:
+		retornar "Expressao"
+	padrao:
+		retornar "NoDesconhecido"
+	}
+}
+
+// NoAST é o nó genérico da árvore sintática
+tipo NoAST estrutura {
+	Tipo      inteiro
+	Nome      texto
+	TipoDado  texto
+	Valor     texto
+	Filhos    []*NoAST
+	Linha     inteiro
+}
+
+// NovoNo cria um novo nó da AST
+funcao NovoNo(tipoNo inteiro, nome texto, linha inteiro) *NoAST {
+	retornar &NoAST{
+		Tipo:   tipoNo,
+		Nome:   nome,
+		Filhos: criar([]*NoAST, 0),
+		Linha:  linha,
+	}
+}
+
+// AdicionarFilho anexa um nó dependente
+funcao (n *NoAST) AdicionarFilho(filho *NoAST) {
+	n.Filhos = anexar(n.Filhos, filho)
+}
+
+// TotalFilhos retorna a contagem de nós dependentes
+funcao (n *NoAST) TotalFilhos() inteiro {
+	retornar tamanho(n.Filhos)
+}
+
+// ImprimirArvore exibe a AST formatada graficamente no terminal
+funcao ImprimirArvore(no *NoAST, prefixo texto, ehUltimo booleano) {
+	se no == nulo {
+		retornar
+	}
+
+	marcador := "├── "
+	se ehUltimo {
+		marcador = "└── "
+	}
+
+	detalhe := ""
+	se no.Nome != "" {
+		detalhe = detalhe + " [" + no.Nome + "]"
+	}
+	se no.TipoDado != "" {
+		detalhe = detalhe + " (tipo: " + no.TipoDado + ")"
+	}
+	se no.Valor != "" {
+		detalhe = detalhe + " = " + no.Valor
+	}
+
+	formatar.ImprimirLinha(prefixo + marcador + ObterNomeNoTipo(no.Tipo) + detalhe)
+
+	novoPrefixo := prefixo
+	se ehUltimo {
+		novoPrefixo = novoPrefixo + "    "
+	} senao {
+		novoPrefixo = novoPrefixo + "│   "
+	}
+
+	total := no.TotalFilhos()
+	para i, filho := intervalo no.Filhos {
+		ultimo := (i == total-1)
+		ImprimirArvore(filho, novoPrefixo, ultimo)
+	}
+}

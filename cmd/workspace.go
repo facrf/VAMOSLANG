@@ -136,7 +136,28 @@ func CopyFile(src, dst string) error {
 	return err
 }
 
-// RewriteErrors filtra mensagens do compilador Go para apontar para os arquivos .vamos originais.
+// TranslateCompilerMessages traduz mensagens técnicas do compilador e de execução (panic) do Go para Português amigável.
+func TranslateCompilerMessages(msg string) string {
+	m := msg
+	m = strings.ReplaceAll(m, "undefined:", "identificador não definido:")
+	m = strings.ReplaceAll(m, "cannot use", "não é possível usar")
+	m = strings.ReplaceAll(m, "as value in return statement", "como valor no retorno")
+	m = strings.ReplaceAll(m, "too many arguments in call to", "muitos argumentos na chamada para")
+	m = strings.ReplaceAll(m, "not enough arguments in call to", "argumentos insuficientes na chamada para")
+	m = strings.ReplaceAll(m, "syntax error:", "erro de sintaxe:")
+	m = strings.ReplaceAll(m, "declared and not used:", "declarado e não utilizado:")
+	m = strings.ReplaceAll(m, "imported and not used:", "importado e não utilizado:")
+	m = strings.ReplaceAll(m, "type mismatch", "incompatibilidade de tipos")
+	m = strings.ReplaceAll(m, "cannot assign to", "não é possível atribuir a")
+	m = strings.ReplaceAll(m, "panic: runtime error:", "pânico (erro em tempo de execução):")
+	m = strings.ReplaceAll(m, "index out of range", "índice fora dos limites")
+	m = strings.ReplaceAll(m, "nil pointer dereference", "desreferência de ponteiro nulo")
+	m = strings.ReplaceAll(m, "slice bounds out of range", "limites de fatia fora do intervalo")
+	m = strings.ReplaceAll(m, "divide by zero", "divisão por zero")
+	return m
+}
+
+// RewriteErrors filtra mensagens do compilador Go para apontar para os arquivos .vamos originais e traduz erros.
 func RewriteErrors(output, tempDir, rootDir string) string {
 	res := strings.ReplaceAll(output, tempDir+string(filepath.Separator), "")
 	res = strings.ReplaceAll(res, tempDir, "")
@@ -146,10 +167,21 @@ func RewriteErrors(output, tempDir, rootDir string) string {
 			lines[i] = strings.Replace(line, ".go:", ".vamos:", 1)
 		}
 	}
-	return strings.Join(lines, "\n")
+	return TranslateCompilerMessages(strings.Join(lines, "\n"))
 }
 
-// RewriteFileErrors substitui o caminho do arquivo temporário pelo caminho do arquivo .vamos original.
+// RewriteFileErrors substitui o caminho do arquivo temporário pelo caminho do arquivo .vamos original e traduz mensagens.
 func RewriteFileErrors(output, tempPath, originalPath string) string {
-	return strings.ReplaceAll(output, tempPath, originalPath)
+	res := output
+	base := filepath.Base(tempPath)
+	res = strings.ReplaceAll(res, tempPath, originalPath)
+	res = strings.ReplaceAll(res, "./"+base, originalPath)
+	res = strings.ReplaceAll(res, base, filepath.Base(originalPath))
+	lines := strings.Split(res, "\n")
+	for i, line := range lines {
+		if strings.Contains(line, ".go:") {
+			lines[i] = strings.Replace(line, ".go:", ".vamos:", 1)
+		}
+	}
+	return TranslateCompilerMessages(strings.Join(lines, "\n"))
 }

@@ -94,9 +94,18 @@ func RunBuild(args []string) int {
 			}
 			goEntryRelPath := strings.TrimSuffix(relPath, ".vamos") + ".go"
 
+			buildTarget := goEntryRelPath
+			entryDir := filepath.Dir(goEntryRelPath)
+			if entryDir != "." {
+				matches, _ := filepath.Glob(filepath.Join(tempDir, entryDir, "*.go"))
+				if len(matches) > 1 {
+					buildTarget = "./" + filepath.ToSlash(entryDir)
+				}
+			}
+
 			buildArgs := []string{"build", "-o", absOutFile}
 			buildArgs = append(buildArgs, forwardArgs...)
-			buildArgs = append(buildArgs, goEntryRelPath)
+			buildArgs = append(buildArgs, buildTarget)
 
 			cmd := exec.Command("go", buildArgs...)
 			cmd.Dir = tempDir

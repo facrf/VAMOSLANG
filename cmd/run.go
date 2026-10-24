@@ -79,7 +79,16 @@ func RunExecute(args []string) int {
 		}
 		goEntryRelPath := strings.TrimSuffix(relPath, ".vamos") + ".go"
 
-		runArgs := append([]string{"run", goEntryRelPath}, progArgs...)
+		runTarget := goEntryRelPath
+		entryDir := filepath.Dir(goEntryRelPath)
+		if entryDir != "." {
+			matches, _ := filepath.Glob(filepath.Join(tempDir, entryDir, "*.go"))
+			if len(matches) > 1 {
+				runTarget = "./" + filepath.ToSlash(entryDir)
+			}
+		}
+
+		runArgs := append([]string{"run", runTarget}, progArgs...)
 		cmd := exec.Command("go", runArgs...)
 		cmd.Dir = tempDir
 		cmd.Stdin = os.Stdin

@@ -277,7 +277,7 @@ func (l *Lexer) NextToken() (Token, error) {
 	switch single {
 	case '(', ')', '[', ']', '{', '}', ';', ',', ':', '.':
 		return Token{Type: TokenDelimiter, Value: strSingle, Line: curLine, Column: curCol}, nil
-	case '+', '-', '*', '/', '%', '&', '|', '^', '<', '>', '=', '!':
+	case '+', '-', '*', '/', '%', '&', '|', '^', '<', '>', '=', '!', '~':
 		return Token{Type: TokenOperator, Value: strSingle, Line: curLine, Column: curCol}, nil
 	default:
 		return Token{Type: TokenError, Value: strSingle, Line: curLine, Column: curCol},

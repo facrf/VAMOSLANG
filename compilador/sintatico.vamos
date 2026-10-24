@@ -1,0 +1,565 @@
+// Pacote compilador - Analisador Sintático Descendente Recursivo (Recursive Descent Parser)
+// Implementado 100% na própria linguagem VAMOS-LANG.
+// Transforma a sequência de tokens na Árvore Sintática Abstrata (AST).
+
+pacote principal
+
+importar (
+	"erros"
+	"formatar"
+)
+
+// AnalisadorSintatico gerencia o fluxo de tokens e constrói a AST
+tipo AnalisadorSintatico estrutura {
+	tokens  []Token
+	pos     inteiro
+	tamanho inteiro
+}
+
+// NovoAnalisadorSintatico cria uma nova instância descartando espaços e comentários desnecessários
+funcao NovoAnalisadorSintatico(tokensOriginais []Token) *AnalisadorSintatico {
+	filtrados := criar([]Token, 0)
+	para _, tok := intervalo tokensOriginais {
+		se tok.Tipo != TokenEspaco && tok.Tipo != TokenComentario {
+			filtrados = anexar(filtrados, tok)
+		}
+	}
+	retornar &AnalisadorSintatico{
+		tokens:  filtrados,
+		pos:     0,
+		tamanho: tamanho(filtrados),
+	}
+}
+
+// espiar retorna o token atual sem consumir
+funcao (p *AnalisadorSintatico) espiar() Token {
+	se p.pos >= p.tamanho {
+		retornar Token{Tipo: TokenFimArquivo}
+	}
+	retornar p.tokens[p.pos]
+}
+
+// espiarOffset retorna o token em um deslocamento
+funcao (p *AnalisadorSintatico) espiarOffset(offset inteiro) Token {
+	idx := p.pos + offset
+	se idx >= p.tamanho {
+		retornar Token{Tipo: TokenFimArquivo}
+	}
+	retornar p.tokens[idx]
+}
+
+// consumir avança e retorna o token atual
+funcao (p *AnalisadorSintatico) consumir() Token {
+	se p.pos >= p.tamanho {
+		retornar Token{Tipo: TokenFimArquivo}
+	}
+	tok := p.tokens[p.pos]
+	p.pos++
+	retornar tok
+}
+
+// pularQuebrasLinha descarta tokens de quebra de linha subsequentes
+funcao (p *AnalisadorSintatico) pularQuebrasLinha() {
+	para p.pos < p.tamanho && p.espiar().Tipo == TokenQuebraLinha {
+		p.consumir()
+	}
+}
+
+// coincidir verifica se o token atual é do tipo e valor esperado
+funcao (p *AnalisadorSintatico) coincidir(tipoToken inteiro, valor texto) booleano {
+	tok := p.espiar()
+	se tok.Tipo != tipoToken {
+		retornar falso
+	}
+	se valor != "" && tok.Valor != valor {
+		retornar falso
+	}
+	retornar verdadeiro
+}
+
+// esperar consome o token se coincidir, ou retorna erro sintático descritivo
+funcao (p *AnalisadorSintatico) esperar(tipoToken inteiro, valor texto) (Token, erro) {
+	p.pularQuebrasLinha()
+	tok := p.espiar()
+	se tok.Tipo == TokenFimArquivo {
+		retornar tok, erros.Novo("fim inesperado de arquivo durante a análise sintática")
+	}
+
+	se tok.Tipo != tipoToken || (valor != "" && tok.Valor != valor) {
+		esperado := valor
+		se esperado == "" {
+			esperado = ObterNomeToken(tipoToken)
+		}
+		retornar tok, erros.Novo(formatar.Formatar("linha %d, coluna %d: esperado '%s', encontrado '%s'", tok.Linha, tok.Coluna, esperado, tok.Valor))
+	}
+
+	retornar p.consumir(), nulo
+}
+
+// AnalisarPrograma é o ponto de partida do analisador sintático
+funcao (p *AnalisadorSintatico) AnalisarPrograma() (*NoAST, erro) {
+	p.pularQuebrasLinha()
+	raiz := NovoNo(NoTipoPrograma, "Programa", 1)
+
+	// 1. Declaração obrigatória de pacote: 'pacote <nome>'
+	noPacote, errPacote := p.analisarPacote()
+	se errPacote != nulo {
+		retornar nulo, errPacote
+	}
+	raiz.AdicionarFilho(noPacote)
+
+	// 2. Loop de declarações de nível superior (imports, tipos, funcoes, variáveis, constantes)
+	para p.pos < p.tamanho {
+		p.pularQuebrasLinha()
+		se p.espiar().Tipo == TokenFimArquivo {
+			interromper
+		}
+
+		tok := p.espiar()
+		se tok.Tipo == TokenPalavraChave && tok.Valor == "importar" {
+			nosImports, errImp := p.analisarImportacoes()
+			se errImp != nulo {
+				retornar nulo, errImp
+			}
+			para _, noImp := intervalo nosImports {
+				raiz.AdicionarFilho(noImp)
+			}
+			continuar
+		}
+
+		se tok.Tipo == TokenPalavraChave && tok.Valor == "tipo" {
+			noTipo, errTipo := p.analisarDeclaracaoTipo()
+			se errTipo != nulo {
+				retornar nulo, errTipo
+			}
+			raiz.AdicionarFilho(noTipo)
+			continuar
+		}
+
+		se tok.Tipo == TokenPalavraChave && tok.Valor == "funcao" {
+			noFunc, errFunc := p.analisarFuncao()
+			se errFunc != nulo {
+				retornar nulo, errFunc
+			}
+			raiz.AdicionarFilho(noFunc)
+			continuar
+		}
+
+		se tok.Tipo == TokenPalavraChave && (tok.Valor == "variavel" || tok.Valor == "constante") {
+			noVar, errVar := p.analisarVariavelOuConstanteGlobal()
+			se errVar != nulo {
+				retornar nulo, errVar
+			}
+			raiz.AdicionarFilho(noVar)
+			continuar
+		}
+
+		// Se encontrar token não reconhecido no topo, pula para evitar loop infinito
+		p.consumir()
+	}
+
+	retornar raiz, nulo
+}
+
+// analisarPacote processa 'pacote <identificador>'
+funcao (p *AnalisadorSintatico) analisarPacote() (*NoAST, erro) {
+	tokPacote, err := p.esperar(TokenPalavraChave, "pacote")
+	se err != nulo {
+		retornar nulo, err
+	}
+
+	tokNome, errNome := p.esperar(TokenIdentificador, "")
+	se errNome != nulo {
+		// Permite 'principal' mesmo se for palavra-chave
+		se p.espiar().Valor == "principal" {
+			tokNome = p.consumir()
+		} senao {
+			retornar nulo, errNome
+		}
+	}
+
+	no := NovoNo(NoTipoPacote, tokNome.Valor, tokPacote.Linha)
+	retornar no, nulo
+}
+
+// analisarImportacoes processa 'importar "..."' ou 'importar ( "..." \n "..." )'
+funcao (p *AnalisadorSintatico) analisarImportacoes() ([]*NoAST, erro) {
+	_, err := p.esperar(TokenPalavraChave, "importar")
+	se err != nulo {
+		retornar nulo, err
+	}
+
+	p.pularQuebrasLinha()
+	resultado := criar([]*NoAST, 0)
+
+	// Caso A: Bloco de importações em parênteses
+	se p.coincidir(TokenDelimitador, "(") {
+		p.consumir() // consome '('
+		para p.pos < p.tamanho {
+			p.pularQuebrasLinha()
+			se p.coincidir(TokenDelimitador, ")") {
+				p.consumir() // consome ')'
+				interromper
+			}
+			tokTexto, errTexto := p.esperar(TokenTexto, "")
+			se errTexto != nulo {
+				retornar nulo, errTexto
+			}
+			no := NovoNo(NoTipoImportacao, tokTexto.Valor, tokTexto.Linha)
+			resultado = anexar(resultado, no)
+		}
+		retornar resultado, nulo
+	}
+
+	// Caso B: Importação simples em linha única
+	tokTexto, errTexto := p.esperar(TokenTexto, "")
+	se errTexto != nulo {
+		retornar nulo, errTexto
+	}
+	no := NovoNo(NoTipoImportacao, tokTexto.Valor, tokTexto.Linha)
+	resultado = anexar(resultado, no)
+	retornar resultado, nulo
+}
+
+// analisarDeclaracaoTipo processa 'tipo <Nome> estrutura { ... }' ou 'tipo <Nome> interface { ... }'
+funcao (p *AnalisadorSintatico) analisarDeclaracaoTipo() (*NoAST, erro) {
+	tokTipo, err := p.esperar(TokenPalavraChave, "tipo")
+	se err != nulo {
+		retornar nulo, err
+	}
+
+	tokNome, errNome := p.esperar(TokenIdentificador, "")
+	se errNome != nulo {
+		retornar nulo, errNome
+	}
+
+	p.pularQuebrasLinha()
+
+	// Suporte a Generics no tipo: tipo Pilha[T qualquer] ...
+	parametrosGenericos := ""
+	se p.coincidir(TokenDelimitador, "[") {
+		p.consumir()
+		para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, "]") {
+			parametrosGenericos = parametrosGenericos + p.consumir().Valor + " "
+		}
+		se p.coincidir(TokenDelimitador, "]") {
+			p.consumir()
+		}
+	}
+
+	p.pularQuebrasLinha()
+	tokCat := p.espiar()
+
+	// Caso 1: Estrutura (struct)
+	se tokCat.Tipo == TokenPalavraChave && tokCat.Valor == "estrutura" {
+		p.consumir()
+		p.pularQuebrasLinha()
+		_, errAbre := p.esperar(TokenDelimitador, "{")
+		se errAbre != nulo {
+			retornar nulo, errAbre
+		}
+
+		noEstrutura := NovoNo(NoTipoEstrutura, tokNome.Valor, tokTipo.Linha)
+		se parametrosGenericos != "" {
+			noEstrutura.TipoDado = "[" + parametrosGenericos + "]"
+		}
+
+		para p.pos < p.tamanho {
+			p.pularQuebrasLinha()
+			se p.coincidir(TokenDelimitador, "}") {
+				p.consumir()
+				interromper
+			}
+
+			tokCampo := p.espiar()
+			se tokCampo.Tipo == TokenIdentificador {
+				p.consumir()
+				tipoCampo := ""
+				para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && p.espiar().Valor != "}" {
+					tipoCampo = tipoCampo + p.consumir().Valor
+				}
+				noCampo := NovoNo(NoTipoCampo, tokCampo.Valor, tokCampo.Linha)
+				noCampo.TipoDado = tipoCampo
+				noEstrutura.AdicionarFilho(noCampo)
+			} senao {
+				p.consumir()
+			}
+		}
+		retornar noEstrutura, nulo
+	}
+
+	// Caso 2: Interface
+	se tokCat.Tipo == TokenPalavraChave && tokCat.Valor == "interface" {
+		p.consumir()
+		p.pularQuebrasLinha()
+		_, errAbre := p.esperar(TokenDelimitador, "{")
+		se errAbre != nulo {
+			retornar nulo, errAbre
+		}
+
+		noInterface := NovoNo(NoTipoInterface, tokNome.Valor, tokTipo.Linha)
+		para p.pos < p.tamanho {
+			p.pularQuebrasLinha()
+			se p.coincidir(TokenDelimitador, "}") {
+				p.consumir()
+				interromper
+			}
+			tokMembro := p.consumir()
+			se tokMembro.Tipo == TokenIdentificador || tokMembro.Tipo == TokenOperador {
+				detalhe := tokMembro.Valor
+				para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && p.espiar().Valor != "}" {
+					detalhe = detalhe + " " + p.consumir().Valor
+				}
+				noMembro := NovoNo(NoTipoMetodoAssinatura, detalhe, tokMembro.Linha)
+				noInterface.AdicionarFilho(noMembro)
+			}
+		}
+		retornar noInterface, nulo
+	}
+
+	// Caso 3: Alias simples de tipo (tipo MeuInteiro inteiro)
+	tipoBase := p.consumir().Valor
+	noAlias := NovoNo(NoTipoTipoDecl, tokNome.Valor, tokTipo.Linha)
+	noAlias.TipoDado = tipoBase
+	retornar noAlias, nulo
+}
+
+// analisarFuncao processa 'funcao [(receptor)] Nome[T](parametros) [retorno] { ... }'
+funcao (p *AnalisadorSintatico) analisarFuncao() (*NoAST, erro) {
+	tokFunc, err := p.esperar(TokenPalavraChave, "funcao")
+	se err != nulo {
+		retornar nulo, err
+	}
+
+	p.pularQuebrasLinha()
+
+	// 1. Verifica se há receptor de método (ex: funcao (e *Editor) Carregar())
+	receptor := ""
+	se p.coincidir(TokenDelimitador, "(") {
+		p.consumir() // consome '('
+		para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, ")") {
+			receptor = receptor + p.consumir().Valor + " "
+		}
+		se p.coincidir(TokenDelimitador, ")") {
+			p.consumir() // consome ')'
+		}
+	}
+
+	p.pularQuebrasLinha()
+
+	// 2. Nome da Função
+	tokNome := p.consumir()
+	nomeFunc := tokNome.Valor
+
+	// 3. Generics na Função (ex: funcao Somar[T Numerico](a T, b T) T)
+	generics := ""
+	se p.coincidir(TokenDelimitador, "[") {
+		p.consumir()
+		para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, "]") {
+			generics = generics + p.consumir().Valor + " "
+		}
+		se p.coincidir(TokenDelimitador, "]") {
+			p.consumir()
+		}
+	}
+
+	// 4. Parâmetros da Função
+	_, errAbreParams := p.esperar(TokenDelimitador, "(")
+	se errAbreParams != nulo {
+		retornar nulo, errAbreParams
+	}
+
+	noFunc := NovoNo(NoTipoFuncao, nomeFunc, tokFunc.Linha)
+	se receptor != "" {
+		noFunc.Valor = "receptor: " + receptor
+	}
+	se generics != "" {
+		noFunc.TipoDado = "[" + generics + "]"
+	}
+
+	para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, ")") {
+		tokParam := p.consumir()
+		se tokParam.Tipo == TokenDelimitador && tokParam.Valor == "," {
+			continuar
+		}
+		// Consome tipo do parâmetro até vírgula ou fecha parênteses
+		tipoParam := ""
+		para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, ",") && !p.coincidir(TokenDelimitador, ")") {
+			tipoParam = tipoParam + p.consumir().Valor
+		}
+		noParam := NovoNo(NoTipoParametro, tokParam.Valor, tokParam.Linha)
+		noParam.TipoDado = tipoParam
+		noFunc.AdicionarFilho(noParam)
+	}
+
+	se p.coincidir(TokenDelimitador, ")") {
+		p.consumir()
+	}
+
+	// 5. Tipo de Retorno (opcional)
+	p.pularQuebrasLinha()
+	tipoRetorno := ""
+	para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, "{") {
+		tipoRetorno = tipoRetorno + p.consumir().Valor + " "
+	}
+	se tipoRetorno != "" {
+		se noFunc.TipoDado != "" {
+			noFunc.TipoDado = noFunc.TipoDado + " -> " + tipoRetorno
+		} senao {
+			noFunc.TipoDado = "retorno: " + tipoRetorno
+		}
+	}
+
+	// 6. Corpo da Função { ... }
+	noBloco, errBloco := p.analisarBloco()
+	se errBloco != nulo {
+		retornar nulo, errBloco
+	}
+	noFunc.AdicionarFilho(noBloco)
+
+	retornar noFunc, nulo
+}
+
+// analisarBloco processa um bloco de instruções delimitado por chaves '{' ... '}'
+funcao (p *AnalisadorSintatico) analisarBloco() (*NoAST, erro) {
+	p.pularQuebrasLinha()
+	tokAbre, err := p.esperar(TokenDelimitador, "{")
+	se err != nulo {
+		retornar nulo, err
+	}
+
+	bloco := NovoNo(NoTipoBloco, "Bloco", tokAbre.Linha)
+
+	para p.pos < p.tamanho {
+		p.pularQuebrasLinha()
+		se p.coincidir(TokenDelimitador, "}") {
+			p.consumir()
+			interromper
+		}
+
+		noInstrucao, errInst := p.analisarInstrucao()
+		se errInst != nulo {
+			// Recuperação de erro: avança até a próxima linha
+			p.consumir()
+			continuar
+		}
+		se noInstrucao != nulo {
+			bloco.AdicionarFilho(noInstrucao)
+		}
+	}
+
+	retornar bloco, nulo
+}
+
+// analisarInstrucao processa instruções comuns dentro de blocos
+funcao (p *AnalisadorSintatico) analisarInstrucao() (*NoAST, erro) {
+	p.pularQuebrasLinha()
+	tok := p.espiar()
+
+	// 1. Condicional 'se ... { ... }'
+	se tok.Tipo == TokenPalavraChave && tok.Valor == "se" {
+		p.consumir()
+		condicao := ""
+		para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, "{") {
+			condicao = condicao + p.consumir().Valor + " "
+		}
+		noSe := NovoNo(NoTipoCondicional, "Se", tok.Linha)
+		noSe.Valor = condicao
+
+		blocoSe, errBloco := p.analisarBloco()
+		se errBloco == nulo {
+			noSe.AdicionarFilho(blocoSe)
+		}
+
+		p.pularQuebrasLinha()
+		se p.coincidir(TokenPalavraChave, "senao") {
+			p.consumir()
+			blocoSenao, errSenao := p.analisarBloco()
+			se errSenao == nulo {
+				noSenao := NovoNo(NoTipoCondicional, "Senao", tok.Linha)
+				noSenao.AdicionarFilho(blocoSenao)
+				noSe.AdicionarFilho(noSenao)
+			}
+		}
+		retornar noSe, nulo
+	}
+
+	// 2. Laço 'para ... { ... }'
+	se tok.Tipo == TokenPalavraChave && tok.Valor == "para" {
+		p.consumir()
+		clausula := ""
+		para p.pos < p.tamanho && !p.coincidir(TokenDelimitador, "{") {
+			clausula = clausula + p.consumir().Valor + " "
+		}
+		noPara := NovoNo(NoTipoLaco, "Para", tok.Linha)
+		noPara.Valor = clausula
+		blocoPara, errPara := p.analisarBloco()
+		se errPara == nulo {
+			noPara.AdicionarFilho(blocoPara)
+		}
+		retornar noPara, nulo
+	}
+
+	// 3. Retorno 'retornar ...'
+	se tok.Tipo == TokenPalavraChave && tok.Valor == "retornar" {
+		p.consumir()
+		valRetorno := ""
+		para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && !p.coincidir(TokenDelimitador, "}") {
+			valRetorno = valRetorno + p.consumir().Valor + " "
+		}
+		noRetorno := NovoNo(NoTipoRetorno, "Retorno", tok.Linha)
+		noRetorno.Valor = valRetorno
+		retornar noRetorno, nulo
+	}
+
+	// 4. Declaração 'variavel' ou 'constante'
+	se tok.Tipo == TokenPalavraChave && (tok.Valor == "variavel" || tok.Valor == "constante") {
+		tipoDecl := tok.Valor
+		p.consumir()
+		nomeVar := p.consumir().Valor
+		resto := ""
+		para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && !p.coincidir(TokenDelimitador, "}") {
+			resto = resto + p.consumir().Valor + " "
+		}
+		tipoNo := NoTipoVariavel
+		se tipoDecl == "constante" {
+			tipoNo = NoTipoConstante
+		}
+		noVar := NovoNo(tipoNo, nomeVar, tok.Linha)
+		noVar.Valor = resto
+		retornar noVar, nulo
+	}
+
+	// 5. Atribuição rápida (x := ...) ou Expressão/Chamada genérica em linha
+	linhaExpressao := ""
+	linhaNum := tok.Linha
+	para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha && !p.coincidir(TokenDelimitador, "}") {
+		linhaExpressao = linhaExpressao + p.consumir().Valor + " "
+	}
+
+	se linhaExpressao != "" {
+		noExp := NovoNo(NoTipoExpressao, "Instrucao", linhaNum)
+		noExp.Valor = linhaExpressao
+		retornar noExp, nulo
+	}
+
+	retornar nulo, nulo
+}
+
+// analisarVariavelOuConstanteGlobal processa declarações globais no nível do pacote
+funcao (p *AnalisadorSintatico) analisarVariavelOuConstanteGlobal() (*NoAST, erro) {
+	tok := p.consumir()
+	tipoDecl := tok.Valor
+	nomeVar := p.consumir().Valor
+	resto := ""
+	para p.pos < p.tamanho && p.espiar().Tipo != TokenQuebraLinha {
+		resto = resto + p.consumir().Valor + " "
+	}
+	tipoNo := NoTipoVariavel
+	se tipoDecl == "constante" {
+		tipoNo = NoTipoConstante
+	}
+	no := NovoNo(tipoNo, nomeVar, tok.Linha)
+	no.Valor = resto
+	retornar no, nulo
+}

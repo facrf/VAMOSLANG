@@ -1,0 +1,360 @@
+// Pacote compilador - Motor Léxico Auto-Hospedado (Self-Hosted Lexer) em VAMOS-LANG
+// Responsável por ler código-fonte em caracteres Unicode (runas) e gerar a sequência de tokens.
+
+pacote principal
+
+importar (
+	"erros"
+	"formatar"
+)
+
+// AnalisadorLexico processa o código-fonte gerando tokens
+tipo AnalisadorLexico estrutura {
+	origem  texto
+	runas   []runa
+	pos     inteiro
+	tamanho inteiro
+	linha   inteiro
+	coluna  inteiro
+}
+
+// NovoAnalisadorLexico instancia o analisador léxico a partir de um texto fonte
+funcao NovoAnalisadorLexico(codigo texto) *AnalisadorLexico {
+	r := []runa(codigo)
+	retornar &AnalisadorLexico{
+		origem:  codigo,
+		runas:   r,
+		pos:     0,
+		tamanho: tamanho(r),
+		linha:   1,
+		coluna:  1,
+	}
+}
+
+// ehLetra verifica se a runa é uma letra ou caractere válido para identificadores (incluindo acentos PT-BR)
+funcao ehLetra(r runa) booleano {
+	se r == '_' {
+		retornar verdadeiro
+	}
+	// Letras ASCII
+	se (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+		retornar verdadeiro
+	}
+	// Acentuação e caracteres especiais em Português (Unicode Latin-1 e Estendidos)
+	se (r >= 0x00C0 && r <= 0x00FF) || (r >= 0x0100 && r <= 0x017F) {
+		retornar verdadeiro
+	}
+	retornar falso
+}
+
+// ehDigito verifica se a runa é um dígito numérico (0-9)
+funcao ehDigito(r runa) booleano {
+	retornar r >= '0' && r <= '9'
+}
+
+// olhar retorna a runa no deslocamento relativo offset sem avançar o cursor
+funcao (l *AnalisadorLexico) olhar(offset inteiro) runa {
+	alvo := l.pos + offset
+	se alvo >= l.tamanho {
+		retornar 0
+	}
+	retornar l.runas[alvo]
+}
+
+// proximo consome e retorna a próxima runa, atualizando linha e coluna
+funcao (l *AnalisadorLexico) proximo() runa {
+	se l.pos >= l.tamanho {
+		retornar 0
+	}
+	r := l.runas[l.pos]
+	l.pos++
+	se r == '\n' {
+		l.linha++
+		l.coluna = 1
+	} senao {
+		l.coluna++
+	}
+	retornar r
+}
+
+// ProximoToken extrai o próximo token léxico do fluxo de entrada
+funcao (l *AnalisadorLexico) ProximoToken() (Token, erro) {
+	se l.pos >= l.tamanho {
+		retornar Token{
+			Tipo:   TokenFimArquivo,
+			Valor:  "",
+			Linha:  l.linha,
+			Coluna: l.coluna,
+		}, nulo
+	}
+
+	curLinha := l.linha
+	curColuna := l.coluna
+	ch := l.olhar(0)
+
+	// 1. Espaços em branco (sem quebra de linha)
+	se ch == ' ' || ch == '\t' || ch == '\r' {
+		buf := criar([]runa, 0)
+		para l.pos < l.tamanho && (l.olhar(0) == ' ' || l.olhar(0) == '\t' || l.olhar(0) == '\r') {
+			buf = anexar(buf, l.proximo())
+		}
+		retornar Token{
+			Tipo:   TokenEspaco,
+			Valor:  texto(buf),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 2. Quebra de linha
+	se ch == '\n' {
+		l.proximo()
+		retornar Token{
+			Tipo:   TokenQuebraLinha,
+			Valor:  "\n",
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 3. Comentários (linha '//' ou bloco '/* */')
+	se ch == '/' && l.olhar(1) == '/' {
+		buf := criar([]runa, 0)
+		buf = anexar(buf, l.proximo()) // '/'
+		buf = anexar(buf, l.proximo()) // '/'
+		para l.pos < l.tamanho && l.olhar(0) != '\n' {
+			buf = anexar(buf, l.proximo())
+		}
+		retornar Token{
+			Tipo:   TokenComentario,
+			Valor:  texto(buf),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	se ch == '/' && l.olhar(1) == '*' {
+		buf := criar([]runa, 0)
+		buf = anexar(buf, l.proximo()) // '/'
+		buf = anexar(buf, l.proximo()) // '*'
+		para l.pos < l.tamanho {
+			se l.olhar(0) == '*' && l.olhar(1) == '/' {
+				buf = anexar(buf, l.proximo()) // '*'
+				buf = anexar(buf, l.proximo()) // '/'
+				interromper
+			}
+			buf = anexar(buf, l.proximo())
+		}
+		retornar Token{
+			Tipo:   TokenComentario,
+			Valor:  texto(buf),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 4. Cadeias de Caracteres com aspas duplas ("...")
+	se ch == '"' {
+		buf := criar([]runa, 0)
+		buf = anexar(buf, l.proximo()) // '"'
+		escapado := falso
+		para l.pos < l.tamanho {
+			r := l.proximo()
+			buf = anexar(buf, r)
+			se escapado {
+				escapado = falso
+				continuar
+			}
+			se r == '\\' {
+				escapado = verdadeiro
+				continuar
+			}
+			se r == '"' {
+				interromper
+			}
+		}
+		retornar Token{
+			Tipo:   TokenTexto,
+			Valor:  texto(buf),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 5. Cadeias de Caracteres Brutas (`...`)
+	se ch == '`' {
+		buf := criar([]runa, 0)
+		buf = anexar(buf, l.proximo()) // '`'
+		para l.pos < l.tamanho {
+			r := l.proximo()
+			buf = anexar(buf, r)
+			se r == '`' {
+				interromper
+			}
+		}
+		retornar Token{
+			Tipo:   TokenTextoBruto,
+			Valor:  texto(buf),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 6. Runa / Caractere ('...')
+	se ch == '\'' {
+		buf := criar([]runa, 0)
+		buf = anexar(buf, l.proximo()) // '\''
+		escapado := falso
+		para l.pos < l.tamanho {
+			r := l.proximo()
+			buf = anexar(buf, r)
+			se escapado {
+				escapado = falso
+				continuar
+			}
+			se r == '\\' {
+				escapado = verdadeiro
+				continuar
+			}
+			se r == '\'' {
+				interromper
+			}
+		}
+		retornar Token{
+			Tipo:   TokenRuna,
+			Valor:  texto(buf),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 7. Literais Numéricos
+	se ehDigito(ch) {
+		buf := criar([]runa, 0)
+		// Suporte a hex (0x), bin (0b), octal (0o)
+		se ch == '0' && (l.olhar(1) == 'x' || l.olhar(1) == 'X' || l.olhar(1) == 'b' || l.olhar(1) == 'B' || l.olhar(1) == 'o' || l.olhar(1) == 'O') {
+			buf = anexar(buf, l.proximo())
+			buf = anexar(buf, l.proximo())
+			para l.pos < l.tamanho && (ehLetra(l.olhar(0)) || ehDigito(l.olhar(0))) {
+				buf = anexar(buf, l.proximo())
+			}
+			retornar Token{
+				Tipo:   TokenNumero,
+				Valor:  texto(buf),
+				Linha:  curLinha,
+				Coluna: curColuna,
+			}, nulo
+		}
+
+		temPonto := falso
+		para l.pos < l.tamanho {
+			c := l.olhar(0)
+			se c == '.' && !temPonto && ehDigito(l.olhar(1)) {
+				temPonto = verdadeiro
+				buf = anexar(buf, l.proximo())
+			} senao se ehDigito(c) || c == '_' {
+				buf = anexar(buf, l.proximo())
+			} senao {
+				interromper
+			}
+		}
+		retornar Token{
+			Tipo:   TokenNumero,
+			Valor:  texto(buf),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 8. Identificadores e Palavras Reservadas
+	se ehLetra(ch) {
+		buf := criar([]runa, 0)
+		para l.pos < l.tamanho && (ehLetra(l.olhar(0)) || ehDigito(l.olhar(0))) {
+			buf = anexar(buf, l.proximo())
+		}
+		val := texto(buf)
+		tipoTok := TokenIdentificador
+		se EhPalavraChave(val) {
+			tipoTok = TokenPalavraChave
+		}
+		retornar Token{
+			Tipo:   tipoTok,
+			Valor:  val,
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 9. Operadores com 3 caracteres ("...")
+	se l.pos+2 < l.tamanho && ch == '.' && l.olhar(1) == '.' && l.olhar(2) == '.' {
+		l.proximo()
+		l.proximo()
+		l.proximo()
+		retornar Token{
+			Tipo:   TokenOperador,
+			Valor:  "...",
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	}
+
+	// 10. Operadores de 2 caracteres
+	se l.pos+1 < l.tamanho {
+		prox := l.olhar(1)
+		par := formatar.Formatar("%c%c", ch, prox)
+		escolha par {
+		caso ":=", "==", "!=", "<=", ">=", "&&", "||", "<-", "++", "--",
+			"+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<", ">>":
+			l.proximo()
+			l.proximo()
+			retornar Token{
+				Tipo:   TokenOperador,
+				Valor:  par,
+				Linha:  curLinha,
+				Coluna: curColuna,
+			}, nulo
+		}
+	}
+
+	// 11. Delimitadores e Operadores de 1 caractere
+	l.proximo()
+	escolha ch {
+	caso '(', ')', '[', ']', '{', '}', ';', ',', ':', '.':
+		retornar Token{
+			Tipo:   TokenDelimitador,
+			Valor:  formatar.Formatar("%c", ch),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	caso '+', '-', '*', '/', '%', '&', '|', '^', '<', '>', '=', '!', '~':
+		retornar Token{
+			Tipo:   TokenOperador,
+			Valor:  formatar.Formatar("%c", ch),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, nulo
+	padrao:
+		retornar Token{
+			Tipo:   TokenErro,
+			Valor:  formatar.Formatar("%c", ch),
+			Linha:  curLinha,
+			Coluna: curColuna,
+		}, erros.Novo(formatar.Formatar("caractere inválido '%c' na linha %d, coluna %d", ch, curLinha, curColuna))
+	}
+}
+
+// TokenizarTodos processa completamente a fonte e retorna uma lista de todos os tokens
+funcao (l *AnalisadorLexico) TokenizarTodos() ([]Token, erro) {
+	tokens := criar([]Token, 0)
+	para {
+		tok, err := l.ProximoToken()
+		se err != nulo {
+			retornar tokens, err
+		}
+		tokens = anexar(tokens, tok)
+		se tok.Tipo == TokenFimArquivo {
+			interromper
+		}
+	}
+	retornar tokens, nulo
+}

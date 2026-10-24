@@ -13,8 +13,9 @@
 **VAMOS-LANG** é uma linguagem de programação de alto desempenho e tipagem estática com sintaxe idêntica ao Go, porém totalmente expressa no idioma Português (PT-BR). 
 
 O ecossistema VAMOS-LANG inclui:
-- **Transpilador Ultra-Rápido**: Em Go puro, sem dependências externas pesadas.
-- **CLI Completa (`vamos`)**: Com comandos e aliases em Português e Inglês.
+- **Compilador Auto-Hospedado (`vamosc` / Bootstrapping)**: Compilador escrito 100% na própria linguagem VAMOS-LANG ([`compilador/`](compilador/)), iniciando a jornada de auto-hospedagem e independência (consulte [`BOOTSTRAP.md`](BOOTSTRAP.md)).
+- **Transpilador Ultra-Rápido**: Em Go puro, sem dependências externas pesadas, com suporte completo a **Tipos Genéricos (Generics)** (`qualquer`, `comparavel`, aproximações `~`).
+- **CLI Completa (`vamos`)**: Com comandos e aliases em Português e Inglês, e tradução amigável de diagnósticos/stacktraces.
 - **Extensão Oficial para VS Code**: Realce de sintaxe oficial e snippets inteligentes.
 - **Formatador Oficial de Código (`vamos fmt`)**: Padronização automática de código `.vamos`.
 - **Linter Estático & Validador de Sintaxe (`vamos lint --strict`)**: Validação de convenções e diagnóstico sintático baseado no Go AST.
@@ -132,6 +133,8 @@ Acesse em: `http://localhost:8080`
 | `inteiro64` | `int64` | Inteiro de 64 bits |
 | `decimal` / `decimal64` | `float64` | Ponto flutuante de 64 bits |
 | `booleano` | `bool` | Valor booleano |
+| `qualquer` | `any` | Restrição de tipo para qualquer valor genérico |
+| `comparavel` | `comparable` | Restrição de tipo para valores comparáveis (`==`, `!=`) |
 | `verdadeiro` | `true` | Literal booleano verdadeiro |
 | `falso` | `false` | Literal booleano falso |
 | `nulo` | `nil` | Ponteiro / valor nulo |
@@ -164,6 +167,38 @@ Acesse em: `http://localhost:8080`
 | `cripto/sha256.Soma256(...)` | `crypto/sha256.Sum256(...)` | `hash := sha256.Soma256([]byte("msg"))` |
 | `matematica/aleatorio.InteiroAte(...)` | `math/rand.Intn(...)` | `sorte := aleatorio.InteiroAte(100)` |
 | `banco_dados.Abrir(...)` | `database/sql.Open(...)` | `db, _ := banco_dados.Abrir("sqlite", "db.sqlite")` |
+| `sincronizar/atomico` | `sync/atomic` | `atomico.AdicionarInteiro64(&c, 1); val := atomico.CarregarInteiro64(&c)` |
+| `redes/url.Analisar(...)` | `net/url.Parse(...)` | `u, _ := url.Analisar("https://exemplo.com.br")` |
+
+---
+
+### 4. Tipos Genéricos (Generics) em VAMOS-LANG
+
+O VAMOS-LANG suporta parametrização de tipos completa com `qualquer` (`any`), `comparavel` (`comparable`) e uniões de tipos com aproximação (`~`):
+
+```vamos
+// Restrição com união e aproximação
+tipo Numerico interface {
+	~inteiro | ~inteiro64 | ~decimal64
+}
+
+// Estrutura genérica
+tipo Pilha[T qualquer] estrutura {
+	elementos []T
+}
+
+// Função genérica com restrição comparável
+funcao IndiceDe[T comparavel](colecao []T, item T) inteiro {
+	para i, val := intervalo colecao {
+		se val == item {
+			retornar i
+		}
+	}
+	retornar -1
+}
+```
+
+Consulte o exemplo funcional completo em [`exemplos/genericos.vamos`](exemplos/genericos.vamos).
 
 ---
 
@@ -313,6 +348,14 @@ make check
 /storage/www/projetos/VAMOSLANG/
 ├── main.go                   # Ponto de entrada da CLI oficial
 ├── teste.vamos               # Exemplo de teste integrado oficial
+├── BOOTSTRAP.md              # Roteiro oficial de auto-hospedagem (Self-Hosting)
+├── compilador/               # Compilador auto-hospedado escrito 100% em VAMOS-LANG
+│   ├── token.vamos           # Definição de tokens e tabelas léxicas
+│   ├── lexico.vamos          # Scanner léxico com suporte a Unicode e operadores
+│   ├── ast.vamos             # Estrutura de nós da árvore sintática
+│   ├── sintatico.vamos       # Parser descendente recursivo em VAMOS-LANG
+│   ├── transpilador.vamos    # Motor de transpilação em VAMOS-LANG
+│   └── main.vamos            # Ponto de entrada do compilador 'vamosc'
 ├── lsp/                      # Language Server Protocol (LSP JSON-RPC 2.0 nativo)
 ├── jogos/                    # Jogos clássicos desenvolvidos em VAMOS-LANG
 │   ├── cobrinha.vamos        # Jogo da Cobrinha (Snake) com IA e interativo
@@ -348,7 +391,8 @@ make check
 │   ├── cripto_e_conversao.vamos
 │   ├── nano.vamos            # Editor de texto estilo GNU nano em terminal
 │   ├── api_rest.vamos        # API REST com a micro-framework servidor
-│   └── uuid_externo.vamos    # Integração com pacotes Go externos
+│   ├── uuid_externo.vamos    # Integração com pacotes Go externos
+│   └── genericos.vamos       # Tipos genéricos (Generics) e restrições
 ├── wasm/                     # Ponto de entrada para compilação WebAssembly
 ├── transpiler/               # Motor do transpilador, validador Go AST e linter
 ├── cmd/                      # Comandos modulares da CLI (run, build, lsp, get, etc.)

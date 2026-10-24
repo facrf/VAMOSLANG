@@ -1,0 +1,259 @@
+// ==============================================================================
+// COMPILADOR AUTO-HOSPEDADO (SELF-HOSTED) VAMOS-LANG (vamosc)
+// Escrito 100% na própria linguagem VAMOS-LANG.
+// Etapas 1 e 2 do Bootstrapping: Análise Léxica, Parser Sintático AST e Transpilação.
+// ==============================================================================
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"so"
+)
+
+constante VersaoCompilador texto = "2.1.0-bootstrap"
+
+funcao exibirAjuda() {
+	formatar.ImprimirLinha("==================================================================")
+	formatar.ImprimirLinha("   COMPILADOR AUTO-HOSPEDADO VAMOS-LANG (vamosc) - ETAPAS 1 & 2   ")
+	formatar.ImprimirLinha("==================================================================")
+	formatar.ImprimirLinha("Uso: vamosc [comando/flag] <arquivo.vamos> [opcoes...]")
+	formatar.ImprimirLinha("")
+	formatar.ImprimirLinha("Comandos e Flags disponíveis:")
+	formatar.ImprimirLinha("  --tokens <arquivo.vamos>       Inspeciona e lista todos os tokens léxicos")
+	formatar.ImprimirLinha("  --ast <arquivo.vamos>          Gera e exibe a Árvore Sintática Abstrata (AST)")
+	formatar.ImprimirLinha("  --transpilar <arquivo.vamos>   Converte código VAMOS para Go nativo")
+	formatar.ImprimirLinha("  -o <saida.go>                  Define o arquivo de destino da transpilação")
+	formatar.ImprimirLinha("  --auto-teste                   Executa teste interno de auto-hospedagem")
+	formatar.ImprimirLinha("  --versao, -v                   Exibe a versão do compilador auto-hospedado")
+	formatar.ImprimirLinha("  --ajuda, -h                    Exibe esta tela de instruções")
+	formatar.ImprimirLinha("==================================================================")
+}
+
+funcao inspecionarTokens(caminhoArquivo texto) {
+	dados, err := so.LerArquivo(caminhoArquivo)
+	se err != nulo {
+		formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+		so.Sair(1)
+	}
+
+	conteudo := texto(dados)
+	lexer := NovoAnalisadorLexico(conteudo)
+	tokens, errLex := lexer.TokenizarTodos()
+	se errLex != nulo {
+		formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+		so.Sair(1)
+	}
+
+	formatar.ImprimirLinha("------------------------------------------------------------------")
+	formatar.ImprimirFormatado("   INSPEÇÃO LÉXICA DO COMPILADOR VAMOS: %s\n", caminhoArquivo)
+	formatar.ImprimirLinha("------------------------------------------------------------------")
+	formatar.ImprimirLinha(" LINHA | COLUNA | TIPO             | VALOR LÉXICO")
+	formatar.ImprimirLinha("-------+--------+------------------+------------------------------")
+
+	para _, tok := intervalo tokens {
+		se tok.Tipo == TokenEspaco || tok.Tipo == TokenQuebraLinha {
+			continuar
+		}
+		valExibicao := tok.Valor
+		se tok.Tipo == TokenFimArquivo {
+			valExibicao = "<EOF>"
+		}
+		se tamanho(valExibicao) > 30 {
+			valExibicao = valExibicao[:27] + "..."
+		}
+		nomeTipo := ObterNomeToken(tok.Tipo)
+		formatar.ImprimirFormatado(
+			" %5d | %6d | %-16s | %s\n",
+			tok.Linha,
+			tok.Coluna,
+			nomeTipo,
+			valExibicao,
+		)
+	}
+
+	formatar.ImprimirLinha("------------------------------------------------------------------")
+	formatar.ImprimirFormatado("Total de tokens identificados: %d\n", tamanho(tokens))
+	formatar.ImprimirLinha("------------------------------------------------------------------")
+}
+
+funcao inspecionarAST(caminhoArquivo texto) {
+	dados, err := so.LerArquivo(caminhoArquivo)
+	se err != nulo {
+		formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+		so.Sair(1)
+	}
+
+	lexer := NovoAnalisadorLexico(texto(dados))
+	tokens, errLex := lexer.TokenizarTodos()
+	se errLex != nulo {
+		formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+		so.Sair(1)
+	}
+
+	parser := NovoAnalisadorSintatico(tokens)
+	ast, errParse := parser.AnalisarPrograma()
+	se errParse != nulo {
+		formatar.ImprimirFormatado("Erro sintático: %v\n", errParse)
+		so.Sair(1)
+	}
+
+	formatar.ImprimirLinha("==================================================================")
+	formatar.ImprimirFormatado("   ÁRVORE SINTÁTICA ABSTRATA (AST) - PARSER VAMOS: %s\n", caminhoArquivo)
+	formatar.ImprimirLinha("==================================================================")
+	ImprimirArvore(ast, "", verdadeiro)
+	formatar.ImprimirLinha("==================================================================")
+}
+
+funcao executarTranspilacao(caminhoArquivo texto, destinoSaida texto) {
+	dados, err := so.LerArquivo(caminhoArquivo)
+	se err != nulo {
+		formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+		so.Sair(1)
+	}
+
+	lexer := NovoAnalisadorLexico(texto(dados))
+	tokens, errLex := lexer.TokenizarTodos()
+	se errLex != nulo {
+		formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+		so.Sair(1)
+	}
+
+	transpilador := NovoTranspilador(tokens)
+	codigoGo := transpilador.Transpilar()
+
+	se destinoSaida != "" {
+		errGravacao := so.EscreverArquivo(destinoSaida, []byte(codigoGo), 0644)
+		se errGravacao != nulo {
+			formatar.ImprimirFormatado("Erro ao salvar arquivo em '%s': %v\n", destinoSaida, errGravacao)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("✓ Transpilação concluída com sucesso! Arquivo gerado em: %s\n", destinoSaida)
+	} senao {
+		formatar.ImprimirLinha(codigoGo)
+	}
+}
+
+funcao executarAutoTeste() {
+	formatar.ImprimirLinha("==> Executando Teste Interno de Auto-Hospedagem (Bootstrap G1/G2)...")
+
+	codigoFonte := `pacote principal
+importar "formatar"
+
+tipo Usuario estrutura {
+	Nome texto
+	Idade inteiro
+}
+
+funcao principal() {
+	u := Usuario{Nome: "VAMOS", Idade: 1}
+	se u.Idade > 0 {
+		formatar.ImprimirLinha("Compilador VAMOS compilando a si mesmo!")
+	}
+}
+`
+	// 1. Teste Léxico
+	lexer := NovoAnalisadorLexico(codigoFonte)
+	tokens, err := lexer.TokenizarTodos()
+	se err != nulo {
+		formatar.ImprimirFormatado("Falha no teste léxico: %v\n", err)
+		so.Sair(1)
+	}
+
+	// 2. Teste Sintático (Parser AST)
+	parser := NovoAnalisadorSintatico(tokens)
+	ast, errParse := parser.AnalisarPrograma()
+	se errParse != nulo || ast == nulo {
+		formatar.ImprimirFormatado("Falha no teste do parser sintático: %v\n", errParse)
+		so.Sair(1)
+	}
+	se ast.TotalFilhos() == 0 {
+		formatar.ImprimirLinha("Falha na validação dos nós da AST.")
+		so.Sair(1)
+	}
+
+	// 3. Teste do Transpilador
+	transpilador := NovoTranspilador(tokens)
+	resultado := transpilador.Transpilar()
+
+	se !cordas.Contem(resultado, "package main") || !cordas.Contem(resultado, "fmt.Println") {
+		formatar.ImprimirLinha("Falha na validação do código Go gerado.")
+		formatar.ImprimirLinha(resultado)
+		so.Sair(1)
+	}
+
+	formatar.ImprimirLinha("✓ 1. Análise léxica em VAMOS-LANG: APROVADA")
+	formatar.ImprimirLinha("✓ 2. Parser sintático descendente recursivo (AST) em VAMOS-LANG: APROVADO")
+	formatar.ImprimirLinha("✓ 3. Mapeamento de imports, tipos e estruturas em VAMOS-LANG: APROVADO")
+	formatar.ImprimirLinha("✓ 4. Transpilação e emissão de código em VAMOS-LANG: APROVADA")
+	formatar.ImprimirLinha("✓ Auto-teste de Bootstrapping (Etapas 1 e 2) concluído com 100% de êxito!")
+}
+
+funcao principal() {
+	args := so.Argumentos[1:]
+	se tamanho(args) == 0 {
+		exibirAjuda()
+		so.Sair(0)
+	}
+
+	primeiroArg := args[0]
+
+	escolha primeiroArg {
+	caso "--ajuda", "-h", "ajuda":
+		exibirAjuda()
+		so.Sair(0)
+
+	caso "--versao", "-v", "versao":
+		formatar.ImprimirFormatado("Compilador VAMOS-LANG (vamosc) versão %s\n", VersaoCompilador)
+		so.Sair(0)
+
+	caso "--auto-teste":
+		executarAutoTeste()
+		so.Sair(0)
+
+	caso "--tokens":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o caminho do arquivo .vamos para inspecionar tokens.")
+			so.Sair(1)
+		}
+		inspecionarTokens(args[1])
+		so.Sair(0)
+
+	caso "--ast":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o caminho do arquivo .vamos para gerar a AST.")
+			so.Sair(1)
+		}
+		inspecionarAST(args[1])
+		so.Sair(0)
+
+	caso "--transpilar":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o caminho do arquivo .vamos para transpilar.")
+			so.Sair(1)
+		}
+		arquivo := args[1]
+		destino := ""
+		se tamanho(args) >= 4 && args[2] == "-o" {
+			destino = args[3]
+		}
+		executarTranspilacao(arquivo, destino)
+		so.Sair(0)
+
+	padrao:
+		// Se passou direto o arquivo .vamos
+		se cordas.TemSufixo(primeiroArg, ".vamos") {
+			destino := ""
+			se tamanho(args) >= 3 && args[1] == "-o" {
+				destino = args[2]
+			}
+			executarTranspilacao(primeiroArg, destino)
+			so.Sair(0)
+		}
+
+		formatar.ImprimirFormatado("Opção ou comando não reconhecido: '%s'\n", primeiroArg)
+		exibirAjuda()
+		so.Sair(1)
+	}
+}

@@ -109,5 +109,23 @@
       "formatar.ImprimirFormatado(\"${1:%s}\\n\", ${2:valor})"
     ],
     "description": "Imprime texto formatado na saída padrão (fmt.Printf)"
+  },
+  "Função Genérica": {
+    "prefix": "funcaog",
+    "body": [
+      "funcao ${1:Nome}[${2:T} ${3|qualquer,comparavel|}](${4:param} ${2:T}) ${2:T} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Declaração de função genérica com tipos parametrizados"
+  },
+  "Estrutura Genérica": {
+    "prefix": "estruturag",
+    "body": [
+      "tipo ${1:Nome}[${2:T} ${3|qualquer,comparavel|}] estrutura {",
+      "\t${4:Itens} []${2:T}",
+      "}"
+    ],
+    "description": "Declaração de estrutura genérica parametrizada"
   }
 }
