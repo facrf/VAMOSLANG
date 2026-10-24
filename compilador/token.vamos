@@ -253,10 +253,14 @@ funcao TraduzirCaminhoImport(caminho texto) texto {
 		retornar "strconv"
 	caso "cripto/sha256", "sha256":
 		retornar "crypto/sha256"
-	caso "matematica/aleatorio", "aleatorio":
-		retornar "math/rand"
 	caso "servidor":
 		retornar "vamos/pacotes/servidor"
+	caso "colecoes":
+		retornar "vamos/pacotes/colecoes"
+	caso "matematica_util":
+		retornar "vamos/pacotes/matematica_util"
+	caso "matematica/aleatorio", "aleatorio":
+		retornar "math/rand"
 	padrao:
 		retornar caminho
 	}

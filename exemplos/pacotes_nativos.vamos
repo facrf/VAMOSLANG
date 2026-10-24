@@ -1,0 +1,58 @@
+// Exemplo demonstrando uso dos pacotes da Biblioteca Padrão desenvolvidos 100% em VAMOS-LANG
+pacote principal
+
+importar (
+	"colecoes"
+	"formatar"
+	"matematica_util"
+)
+
+funcao principal() {
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("   BIBLIOTECA PADRÃO EM VAMOS-LANG PURO        ")
+	formatar.ImprimirLinha("================================================")
+
+	// 1. Uso do pacote 'matematica_util'
+	formatar.ImprimirLinha("1. Utilitários Matemáticos:")
+	fat := matematica_util.Fatorial(6)
+	formatar.ImprimirFormatado("   Fatorial de 6: %d\n", fat)
+	fib := matematica_util.Fibonacci(10)
+	formatar.ImprimirFormatado("   Fibonacci(10): %d\n", fib)
+	mdc := matematica_util.MDC(48, 18)
+	formatar.ImprimirFormatado("   MDC(48, 18): %d\n", mdc)
+	mmc := matematica_util.MMC(4, 6)
+	formatar.ImprimirFormatado("   MMC(4, 6): %d\n", mmc)
+	primo := matematica_util.EhPrimo(29)
+	formatar.ImprimirFormatado("   29 é primo? %v\n", primo)
+
+	// 2. Uso do pacote 'colecoes' com tipos genéricos
+	formatar.ImprimirLinha("\n2. Estrutura Genérica Pilha (LIFO):")
+	pilha := colecoes.NovaPilha[texto]()
+	pilha.Empilhar("Etapa 1: Lexer")
+	pilha.Empilhar("Etapa 2: Parser")
+	pilha.Empilhar("Etapa 3: Bootstrapping")
+	formatar.ImprimirFormatado("   Total na pilha: %d\n", pilha.Tamanho())
+	topo, _ := pilha.Topo()
+	formatar.ImprimirFormatado("   Elemento no topo: %s\n", topo)
+	itemDesempilhado, _ := pilha.Desempilhar()
+	formatar.ImprimirFormatado("   Desempilhado: %s\n", itemDesempilhado)
+
+	formatar.ImprimirLinha("\n3. Estrutura Genérica Fila (FIFO):")
+	fila := colecoes.NovaFila[inteiro]()
+	fila.Enfileirar(100)
+	fila.Enfileirar(200)
+	fila.Enfileirar(300)
+	frente, _ := fila.Desenfileirar()
+	formatar.ImprimirFormatado("   Primeiro da fila atendido: %d\n", frente)
+
+	formatar.ImprimirLinha("\n4. Estrutura Genérica Conjunto (Valores Únicos):")
+	conjunto := colecoes.NovoConjunto[texto]()
+	conjunto.Adicionar("Go")
+	conjunto.Adicionar("VAMOS-LANG")
+	conjunto.Adicionar("Go") // Duplicado ignorado
+	formatar.ImprimirFormatado("   Total de itens únicos no conjunto: %d\n", conjunto.Tamanho())
+	formatar.ImprimirFormatado("   Contém 'VAMOS-LANG'? %v\n", conjunto.Contem("VAMOS-LANG"))
+
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("✓ Demonstração da biblioteca padrão concluída com êxito!")
+}

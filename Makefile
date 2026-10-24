@@ -51,6 +51,9 @@ run-examples: build
 	./$(BINARY_NAME) compilar-c exemplos/c_nativo.vamos -o /tmp/c_demo
 	/tmp/c_demo
 	@rm -f /tmp/c_demo
+	@echo ""
+	@echo "==> Testando exemplo 'pacotes_nativos.vamos' (Biblioteca Padrão em VAMOS puro):"
+	./$(BINARY_NAME) run exemplos/pacotes_nativos.vamos
 
 check: build
 	@echo "==> 1. Verificando formatação de código..."

@@ -1,0 +1,112 @@
+// Pacote matematica_util - Utilitários numéricos e matemáticos em VAMOS-LANG
+pacote matematica_util
+
+// Absoluto retorna o valor absoluto de um inteiro
+funcao Absoluto(x inteiro) inteiro {
+	se x < 0 {
+		retornar -x
+	}
+	retornar x
+}
+
+// Maximo retorna o maior entre dois inteiros
+funcao Maximo(a inteiro, b inteiro) inteiro {
+	se a > b {
+		retornar a
+	}
+	retornar b
+}
+
+// Minimo retorna o menor entre dois inteiros
+funcao Minimo(a inteiro, b inteiro) inteiro {
+	se a < b {
+		retornar a
+	}
+	retornar b
+}
+
+// Potencia calcula base elevada ao expoente
+funcao Potencia(base inteiro, expoente inteiro) inteiro {
+	se expoente == 0 {
+		retornar 1
+	}
+	resultado := 1
+	para i := 0; i < expoente; i++ {
+		resultado = resultado * base
+	}
+	retornar resultado
+}
+
+// Fatorial calcula o fatorial de n
+funcao Fatorial(n inteiro) inteiro {
+	se n <= 1 {
+		retornar 1
+	}
+	retornar n * Fatorial(n - 1)
+}
+
+// Fibonacci calcula o n-ésimo termo da sequência de Fibonacci
+funcao Fibonacci(n inteiro) inteiro {
+	se n <= 0 {
+		retornar 0
+	}
+	se n == 1 {
+		retornar 1
+	}
+	a := 0
+	b := 1
+	para i := 2; i <= n; i++ {
+		c := a + b
+		a = b
+		b = c
+	}
+	retornar b
+}
+
+// MDC calcula o Máximo Divisor Comum pelo Algoritmo de Euclides
+funcao MDC(a inteiro, b inteiro) inteiro {
+	para b != 0 {
+		temp := b
+		b = a % b
+		a = temp
+	}
+	retornar a
+}
+
+// MMC calcula o Mínimo Múltiplo Comum
+funcao MMC(a inteiro, b inteiro) inteiro {
+	se a == 0 || b == 0 {
+		retornar 0
+	}
+	retornar (Absoluto(a) * Absoluto(b)) / MDC(a, b)
+}
+
+// EhPrimo verifica se um número inteiro é primo
+funcao EhPrimo(n inteiro) booleano {
+	se n <= 1 {
+		retornar falso
+	}
+	se n <= 3 {
+		retornar verdadeiro
+	}
+	se n % 2 == 0 || n % 3 == 0 {
+		retornar falso
+	}
+	para i := 5; i * i <= n; i = i + 6 {
+		se n % i == 0 || n % (i + 2) == 0 {
+			retornar falso
+		}
+	}
+	retornar verdadeiro
+}
+
+// Clampar restringe um valor entre um mínimo e um máximo
+funcao Clampar(val inteiro, min inteiro, max inteiro) inteiro {
+	se val < min {
+		retornar min
+	}
+	se val > max {
+		retornar max
+	}
+	retornar val
+}

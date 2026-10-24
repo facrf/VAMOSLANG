@@ -222,6 +222,8 @@ var StdlibImportPathsMap = map[string]string{
 	"executar":            "os/exec",
 	"processo":            "os/exec",
 	"servidor":            "vamos/pacotes/servidor",
+	"colecoes":            "vamos/pacotes/colecoes",
+	"matematica_util":     "vamos/pacotes/matematica_util",
 }
 
 // ReverseStdlibImportsMap mapeia import paths do Go para pacotes PT-BR.
@@ -301,6 +303,8 @@ var StdlibIdentMap = map[string]string{
 	"aleatorio":           "rand",
 	"rand":                "rand",
 	"servidor":            "servidor",
+	"colecoes":            "colecoes",
+	"matematica_util":     "matematica_util",
 }
 
 // StdlibMethodsMap mapeia métodos/funções conhecidos para o identificador do pacote Go.

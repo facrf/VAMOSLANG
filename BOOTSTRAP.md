@@ -33,7 +33,7 @@ flowchart TD
 
 ---
 
-## 🗺️ As 7 Etapas da Jornada de Bootstrapping
+## 🗺️ As 9 Etapas da Jornada de Bootstrapping
 
 | Etapa | Meta | Descrição | Status |
 | :---: | :--- | :--- | :---: |
@@ -44,6 +44,8 @@ flowchart TD
 | **5** | **Emissão Nativa WebAssembly 1.0 (Wasm)** | Emissor direto de binários `.wasm` autônomos sem compiladores externos, com LEB128 e seção de exportação. | ✅ **Concluído** |
 | **6** | **Análise Semântica e Verificação de Tipos** | Tabela de símbolos com escopos léxicos, validação de tipos, variáveis não declaradas e assinaturas de funções. | ✅ **Concluído** |
 | **7** | **Backend C Nativo (C99) & Compilação via GCC** | Emissor de C99 nativo e geração de binários de máquina ELF sem dependência do compilador Go hospedeiro. | ✅ **Concluído** |
+| **8** | **Mapas, Estruturas e Mutação na VVM** | `OpCriarMapa`, indexação flexível de chaves dinâmicas, instanciação e mutação de structs (`struct.campo = val`). | ✅ **Concluído** |
+| **9** | **Biblioteca Padrão em VAMOS Puro** | Módulos canônicos (`pacotes/colecoes`, `pacotes/matematica_util`) escritos inteiramente na sintaxe VAMOS-LANG. | ✅ **Concluído** |
 
 ---
 
@@ -94,6 +96,11 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
 13. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
     - Ponto de entrada CLI completo do compilador auto-hospedado (`vamosc`).
     - Comandos oficiais: `compilar`, `compilar-c`, `c`, `rodar`, `vm`, `bytecode`, `wasm`, `checar`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
+14. **[`pacotes/colecoes/colecoes.vamos`](file:///storage/www/projetos/VAMOSLANG/pacotes/colecoes/colecoes.vamos)**:
+    - Estruturas de dados genéricas em VAMOS-LANG puro: `Pilha[T qualquer]`, `Fila[T qualquer]` e `Conjunto[T comparavel]`.
+    - Métodos padrão: `Empilhar`, `Desempilhar`, `Topo`, `Enfileirar`, `Desenfileirar`, `Frente`, `Inserir`, `Add`, `Contem`, `Remover`, `ParaLista`.
+15. **[`pacotes/matematica_util/matematica_util.vamos`](file:///storage/www/projetos/VAMOSLANG/pacotes/matematica_util/matematica_util.vamos)**:
+    - Biblioteca matemática autônoma: `Absoluto`, `Maximo`, `Minimo`, `Potencia`, `Fatorial`, `Fibonacci`, `MDC`, `MMC`, `EhPrimo`, `Clampar`.
 
 ---
 

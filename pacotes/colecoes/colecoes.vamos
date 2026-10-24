@@ -1,0 +1,146 @@
+// Pacote colecoes - Estruturas de dados genéricas em VAMOS-LANG
+// Fornece implementações de Pilha, Fila e Conjunto com tipos genéricos.
+
+pacote colecoes
+
+// Pilha representa uma estrutura de dados LIFO (Last-In, First-Out)
+tipo Pilha[T qualquer] estrutura {
+	itens []T
+}
+
+// NovaPilha inicializa uma pilha vazia
+funcao NovaPilha[T qualquer]() *Pilha[T] {
+	retornar &Pilha[T]{
+		itens: criar([]T, 0),
+	}
+}
+
+// Empilhar insere um elemento no topo da pilha
+funcao (p *Pilha[T]) Empilhar(item T) {
+	p.itens = anexar(p.itens, item)
+}
+
+// Desempilhar remove e retorna o elemento do topo da pilha
+funcao (p *Pilha[T]) Desempilhar() (T, booleano) {
+	se p.Vazia() {
+		var zero T
+		retornar zero, falso
+	}
+	ultimoIndice := tamanho(p.itens) - 1
+	item := p.itens[ultimoIndice]
+	p.itens = p.itens[:ultimoIndice]
+	retornar item, verdadeiro
+}
+
+// Topo retorna o elemento do topo da pilha sem removê-lo
+funcao (p *Pilha[T]) Topo() (T, booleano) {
+	se p.Vazia() {
+		var zero T
+		retornar zero, falso
+	}
+	retornar p.itens[tamanho(p.itens)-1], verdadeiro
+}
+
+// Tamanho retorna a quantidade de itens na pilha
+funcao (p *Pilha[T]) Tamanho() inteiro {
+	retornar tamanho(p.itens)
+}
+
+// Vazia verifica se a pilha não possui elementos
+funcao (p *Pilha[T]) Vazia() booleano {
+	retornar tamanho(p.itens) == 0
+}
+
+// Fila representa uma estrutura de dados FIFO (First-In, First-Out)
+tipo Fila[T qualquer] estrutura {
+	itens []T
+}
+
+// NovaFila inicializa uma fila vazia
+funcao NovaFila[T qualquer]() *Fila[T] {
+	retornar &Fila[T]{
+		itens: criar([]T, 0),
+	}
+}
+
+// Enfileirar insere um elemento no fim da fila
+funcao (f *Fila[T]) Enfileirar(item T) {
+	f.itens = anexar(f.itens, item)
+}
+
+// Desenfileirar remove e retorna o primeiro elemento da fila
+funcao (f *Fila[T]) Desenfileirar() (T, booleano) {
+	se f.Vazia() {
+		var zero T
+		retornar zero, falso
+	}
+	item := f.itens[0]
+	f.itens = f.itens[1:]
+	retornar item, verdadeiro
+}
+
+// Frente retorna o primeiro elemento da fila sem removê-lo
+funcao (f *Fila[T]) Frente() (T, booleano) {
+	se f.Vazia() {
+		var zero T
+		retornar zero, falso
+	}
+	retornar f.itens[0], verdadeiro
+}
+
+// Tamanho retorna a quantidade de elementos na fila
+funcao (f *Fila[T]) Tamanho() inteiro {
+	retornar tamanho(f.itens)
+}
+
+// Vazia verifica se a fila está vazia
+funcao (f *Fila[T]) Vazia() booleano {
+	retornar tamanho(f.itens) == 0
+}
+
+// Conjunto representa uma coleção de valores únicos
+tipo Conjunto[T comparavel] estrutura {
+	elementos mapa[T]booleano
+}
+
+// NovoConjunto inicializa um conjunto vazio
+funcao NovoConjunto[T comparavel]() *Conjunto[T] {
+	retornar &Conjunto[T]{
+		elementos: criar(mapa[T]booleano),
+	}
+}
+
+// Inserir adiciona um valor no conjunto
+funcao (c *Conjunto[T]) Inserir(item T) {
+	c.elementos[item] = verdadeiro
+}
+
+// Add adiciona um valor no conjunto (compatibilidade direta com Adicionar transpilado)
+funcao (c *Conjunto[T]) Add(item T) {
+	c.elementos[item] = verdadeiro
+}
+
+// Remover elimina um valor do conjunto
+funcao (c *Conjunto[T]) Remover(item T) {
+	excluir(c.elementos, item)
+}
+
+// Contem verifica se o elemento pertence ao conjunto
+funcao (c *Conjunto[T]) Contem(item T) booleano {
+	_, existe := c.elementos[item]
+	retornar existe
+}
+
+// Tamanho retorna o total de elementos únicos
+funcao (c *Conjunto[T]) Tamanho() inteiro {
+	retornar tamanho(c.elementos)
+}
+
+// ParaLista exporta os elementos do conjunto para uma lista
+funcao (c *Conjunto[T]) ParaLista() []T {
+	lista := criar([]T, 0)
+	para k := intervalo c.elementos {
+		lista = anexar(lista, k)
+	}
+	retornar lista
+}

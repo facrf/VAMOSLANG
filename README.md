@@ -175,6 +175,12 @@ Acesse em: `http://localhost:8080`
 | `banco_dados.Abrir(...)` | `database/sql.Open(...)` | `db, _ := banco_dados.Abrir("sqlite", "db.sqlite")` |
 | `sincronizar/atomico` | `sync/atomic` | `atomico.AdicionarInteiro64(&c, 1); val := atomico.CarregarInteiro64(&c)` |
 | `redes/url.Analisar(...)` | `net/url.Parse(...)` | `u, _ := url.Analisar("https://exemplo.com.br")` |
+| `colecoes.NovaPilha[T]()` | *Pacote Nativo* | `p := colecoes.NovaPilha[texto](); p.Empilhar("VAMOS")` |
+| `colecoes.NovaFila[T]()` | *Pacote Nativo* | `f := colecoes.NovaFila[inteiro](); f.Enfileirar(42)` |
+| `colecoes.NovoConjunto[T]()` | *Pacote Nativo* | `c := colecoes.NovoConjunto[texto](); c.Adicionar("Item")` |
+| `matematica_util.Fatorial(...)` | *Pacote Nativo* | `fat := matematica_util.Fatorial(6)` |
+| `matematica_util.MDC(...)` | *Pacote Nativo* | `mdc := matematica_util.MDC(48, 18)` |
+| `matematica_util.EhPrimo(...)` | *Pacote Nativo* | `primo := matematica_util.EhPrimo(29)` |
 
 ---
 
@@ -390,8 +396,10 @@ make check
 │   ├── wasm_exec.js          # Ponte de execução WebAssembly
 │   └── README.md
 ├── blocodenotasBR/           # Aplicação real completa (Bloco de Notas CLI + JSON)
-├── pacotes/                  # Pacotes e bibliotecas nativas em PT-BR
-│   └── servidor/             # Micro-framework web com roteamento e middlewares
+├── pacotes/                  # Pacotes e bibliotecas padrão nativas em PT-BR
+│   ├── servidor/             # Micro-framework web com roteamento e middlewares
+│   ├── colecoes/             # Estruturas genéricas em VAMOS: Pilha[T], Fila[T], Conjunto[T]
+│   └── matematica_util/      # Funções matemáticas em VAMOS: Fatorial, Fibonacci, MDC, MMC, Primos
 ├── exemplos/                 # Coleção de exemplos práticos
 │   ├── ola_mundo.vamos
 │   ├── concorrencia.vamos
@@ -402,7 +410,11 @@ make check
 │   ├── nano.vamos            # Editor de texto estilo GNU nano em terminal
 │   ├── api_rest.vamos        # API REST com a micro-framework servidor
 │   ├── uuid_externo.vamos    # Integração com pacotes Go externos
-│   └── genericos.vamos       # Tipos genéricos (Generics) e restrições
+│   ├── genericos.vamos       # Tipos genéricos (Generics) e restrições
+│   ├── maquina_virtual.vamos # Demonstração de execução direta VVM com mapas e structs
+│   ├── wasm_modulo.vamos     # Compilação nativa para WebAssembly 1.0 (Wasm)
+│   ├── c_nativo.vamos        # Backend C99 nativo e compilação binária GCC
+│   └── pacotes_nativos.vamos # Demonstração da biblioteca padrão em VAMOS puro
 ├── wasm/                     # Ponto de entrada para compilação WebAssembly
 ├── transpiler/               # Motor do transpilador, validador Go AST e linter
 ├── cmd/                      # Comandos modulares da CLI (run, build, lsp, get, etc.)

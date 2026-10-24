@@ -106,6 +106,8 @@
     <div style="font-weight:700; font-size:18px; color:#fff; margin-bottom:16px;">🇧🇷 VAMOS-LANG Doc</div>
     <input type="text" id="filterInput" class="search-box" placeholder="Filtrar símbolos..." onkeyup="filterDocs()">
     <ul class="nav-list" id="navList">
+      <li><a href="#Absoluto">Absoluto</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#Add">Add</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#AdicionarConstante">AdicionarConstante</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#AdicionarFilho">AdicionarFilho</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#AdicionarIdentificador">AdicionarIdentificador</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -132,6 +134,7 @@
       <li><a href="#Carregar">Carregar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#CarregarBytecodeDeArquivo">CarregarBytecodeDeArquivo</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#Circulo">Circulo</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Clampar">Clampar</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#CodificarLEB128S">CodificarLEB128S</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#CodificarLEB128U">CodificarLEB128U</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#CompilarAST">CompilarAST</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -139,6 +142,7 @@
       <li><a href="#CompilarAST">CompilarAST</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#CompilarBinarioC">CompilarBinarioC</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#ContarPalavras">ContarPalavras</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#Contem">Contem</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#ConverterCoordenada">ConverterCoordenada</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#CriarNota">CriarNota</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#CriarNota">CriarNota</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -148,6 +152,8 @@
       <li><a href="#Definir">Definir</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Desassemblar">Desassemblar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Desempilhar">Desempilhar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Desempilhar">Desempilhar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Desenfileirar">Desenfileirar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#DesserializarBytecode">DesserializarBytecode</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#EditarLinha">EditarLinha</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#EditorNano">EditorNano</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
@@ -155,12 +161,15 @@
       <li><a href="#EhMinhaPeca">EhMinhaPeca</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#EhPalavraChave">EhPalavraChave</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#EhParede">EhParede</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#EhPrimo">EhPrimo</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#EmissorBytecode">EmissorBytecode</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#EmissorC">EmissorC</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#EmissorWasm">EmissorWasm</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#Emitir">Emitir</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Empilhar">Empilhar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Empilhar">Empilhar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#EncontrarIndice[T">EncontrarIndice[T</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#Enfileirar">Enfileirar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#EscolherMelhorMovimentoIA">EscolherMelhorMovimentoIA</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Escopo">Escopo</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#Excluir">Excluir</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -173,12 +182,16 @@
       <li><a href="#ExibirNotaDetalhada">ExibirNotaDetalhada</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#ExportarTexto">ExportarTexto</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Fantasma">Fantasma</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Fatorial">Fatorial</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#Fibonacci">Fibonacci</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#FormaGeometrica">FormaGeometrica</a> <span style="font-size:10px; color:#8b949e;">(interface)</span></li>
       <li><a href="#FormatarCodigo">FormatarCodigo</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#FormatarCoordenada">FormatarCoordenada</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#FormatarVez">FormatarVez</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#Frente">Frente</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#GerarNovaComida">GerarNovaComida</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#ImprimirArvore">ImprimirArvore</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#Inserir">Inserir</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#InserirLinha">InserirLinha</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Instrucao">Instrucao</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#Interpretar">Interpretar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -186,9 +199,13 @@
       <li><a href="#JogoDamas">JogoDamas</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#JogoPacman">JogoPacman</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#ListarNotasTabela">ListarNotasTabela</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#MDC">MDC</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#MMC">MMC</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#Mapear[T">Mapear[T</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#MaquinaVirtual">MaquinaVirtual</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Maximo">Maximo</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#MensagemProcessamento">MensagemProcessamento</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Minimo">Minimo</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#ModificarArgumento">ModificarArgumento</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#ModoInterativo">ModoInterativo</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#MoverFantasmas">MoverFantasmas</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -200,12 +217,15 @@
       <li><a href="#Nome">Nome</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Nota">Nota</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#NotaTeste">NotaTeste</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#NovaFila[T">NovaFila[T</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovaMaquinaVirtual">NovaMaquinaVirtual</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#NovaPilha[T">NovaPilha[T</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoAnalisadorLexico">NovoAnalisadorLexico</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoAnalisadorSemantico">NovoAnalisadorSemantico</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoAnalisadorSintatico">NovoAnalisadorSintatico</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoBlocoDeNotas">NovoBlocoDeNotas</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoBlocoTeste">NovoBlocoTeste</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#NovoConjunto[T">NovoConjunto[T</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoEditorNano">NovoEditorNano</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoEmissorBytecode">NovoEmissorBytecode</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#NovoEmissorC">NovoEmissorC</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
@@ -228,15 +248,18 @@
       <li><a href="#ObterNotaPorId">ObterNotaPorId</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#ObterPorId">ObterPorId</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#ObterTodosMovimentosPossiveis">ObterTodosMovimentosPossiveis</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#ParaLista">ParaLista</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Perimetro">Perimetro</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Perimetro">Perimetro</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Ponto">Ponto</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#Posicao">Posicao</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#PosicaoDamas">PosicaoDamas</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#PosicaoOcupadaPelaCobra">PosicaoOcupadaPelaCobra</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Potencia">Potencia</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#ProgramaBytecode">ProgramaBytecode</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#ProximoToken">ProximoToken</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#QuadroChamada">QuadroChamada</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
+      <li><a href="#Remover">Remover</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#RemoverLinha">RemoverLinha</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Renderizar">Renderizar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Renderizar">Renderizar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -256,9 +279,13 @@
       <li><a href="#Simbolo">Simbolo</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#SubstituirGlobal">SubstituirGlobal</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Tamanho">Tamanho</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Tamanho">Tamanho</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Tamanho">Tamanho</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Tamanho">Tamanho</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#Tarefa">Tarefa</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#Token">Token</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#TokenizarTodos">TokenizarTodos</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Topo">Topo</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#TotalFilhos">TotalFilhos</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#TraduzirCaminhoImport">TraduzirCaminhoImport</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#TraduzirPalavraChave">TraduzirPalavraChave</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
@@ -268,6 +295,8 @@
       <li><a href="#Usuario">Usuario</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#Usuario">Usuario</a> <span style="font-size:10px; color:#8b949e;">(estrutura)</span></li>
       <li><a href="#ValidarAST">ValidarAST</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#Vazia">Vazia</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#Vazia">Vazia</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#VerificarColisoes">VerificarColisoes</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#aleatorioAbs">aleatorioAbs</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#analisarBloco">analisarBloco</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -282,6 +311,7 @@
       <li><a href="#calcularFatorial">calcularFatorial</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#calcularPontuacao">calcularPontuacao</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#coincidir">coincidir</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#colecoes">colecoes</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#coletarDeclaracoesGlobais">coletarDeclaracoesGlobais</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#compilarCorpoFuncao">compilarCorpoFuncao</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#consumir">consumir</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -342,23 +372,14 @@
       <li><a href="#manipularStatus">manipularStatus</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#mapearMetodoPacote">mapearMetodoPacote</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#mapearTipoC">mapearTipoC</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
+      <li><a href="#matematica_util">matematica_util</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#multiplicar">multiplicar</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#obterParametrosC">obterParametrosC</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#olhar">olhar</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#polinomio">polinomio</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
@@ -366,11 +387,14 @@
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
@@ -381,9 +405,11 @@
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
@@ -392,12 +418,19 @@
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
-      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(pacote)</span></li>
+      <li><a href="#principal">principal</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#processarTarefa">processarTarefa</a> <span style="font-size:10px; color:#8b949e;">(funcao)</span></li>
       <li><a href="#proximo">proximo</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
       <li><a href="#proximo">proximo</a> <span style="font-size:10px; color:#8b949e;">(metodo)</span></li>
@@ -426,6 +459,24 @@
   <main>
     <h1>Documentação Oficial do Projeto</h1>
     <p style="color:#8b949e;">Gerado automaticamente a partir dos fontes VAMOS-LANG em <code>.</code>.</p>
+    <div class="card doc-item" id="Absoluto" data-name="absoluto">
+      <div class="symbol-title">
+        <span>Absoluto</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao Absoluto(x inteiro) inteiro </code></pre>
+      <p>Absoluto retorna o valor absoluto de um inteiro</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:5</code></div>
+    </div>
+    <div class="card doc-item" id="Add" data-name="add">
+      <div class="symbol-title">
+        <span>Add</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c *Conjunto[T]) Add(item T) </code></pre>
+      <p>Add adiciona um valor no conjunto (compatibilidade direta com Adicionar transpilado)</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:119</code></div>
+    </div>
     <div class="card doc-item" id="AdicionarConstante" data-name="adicionarconstante">
       <div class="symbol-title">
         <span>AdicionarConstante</span>
@@ -458,18 +509,18 @@
         <span>AlternarFavorita</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (b *BlocoTeste) AlternarFavorita(id inteiro) erro </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:95</code></div>
+      <pre><code>funcao (b *BlocoDeNotas) AlternarFavorita(id inteiro) (*Nota, erro) </code></pre>
+      <p>AlternarFavorita marca ou desmarca a nota como favorita</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:169</code></div>
     </div>
     <div class="card doc-item" id="AlternarFavorita" data-name="alternarfavorita">
       <div class="symbol-title">
         <span>AlternarFavorita</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (b *BlocoDeNotas) AlternarFavorita(id inteiro) (*Nota, erro) </code></pre>
-      <p>AlternarFavorita marca ou desmarca a nota como favorita</p>
-      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:169</code></div>
+      <pre><code>funcao (b *BlocoTeste) AlternarFavorita(id inteiro) erro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:95</code></div>
     </div>
     <div class="card doc-item" id="AnalisadorLexico" data-name="analisadorlexico">
       <div class="symbol-title">
@@ -620,9 +671,9 @@
         <span>Carregar</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (b *BlocoDeNotas) Carregar() erro </code></pre>
-      <p>Carregar lê os dados do arquivo JSON local</p>
-      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:60</code></div>
+      <pre><code>funcao (b *BlocoTeste) Carregar() erro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:51</code></div>
     </div>
     <div class="card doc-item" id="Carregar" data-name="carregar">
       <div class="symbol-title">
@@ -638,9 +689,9 @@
         <span>Carregar</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (b *BlocoTeste) Carregar() erro </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:51</code></div>
+      <pre><code>funcao (b *BlocoDeNotas) Carregar() erro </code></pre>
+      <p>Carregar lê os dados do arquivo JSON local</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:60</code></div>
     </div>
     <div class="card doc-item" id="CarregarBytecodeDeArquivo" data-name="carregarbytecodedearquivo">
       <div class="symbol-title">
@@ -659,6 +710,15 @@
       <pre><code>tipo Circulo estrutura {</code></pre>
       <p>Estrutura Círculo</p>
       <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:38</code></div>
+    </div>
+    <div class="card doc-item" id="Clampar" data-name="clampar">
+      <div class="symbol-title">
+        <span>Clampar</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao Clampar(val inteiro, min inteiro, max inteiro) inteiro </code></pre>
+      <p>Clampar restringe um valor entre um mínimo e um máximo</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:104</code></div>
     </div>
     <div class="card doc-item" id="CodificarLEB128S" data-name="codificarleb128s">
       <div class="symbol-title">
@@ -683,9 +743,9 @@
         <span>CompilarAST</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (e *EmissorBytecode) CompilarAST(raiz *NoAST) *ProgramaBytecode </code></pre>
-      <p>CompilarAST processa o nó raiz da AST e produz o programa em bytecode</p>
-      <div class="file-ref">Definido em: <code>compilador/emissor.vamos:63</code></div>
+      <pre><code>funcao (e *EmissorC) CompilarAST(raiz *NoAST) texto </code></pre>
+      <p>CompilarAST gera todo o código C a partir da AST do programa</p>
+      <div class="file-ref">Definido em: <code>compilador/emissor_c.vamos:67</code></div>
     </div>
     <div class="card doc-item" id="CompilarAST" data-name="compilarast">
       <div class="symbol-title">
@@ -701,9 +761,9 @@
         <span>CompilarAST</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (e *EmissorC) CompilarAST(raiz *NoAST) texto </code></pre>
-      <p>CompilarAST gera todo o código C a partir da AST do programa</p>
-      <div class="file-ref">Definido em: <code>compilador/emissor_c.vamos:67</code></div>
+      <pre><code>funcao (e *EmissorBytecode) CompilarAST(raiz *NoAST) *ProgramaBytecode </code></pre>
+      <p>CompilarAST processa o nó raiz da AST e produz o programa em bytecode</p>
+      <div class="file-ref">Definido em: <code>compilador/emissor.vamos:63</code></div>
     </div>
     <div class="card doc-item" id="CompilarBinarioC" data-name="compilarbinarioc">
       <div class="symbol-title">
@@ -722,6 +782,15 @@
       <pre><code>funcao ContarPalavras(s texto) inteiro </code></pre>
       <p>ContarPalavras conta o número aproximado de palavras em um texto</p>
       <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:232</code></div>
+    </div>
+    <div class="card doc-item" id="Contem" data-name="contem">
+      <div class="symbol-title">
+        <span>Contem</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c *Conjunto[T]) Contem(item T) booleano </code></pre>
+      <p>Contem verifica se o elemento pertence ao conjunto</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:129</code></div>
     </div>
     <div class="card doc-item" id="ConverterCoordenada" data-name="convertercoordenada">
       <div class="symbol-title">
@@ -802,7 +871,25 @@
       </div>
       <pre><code>funcao (p *Pilha[T]) Desempilhar() (T, booleano) </code></pre>
       <p>Desempilhar remove e retorna o elemento do topo da pilha</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:24</code></div>
+    </div>
+    <div class="card doc-item" id="Desempilhar" data-name="desempilhar">
+      <div class="symbol-title">
+        <span>Desempilhar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (p *Pilha[T]) Desempilhar() (T, booleano) </code></pre>
+      <p>Desempilhar remove e retorna o elemento do topo da pilha</p>
       <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:27</code></div>
+    </div>
+    <div class="card doc-item" id="Desenfileirar" data-name="desenfileirar">
+      <div class="symbol-title">
+        <span>Desenfileirar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (f *Fila[T]) Desenfileirar() (T, booleano) </code></pre>
+      <p>Desenfileirar remove e retorna o primeiro elemento da fila</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:72</code></div>
     </div>
     <div class="card doc-item" id="DesserializarBytecode" data-name="desserializarbytecode">
       <div class="symbol-title">
@@ -867,6 +954,15 @@
       <p>EhParede verifica se uma posição é obstáculo no labirinto</p>
       <div class="file-ref">Definido em: <code>jogos/pacman.vamos:116</code></div>
     </div>
+    <div class="card doc-item" id="EhPrimo" data-name="ehprimo">
+      <div class="symbol-title">
+        <span>EhPrimo</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao EhPrimo(n inteiro) booleano </code></pre>
+      <p>EhPrimo verifica se um número inteiro é primo</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:85</code></div>
+    </div>
     <div class="card doc-item" id="EmissorBytecode" data-name="emissorbytecode">
       <div class="symbol-title">
         <span>EmissorBytecode</span>
@@ -912,6 +1008,15 @@
       <p>Empilhar insere um novo elemento no topo da pilha</p>
       <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:22</code></div>
     </div>
+    <div class="card doc-item" id="Empilhar" data-name="empilhar">
+      <div class="symbol-title">
+        <span>Empilhar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (p *Pilha[T]) Empilhar(item T) </code></pre>
+      <p>Empilhar insere um elemento no topo da pilha</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:19</code></div>
+    </div>
     <div class="card doc-item" id="EncontrarIndice[T" data-name="encontrarindice[t">
       <div class="symbol-title">
         <span>EncontrarIndice[T</span>
@@ -920,6 +1025,15 @@
       <pre><code>funcao EncontrarIndice[T comparavel](colecao []T, item T) inteiro </code></pre>
       <p>EncontrarIndice busca o primeiro índice de um valor em qualquer fatia comparável</p>
       <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:44</code></div>
+    </div>
+    <div class="card doc-item" id="Enfileirar" data-name="enfileirar">
+      <div class="symbol-title">
+        <span>Enfileirar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (f *Fila[T]) Enfileirar(item T) </code></pre>
+      <p>Enfileirar insere um elemento no fim da fila</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:67</code></div>
     </div>
     <div class="card doc-item" id="EscolherMelhorMovimentoIA" data-name="escolhermelhormovimentoia">
       <div class="symbol-title">
@@ -1029,6 +1143,24 @@
       <p>Fantasma representa um dos inimigos do Pacman</p>
       <div class="file-ref">Definido em: <code>jogos/pacman.vamos:24</code></div>
     </div>
+    <div class="card doc-item" id="Fatorial" data-name="fatorial">
+      <div class="symbol-title">
+        <span>Fatorial</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao Fatorial(n inteiro) inteiro </code></pre>
+      <p>Fatorial calcula o fatorial de n</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:41</code></div>
+    </div>
+    <div class="card doc-item" id="Fibonacci" data-name="fibonacci">
+      <div class="symbol-title">
+        <span>Fibonacci</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao Fibonacci(n inteiro) inteiro </code></pre>
+      <p>Fibonacci calcula o n-ésimo termo da sequência de Fibonacci</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:49</code></div>
+    </div>
     <div class="card doc-item" id="FormaGeometrica" data-name="formageometrica">
       <div class="symbol-title">
         <span>FormaGeometrica</span>
@@ -1065,6 +1197,15 @@
       <p><em>Nenhuma descrição fornecida.</em></p>
       <div class="file-ref">Definido em: <code>jogos/damas.vamos:480</code></div>
     </div>
+    <div class="card doc-item" id="Frente" data-name="frente">
+      <div class="symbol-title">
+        <span>Frente</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (f *Fila[T]) Frente() (T, booleano) </code></pre>
+      <p>Frente retorna o primeiro elemento da fila sem removê-lo</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:83</code></div>
+    </div>
     <div class="card doc-item" id="GerarNovaComida" data-name="gerarnovacomida">
       <div class="symbol-title">
         <span>GerarNovaComida</span>
@@ -1082,6 +1223,15 @@
       <pre><code>funcao ImprimirArvore(no *NoAST, prefixo texto, ehUltimo booleano) </code></pre>
       <p>ImprimirArvore exibe a AST formatada graficamente no terminal</p>
       <div class="file-ref">Definido em: <code>compilador/ast.vamos:110</code></div>
+    </div>
+    <div class="card doc-item" id="Inserir" data-name="inserir">
+      <div class="symbol-title">
+        <span>Inserir</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c *Conjunto[T]) Inserir(item T) </code></pre>
+      <p>Inserir adiciona um valor no conjunto</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:114</code></div>
     </div>
     <div class="card doc-item" id="InserirLinha" data-name="inserirlinha">
       <div class="symbol-title">
@@ -1146,6 +1296,24 @@
       <p>ListarNotasTabela imprime uma lista elegante das notas</p>
       <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:368</code></div>
     </div>
+    <div class="card doc-item" id="MDC" data-name="mdc">
+      <div class="symbol-title">
+        <span>MDC</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao MDC(a inteiro, b inteiro) inteiro </code></pre>
+      <p>MDC calcula o Máximo Divisor Comum pelo Algoritmo de Euclides</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:67</code></div>
+    </div>
+    <div class="card doc-item" id="MMC" data-name="mmc">
+      <div class="symbol-title">
+        <span>MMC</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao MMC(a inteiro, b inteiro) inteiro </code></pre>
+      <p>MMC calcula o Mínimo Múltiplo Comum</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:77</code></div>
+    </div>
     <div class="card doc-item" id="Mapear[T" data-name="mapear[t">
       <div class="symbol-title">
         <span>Mapear[T</span>
@@ -1164,6 +1332,15 @@
       <p>MaquinaVirtual executa as instruções de bytecode na pilha</p>
       <div class="file-ref">Definido em: <code>compilador/vm.vamos:21</code></div>
     </div>
+    <div class="card doc-item" id="Maximo" data-name="maximo">
+      <div class="symbol-title">
+        <span>Maximo</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao Maximo(a inteiro, b inteiro) inteiro </code></pre>
+      <p>Maximo retorna o maior entre dois inteiros</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:13</code></div>
+    </div>
     <div class="card doc-item" id="MensagemProcessamento" data-name="mensagemprocessamento">
       <div class="symbol-title">
         <span>MensagemProcessamento</span>
@@ -1172,6 +1349,15 @@
       <pre><code>tipo MensagemProcessamento estrutura {</code></pre>
       <p>Definição de estrutura de dados</p>
       <div class="file-ref">Definido em: <code>teste.vamos:13</code></div>
+    </div>
+    <div class="card doc-item" id="Minimo" data-name="minimo">
+      <div class="symbol-title">
+        <span>Minimo</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao Minimo(a inteiro, b inteiro) inteiro </code></pre>
+      <p>Minimo retorna o menor entre dois inteiros</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:21</code></div>
     </div>
     <div class="card doc-item" id="ModificarArgumento" data-name="modificarargumento">
       <div class="symbol-title">
@@ -1241,18 +1427,18 @@
         <span>Nome</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (r Retangulo) Nome() texto </code></pre>
+      <pre><code>funcao (c Circulo) Nome() texto </code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:33</code></div>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:51</code></div>
     </div>
     <div class="card doc-item" id="Nome" data-name="nome">
       <div class="symbol-title">
         <span>Nome</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (c Circulo) Nome() texto </code></pre>
+      <pre><code>funcao (r Retangulo) Nome() texto </code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:51</code></div>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:33</code></div>
     </div>
     <div class="card doc-item" id="Nota" data-name="nota">
       <div class="symbol-title">
@@ -1272,6 +1458,15 @@
       <p>Estrutura espelhada para validação de testes</p>
       <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:19</code></div>
     </div>
+    <div class="card doc-item" id="NovaFila[T" data-name="novafila[t">
+      <div class="symbol-title">
+        <span>NovaFila[T</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovaFila[T qualquer]() *Fila[T] </code></pre>
+      <p>NovaFila inicializa uma fila vazia</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:60</code></div>
+    </div>
     <div class="card doc-item" id="NovaMaquinaVirtual" data-name="novamaquinavirtual">
       <div class="symbol-title">
         <span>NovaMaquinaVirtual</span>
@@ -1280,6 +1475,15 @@
       <pre><code>funcao NovaMaquinaVirtual() *MaquinaVirtual </code></pre>
       <p>NovaMaquinaVirtual cria uma nova instância de execução da VM</p>
       <div class="file-ref">Definido em: <code>compilador/vm.vamos:30</code></div>
+    </div>
+    <div class="card doc-item" id="NovaPilha[T" data-name="novapilha[t">
+      <div class="symbol-title">
+        <span>NovaPilha[T</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovaPilha[T qualquer]() *Pilha[T] </code></pre>
+      <p>NovaPilha inicializa uma pilha vazia</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:12</code></div>
     </div>
     <div class="card doc-item" id="NovoAnalisadorLexico" data-name="novoanalisadorlexico">
       <div class="symbol-title">
@@ -1325,6 +1529,15 @@
       <pre><code>funcao NovoBlocoTeste(caminho texto) *BlocoTeste </code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
       <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:35</code></div>
+    </div>
+    <div class="card doc-item" id="NovoConjunto[T" data-name="novoconjunto[t">
+      <div class="symbol-title">
+        <span>NovoConjunto[T</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao NovoConjunto[T comparavel]() *Conjunto[T] </code></pre>
+      <p>NovoConjunto inicializa um conjunto vazio</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:107</code></div>
     </div>
     <div class="card doc-item" id="NovoEditorNano" data-name="novoeditornano">
       <div class="symbol-title">
@@ -1524,6 +1737,15 @@
       <p>ObterTodosMovimentosPossiveis calcula todos os lances legais do jogador da vez</p>
       <div class="file-ref">Definido em: <code>jogos/damas.vamos:172</code></div>
     </div>
+    <div class="card doc-item" id="ParaLista" data-name="paralista">
+      <div class="symbol-title">
+        <span>ParaLista</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c *Conjunto[T]) ParaLista() []T </code></pre>
+      <p>ParaLista exporta os elementos do conjunto para uma lista</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:140</code></div>
+    </div>
     <div class="card doc-item" id="Perimetro" data-name="perimetro">
       <div class="symbol-title">
         <span>Perimetro</span>
@@ -1578,6 +1800,15 @@
       <p>PosicaoOcupadaPelaCobra verifica se uma coordenada coincide com o corpo</p>
       <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:73</code></div>
     </div>
+    <div class="card doc-item" id="Potencia" data-name="potencia">
+      <div class="symbol-title">
+        <span>Potencia</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao Potencia(base inteiro, expoente inteiro) inteiro </code></pre>
+      <p>Potencia calcula base elevada ao expoente</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:29</code></div>
+    </div>
     <div class="card doc-item" id="ProgramaBytecode" data-name="programabytecode">
       <div class="symbol-title">
         <span>ProgramaBytecode</span>
@@ -1605,6 +1836,15 @@
       <p>QuadroChamada armazena o escopo de variáveis e retorno de uma função ativa</p>
       <div class="file-ref">Definido em: <code>compilador/vm.vamos:14</code></div>
     </div>
+    <div class="card doc-item" id="Remover" data-name="remover">
+      <div class="symbol-title">
+        <span>Remover</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c *Conjunto[T]) Remover(item T) </code></pre>
+      <p>Remover elimina um valor do conjunto</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:124</code></div>
+    </div>
     <div class="card doc-item" id="RemoverLinha" data-name="removerlinha">
       <div class="symbol-title">
         <span>RemoverLinha</span>
@@ -1613,6 +1853,15 @@
       <pre><code>funcao (e *EditorNano) RemoverLinha(posicao inteiro) </code></pre>
       <p>RemoverLinha exclui a linha indicada do buffer</p>
       <div class="file-ref">Definido em: <code>exemplos/nano.vamos:117</code></div>
+    </div>
+    <div class="card doc-item" id="Renderizar" data-name="renderizar">
+      <div class="symbol-title">
+        <span>Renderizar</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (j *JogoPacman) Renderizar() </code></pre>
+      <p>Renderizar desenha o labirinto e entidades</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:314</code></div>
     </div>
     <div class="card doc-item" id="Renderizar" data-name="renderizar">
       <div class="symbol-title">
@@ -1631,15 +1880,6 @@
       <pre><code>funcao (j *JogoDamas) Renderizar() </code></pre>
       <p>Renderizar desenha o tabuleiro formatado com coordenadas A-H e 1-8</p>
       <div class="file-ref">Definido em: <code>jogos/damas.vamos:233</code></div>
-    </div>
-    <div class="card doc-item" id="Renderizar" data-name="renderizar">
-      <div class="symbol-title">
-        <span>Renderizar</span>
-        <span class="badge badge-metodo">metodo</span>
-      </div>
-      <pre><code>funcao (j *JogoPacman) Renderizar() </code></pre>
-      <p>Renderizar desenha o labirinto e entidades</p>
-      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:314</code></div>
     </div>
     <div class="card doc-item" id="Renderizar" data-name="renderizar">
       <div class="symbol-title">
@@ -1776,6 +2016,33 @@
       <p>Tamanho retorna a quantidade atual de itens na pilha</p>
       <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:39</code></div>
     </div>
+    <div class="card doc-item" id="Tamanho" data-name="tamanho">
+      <div class="symbol-title">
+        <span>Tamanho</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (f *Fila[T]) Tamanho() inteiro </code></pre>
+      <p>Tamanho retorna a quantidade de elementos na fila</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:92</code></div>
+    </div>
+    <div class="card doc-item" id="Tamanho" data-name="tamanho">
+      <div class="symbol-title">
+        <span>Tamanho</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (c *Conjunto[T]) Tamanho() inteiro </code></pre>
+      <p>Tamanho retorna o total de elementos únicos</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:135</code></div>
+    </div>
+    <div class="card doc-item" id="Tamanho" data-name="tamanho">
+      <div class="symbol-title">
+        <span>Tamanho</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (p *Pilha[T]) Tamanho() inteiro </code></pre>
+      <p>Tamanho retorna a quantidade de itens na pilha</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:45</code></div>
+    </div>
     <div class="card doc-item" id="Tarefa" data-name="tarefa">
       <div class="symbol-title">
         <span>Tarefa</span>
@@ -1802,6 +2069,15 @@
       <pre><code>funcao (l *AnalisadorLexico) TokenizarTodos() ([]Token, erro) </code></pre>
       <p>TokenizarTodos processa completamente a fonte e retorna uma lista de todos os tokens</p>
       <div class="file-ref">Definido em: <code>compilador/lexico.vamos:347</code></div>
+    </div>
+    <div class="card doc-item" id="Topo" data-name="topo">
+      <div class="symbol-title">
+        <span>Topo</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (p *Pilha[T]) Topo() (T, booleano) </code></pre>
+      <p>Topo retorna o elemento do topo da pilha sem removê-lo</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:36</code></div>
     </div>
     <div class="card doc-item" id="TotalFilhos" data-name="totalfilhos">
       <div class="symbol-title">
@@ -1864,7 +2140,7 @@
       </div>
       <pre><code>tipo Usuario estrutura {</code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:14</code></div>
+      <div class="file-ref">Definido em: <code>compilador/main.vamos:562</code></div>
     </div>
     <div class="card doc-item" id="Usuario" data-name="usuario">
       <div class="symbol-title">
@@ -1873,7 +2149,7 @@
       </div>
       <pre><code>tipo Usuario estrutura {</code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>compilador/main.vamos:562</code></div>
+      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:14</code></div>
     </div>
     <div class="card doc-item" id="ValidarAST" data-name="validarast">
       <div class="symbol-title">
@@ -1883,6 +2159,24 @@
       <pre><code>funcao ValidarAST(raiz *NoAST) ([]texto, []texto) </code></pre>
       <p>ValidarAST executa a verificação semântica e imprime os diagnósticos encontrados</p>
       <div class="file-ref">Definido em: <code>compilador/semantico.vamos:424</code></div>
+    </div>
+    <div class="card doc-item" id="Vazia" data-name="vazia">
+      <div class="symbol-title">
+        <span>Vazia</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (f *Fila[T]) Vazia() booleano </code></pre>
+      <p>Vazia verifica se a fila está vazia</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:97</code></div>
+    </div>
+    <div class="card doc-item" id="Vazia" data-name="vazia">
+      <div class="symbol-title">
+        <span>Vazia</span>
+        <span class="badge badge-metodo">metodo</span>
+      </div>
+      <pre><code>funcao (p *Pilha[T]) Vazia() booleano </code></pre>
+      <p>Vazia verifica se a pilha não possui elementos</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:50</code></div>
     </div>
     <div class="card doc-item" id="VerificarColisoes" data-name="verificarcolisoes">
       <div class="symbol-title">
@@ -1970,18 +2264,18 @@
         <span>calcular</span>
         <span class="badge">funcao</span>
       </div>
-      <pre><code>funcao calcular(x inteiro, y inteiro) inteiro </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>compilador/main.vamos:567</code></div>
+      <pre><code>funcao calcular(a decimal64, b decimal64, op texto) (decimal64, erro) </code></pre>
+      <p>OperacaoAritmetica calcula a operação matemática ou retorna um erro</p>
+      <div class="file-ref">Definido em: <code>exemplos/calculadora.vamos:12</code></div>
     </div>
     <div class="card doc-item" id="calcular" data-name="calcular">
       <div class="symbol-title">
         <span>calcular</span>
         <span class="badge">funcao</span>
       </div>
-      <pre><code>funcao calcular(a decimal64, b decimal64, op texto) (decimal64, erro) </code></pre>
-      <p>OperacaoAritmetica calcula a operação matemática ou retorna um erro</p>
-      <div class="file-ref">Definido em: <code>exemplos/calculadora.vamos:12</code></div>
+      <pre><code>funcao calcular(x inteiro, y inteiro) inteiro </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>compilador/main.vamos:567</code></div>
     </div>
     <div class="card doc-item" id="calcularFatorial" data-name="calcularfatorial">
       <div class="symbol-title">
@@ -2009,6 +2303,15 @@
       <pre><code>funcao (p *AnalisadorSintatico) coincidir(tipoToken inteiro, valor texto) booleano </code></pre>
       <p>coincidir verifica se o token atual é do tipo e valor esperado</p>
       <div class="file-ref">Definido em: <code>compilador/sintatico.vamos:69</code></div>
+    </div>
+    <div class="card doc-item" id="colecoes" data-name="colecoes">
+      <div class="symbol-title">
+        <span>colecoes</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote colecoes</code></pre>
+      <p>Pacote colecoes - Estruturas de dados genéricas em VAMOS-LANG Fornece implementações de Pilha, Fila e Conjunto com tipos genéricos.</p>
+      <div class="file-ref">Definido em: <code>pacotes/colecoes/colecoes.vamos:4</code></div>
     </div>
     <div class="card doc-item" id="coletarDeclaracoesGlobais" data-name="coletardeclaracoesglobais">
       <div class="symbol-title">
@@ -2186,18 +2489,18 @@
         <span>emitirFuncao</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (e *EmissorC) emitirFuncao(fn *NoAST) </code></pre>
-      <p>emitirFuncao traduz uma função VAMOS para função em C</p>
-      <div class="file-ref">Definido em: <code>compilador/emissor_c.vamos:140</code></div>
+      <pre><code>funcao (e *EmissorBytecode) emitirFuncao(no *NoAST) </code></pre>
+      <p>emitirFuncao compila uma função nomeada com seus parâmetros e bloco</p>
+      <div class="file-ref">Definido em: <code>compilador/emissor.vamos:117</code></div>
     </div>
     <div class="card doc-item" id="emitirFuncao" data-name="emitirfuncao">
       <div class="symbol-title">
         <span>emitirFuncao</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (e *EmissorBytecode) emitirFuncao(no *NoAST) </code></pre>
-      <p>emitirFuncao compila uma função nomeada com seus parâmetros e bloco</p>
-      <div class="file-ref">Definido em: <code>compilador/emissor.vamos:117</code></div>
+      <pre><code>funcao (e *EmissorC) emitirFuncao(fn *NoAST) </code></pre>
+      <p>emitirFuncao traduz uma função VAMOS para função em C</p>
+      <div class="file-ref">Definido em: <code>compilador/emissor_c.vamos:140</code></div>
     </div>
     <div class="card doc-item" id="emitirInstrucaoExpressaoC" data-name="emitirinstrucaoexpressaoc">
       <div class="symbol-title">
@@ -2267,18 +2570,18 @@
         <span>espiar</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (t *Transpilador) espiar(offset inteiro) Token </code></pre>
-      <p>espiar retorna o token no deslocamento relativo</p>
-      <div class="file-ref">Definido em: <code>compilador/transpilador.vamos:28</code></div>
+      <pre><code>funcao (p *AnalisadorSintatico) espiar() Token </code></pre>
+      <p>espiar retorna o token atual sem consumir</p>
+      <div class="file-ref">Definido em: <code>compilador/sintatico.vamos:35</code></div>
     </div>
     <div class="card doc-item" id="espiar" data-name="espiar">
       <div class="symbol-title">
         <span>espiar</span>
         <span class="badge badge-metodo">metodo</span>
       </div>
-      <pre><code>funcao (p *AnalisadorSintatico) espiar() Token </code></pre>
-      <p>espiar retorna o token atual sem consumir</p>
-      <div class="file-ref">Definido em: <code>compilador/sintatico.vamos:35</code></div>
+      <pre><code>funcao (t *Transpilador) espiar(offset inteiro) Token </code></pre>
+      <p>espiar retorna o token no deslocamento relativo</p>
+      <div class="file-ref">Definido em: <code>compilador/transpilador.vamos:28</code></div>
     </div>
     <div class="card doc-item" id="espiarOffset" data-name="espiaroffset">
       <div class="symbol-title">
@@ -2448,8 +2751,8 @@
         <span class="badge">funcao</span>
       </div>
       <pre><code>funcao fatorial(n inteiro) inteiro </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:23</code></div>
+      <p>Função de cálculo de fatorial com recursão nativa Wasm</p>
+      <div class="file-ref">Definido em: <code>exemplos/wasm_modulo.vamos:27</code></div>
     </div>
     <div class="card doc-item" id="fatorial" data-name="fatorial">
       <div class="symbol-title">
@@ -2457,8 +2760,8 @@
         <span class="badge">funcao</span>
       </div>
       <pre><code>funcao fatorial(n inteiro) inteiro </code></pre>
-      <p>Função de cálculo de fatorial com recursão nativa Wasm</p>
-      <div class="file-ref">Definido em: <code>exemplos/wasm_modulo.vamos:27</code></div>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:23</code></div>
     </div>
     <div class="card doc-item" id="fibonacci" data-name="fibonacci">
       <div class="symbol-title">
@@ -2550,6 +2853,15 @@
       <p>mapearTipoC converte os tipos do VAMOS para equivalentes em C99</p>
       <div class="file-ref">Definido em: <code>compilador/emissor_c.vamos:42</code></div>
     </div>
+    <div class="card doc-item" id="matematica_util" data-name="matematica_util">
+      <div class="symbol-title">
+        <span>matematica_util</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote matematica_util</code></pre>
+      <p>Pacote matematica_util - Utilitários numéricos e matemáticos em VAMOS-LANG</p>
+      <div class="file-ref">Definido em: <code>pacotes/matematica_util/matematica_util.vamos:2</code></div>
+    </div>
     <div class="card doc-item" id="multiplicar" data-name="multiplicar">
       <div class="symbol-title">
         <span>multiplicar</span>
@@ -2589,267 +2901,6 @@
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
         <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/ola_mundo.vamos:11</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Emissor Nativo C (C99) em VAMOS-LANG Transforma a AST em código-fonte C compatível com GCC, Clang e TCC para compilação de binários nativos.</p>
-      <div class="file-ref">Definido em: <code>compilador/emissor_c.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>teste.vamos:60</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Analisador Semântico e Tabela de Símbolos em VAMOS-LANG Realiza a verificação estática de tipos, escopos léxicos, parâmetros e declarações na AST.</p>
-      <div class="file-ref">Definido em: <code>compilador/semantico.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>compilador/main.vamos:692</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>API REST COM MICRO-FRAMEWORK WEB - VAMOS-LANG Servidor HTTP moderno, elegante e idiomático em Português do Brasil.</p>
-      <div class="file-ref">Definido em: <code>exemplos/api_rest.vamos:6</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>compilador/main.vamos:571</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p>Ponto de entrada principal</p>
-      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:553</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>VAMOS NANO - EDITOR DE TEXTO EM TERMINAL (VAMOS-LANG) Um editor simples e elegante inspirado no GNU nano, 100% em Português.</p>
-      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:6</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:30</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Arquivo de teste oficial do ecossistema VAMOS-LANG Demonstra concorrência (disparar, canal, adiar), estruturas (tipo, estrutura) e fluxo de controle (se, para).</p>
-      <div class="file-ref">Definido em: <code>teste.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:293</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Exemplo 1: Olá Mundo em VAMOS-LANG Sintaxe Go 100% traduzida para Português do Brasil</p>
-      <div class="file-ref">Definido em: <code>exemplos/ola_mundo.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Emissor Nativo WebAssembly (Wasm) em VAMOS-LANG Produz binários WebAssembly 1.0 (.wasm) diretamente a partir da AST sem compiladores externos.</p>
-      <div class="file-ref">Definido em: <code>compilador/wasm.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Exemplo 5: Servidor Web HTTP em VAMOS-LANG Demonstração da biblioteca de rede e manipulação de requisições HTTP.</p>
-      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:379</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:8</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:22</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>INTEGRAÇÃO COM PACOTES EXTERNOS - VAMOS-LANG Demonstra o uso transparente de bibliotecas Go mundiais via &#34;vamos get&#34;.</p>
-      <div class="file-ref">Definido em: <code>exemplos/uuid_externo.vamos:6</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/uuid_externo.vamos:13</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Exemplo de Módulo WebAssembly (.wasm) gerado nativamente pelo VAMOS-LANG Sem nenhuma dependência externa, compilado diretamente para binário WebAssembly 1.0.</p>
-      <div class="file-ref">Definido em: <code>exemplos/wasm_modulo.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>SUÍTE DE TESTES AUTOMATIZADOS - BLOCO DE NOTAS BR (VAMOS-LANG)</p>
-      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:5</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:130</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:67</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Árvore Sintática Abstrata (AST) em VAMOS-LANG Modela a estrutura hierárquica do código após o processo de análise sintática.</p>
-      <div class="file-ref">Definido em: <code>compilador/ast.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Especificação de Bytecode da VVM (VAMOS Virtual Machine) Define os códigos de operação (Opcodes), tabelas de constantes e formato do binário .vamosb.</p>
-      <div class="file-ref">Definido em: <code>compilador/bytecode.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Emissor de Bytecode VVM a partir da AST em VAMOS-LANG Percorre a árvore sintática abstrata e sintetiza o ProgramaBytecode executável.</p>
-      <div class="file-ref">Definido em: <code>compilador/emissor.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/api_rest.vamos:24</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>JOGO DA COBRINHA (SNAKE GAME) - VAMOS-LANG Um clássico arcade implementado 100% com sintaxe em Português do Brasil.</p>
-      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:6</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
@@ -2868,29 +2919,11 @@
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
         <span>principal</span>
-        <span class="badge">pacote</span>
-      </div>
-      <pre><code>pacote principal</code></pre>
-      <p>Exemplo: Tipos Genéricos (Generics) em VAMOS-LANG Demonstra o uso de parâmetros de tipo com restrições &#39;qualquer&#39; (any), &#39;comparavel&#39; (comparable) e aproximação (~).</p>
-      <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:4</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
         <span class="badge">funcao</span>
       </div>
       <pre><code>funcao principal() </code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:63</code></div>
-    </div>
-    <div class="card doc-item" id="principal" data-name="principal">
-      <div class="symbol-title">
-        <span>principal</span>
-        <span class="badge">funcao</span>
-      </div>
-      <pre><code>funcao principal() </code></pre>
-      <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/c_nativo.vamos:23</code></div>
+      <div class="file-ref">Definido em: <code>teste.vamos:60</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -2907,8 +2940,17 @@
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Motor de Transpilação Auto-Hospedado (Self-Hosted Transpiler) em VAMOS-LANG Converte a lista de tokens em código Go nativo diretamente a partir de código escrito em VAMOS.</p>
-      <div class="file-ref">Definido em: <code>compilador/transpilador.vamos:4</code></div>
+      <p>Exemplo de Módulo WebAssembly (.wasm) gerado nativamente pelo VAMOS-LANG Sem nenhuma dependência externa, compilado diretamente para binário WebAssembly 1.0.</p>
+      <div class="file-ref">Definido em: <code>exemplos/wasm_modulo.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/uuid_externo.vamos:13</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -2916,8 +2958,17 @@
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
-      <p>Exemplo 4: Calculadora e Tratamento de Erros em VAMOS-LANG Demonstração de controle de fluxo, tratamento de erros e mapas.</p>
-      <div class="file-ref">Definido em: <code>exemplos/calculadora.vamos:4</code></div>
+      <p>INTEGRAÇÃO COM PACOTES EXTERNOS - VAMOS-LANG Demonstra o uso transparente de bibliotecas Go mundiais via &#34;vamos get&#34;.</p>
+      <div class="file-ref">Definido em: <code>exemplos/uuid_externo.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:22</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -2925,17 +2976,17 @@
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
-      <p>Pacote compilador - Máquina Virtual VVM (VAMOS Virtual Machine) em VAMOS-LANG Executa o bytecode VVM diretamente sem dependência de compilação intermediária ou toolchain Go.</p>
-      <div class="file-ref">Definido em: <code>compilador/vm.vamos:4</code></div>
+      <p>Exemplo 5: Servidor Web HTTP em VAMOS-LANG Demonstração da biblioteca de rede e manipulação de requisições HTTP.</p>
+      <div class="file-ref">Definido em: <code>exemplos/servidor_web.vamos:4</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
         <span>principal</span>
-        <span class="badge">pacote</span>
+        <span class="badge">funcao</span>
       </div>
-      <pre><code>pacote principal</code></pre>
-      <p>COMPILADOR AUTO-HOSPEDADO (SELF-HOSTED) VAMOS-LANG (vamosc) Escrito 100% na própria linguagem VAMOS-LANG. Etapas 1, 2 e 3 do Bootstrapping: Lexer, Parser AST, Formatador, Transpilador e CLI.</p>
-      <div class="file-ref">Definido em: <code>compilador/main.vamos:7</code></div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/pacotes_nativos.vamos:10</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -2961,8 +3012,17 @@
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
-      <p>PACMAN (COME-COME) - VAMOS-LANG Clássico jogo de labirinto implementado 100% em Português do Brasil.</p>
-      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:6</code></div>
+      <p>Exemplo demonstrando uso dos pacotes da Biblioteca Padrão desenvolvidos 100% em VAMOS-LANG</p>
+      <div class="file-ref">Definido em: <code>exemplos/pacotes_nativos.vamos:2</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/ola_mundo.vamos:11</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -2970,8 +3030,80 @@
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
-      <p>Exemplo 3: Estruturas, Interfaces e Métodos em VAMOS-LANG Demonstração de tipos customizados, interfaces, ponteiros e polimorfismo.</p>
-      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:4</code></div>
+      <p>Exemplo 1: Olá Mundo em VAMOS-LANG Sintaxe Go 100% traduzida para Português do Brasil</p>
+      <div class="file-ref">Definido em: <code>exemplos/ola_mundo.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:293</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>COMPILADOR AUTO-HOSPEDADO (SELF-HOSTED) VAMOS-LANG (vamosc) Escrito 100% na própria linguagem VAMOS-LANG. Etapas 1, 2 e 3 do Bootstrapping: Lexer, Parser AST, Formatador, Transpilador e CLI.</p>
+      <div class="file-ref">Definido em: <code>compilador/main.vamos:7</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>compilador/main.vamos:571</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Motor de Transpilação Auto-Hospedado (Self-Hosted Transpiler) em VAMOS-LANG Converte a lista de tokens em código Go nativo diretamente a partir de código escrito em VAMOS.</p>
+      <div class="file-ref">Definido em: <code>compilador/transpilador.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Arquivo de teste oficial do ecossistema VAMOS-LANG Demonstra concorrência (disparar, canal, adiar), estruturas (tipo, estrutura) e fluxo de controle (se, para).</p>
+      <div class="file-ref">Definido em: <code>teste.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>compilador/main.vamos:692</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Analisador Semântico e Tabela de Símbolos em VAMOS-LANG Realiza a verificação estática de tipos, escopos léxicos, parâmetros e declarações na AST.</p>
+      <div class="file-ref">Definido em: <code>compilador/semantico.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>VAMOS NANO - EDITOR DE TEXTO EM TERMINAL (VAMOS-LANG) Um editor simples e elegante inspirado no GNU nano, 100% em Português.</p>
+      <div class="file-ref">Definido em: <code>exemplos/nano.vamos:6</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -3007,7 +3139,7 @@
       </div>
       <pre><code>funcao principal() </code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
-      <div class="file-ref">Definido em: <code>exemplos/cripto_e_conversao.vamos:12</code></div>
+      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:30</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -3015,8 +3147,107 @@
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
-      <p>Exemplo de Criptografia, Conversão e Aleatoriedade em VAMOS-LANG</p>
-      <div class="file-ref">Definido em: <code>exemplos/cripto_e_conversao.vamos:2</code></div>
+      <p>PACMAN (COME-COME) - VAMOS-LANG Clássico jogo de labirinto implementado 100% em Português do Brasil.</p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p>Ponto de entrada principal</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/main.vamos:553</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/maquina_virtual.vamos:8</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:67</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>SUÍTE DE TESTES AUTOMATIZADOS - BLOCO DE NOTAS BR (VAMOS-LANG)</p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:5</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>blocodenotasBR/testes.vamos:130</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo: Tipos Genéricos (Generics) em VAMOS-LANG Demonstra o uso de parâmetros de tipo com restrições &#39;qualquer&#39; (any), &#39;comparavel&#39; (comparable) e aproximação (~).</p>
+      <div class="file-ref">Definido em: <code>exemplos/genericos.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:63</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Árvore Sintática Abstrata (AST) em VAMOS-LANG Modela a estrutura hierárquica do código após o processo de análise sintática.</p>
+      <div class="file-ref">Definido em: <code>compilador/ast.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Especificação de Bytecode da VVM (VAMOS Virtual Machine) Define os códigos de operação (Opcodes), tabelas de constantes e formato do binário .vamosb.</p>
+      <div class="file-ref">Definido em: <code>compilador/bytecode.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Máquina Virtual VVM (VAMOS Virtual Machine) em VAMOS-LANG Executa o bytecode VVM diretamente sem dependência de compilação intermediária ou toolchain Go.</p>
+      <div class="file-ref">Definido em: <code>compilador/vm.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Emissor de Bytecode VVM a partir da AST em VAMOS-LANG Percorre a árvore sintática abstrata e sintetiza o ProgramaBytecode executável.</p>
+      <div class="file-ref">Definido em: <code>compilador/emissor.vamos:4</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -3034,7 +3265,97 @@
       </div>
       <pre><code>funcao principal() </code></pre>
       <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>jogos/pacman.vamos:379</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Emissor Nativo WebAssembly (Wasm) em VAMOS-LANG Produz binários WebAssembly 1.0 (.wasm) diretamente a partir da AST sem compiladores externos.</p>
+      <div class="file-ref">Definido em: <code>compilador/wasm.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>JOGO DA COBRINHA (SNAKE GAME) - VAMOS-LANG Um clássico arcade implementado 100% com sintaxe em Português do Brasil.</p>
+      <div class="file-ref">Definido em: <code>jogos/cobrinha.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Pacote compilador - Emissor Nativo C (C99) em VAMOS-LANG Transforma a AST em código-fonte C compatível com GCC, Clang e TCC para compilação de binários nativos.</p>
+      <div class="file-ref">Definido em: <code>compilador/emissor_c.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>API REST COM MICRO-FRAMEWORK WEB - VAMOS-LANG Servidor HTTP moderno, elegante e idiomático em Português do Brasil.</p>
+      <div class="file-ref">Definido em: <code>exemplos/api_rest.vamos:6</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo 3: Estruturas, Interfaces e Métodos em VAMOS-LANG Demonstração de tipos customizados, interfaces, ponteiros e polimorfismo.</p>
+      <div class="file-ref">Definido em: <code>exemplos/estruturas_interfaces.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/cripto_e_conversao.vamos:12</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo de Criptografia, Conversão e Aleatoriedade em VAMOS-LANG</p>
+      <div class="file-ref">Definido em: <code>exemplos/cripto_e_conversao.vamos:2</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
       <div class="file-ref">Definido em: <code>exemplos/concorrencia.vamos:44</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/api_rest.vamos:24</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">pacote</span>
+      </div>
+      <pre><code>pacote principal</code></pre>
+      <p>Exemplo 2: Concorrência em VAMOS-LANG Demonstração do uso de: disparar (go), canal (chan), adiar (defer), sincronizar.GrupoEspera (sync.WaitGroup) e selecionar (select).</p>
+      <div class="file-ref">Definido em: <code>exemplos/concorrencia.vamos:5</code></div>
     </div>
     <div class="card doc-item" id="principal" data-name="principal">
       <div class="symbol-title">
@@ -3051,8 +3372,17 @@
         <span class="badge">pacote</span>
       </div>
       <pre><code>pacote principal</code></pre>
-      <p>Exemplo 2: Concorrência em VAMOS-LANG Demonstração do uso de: disparar (go), canal (chan), adiar (defer), sincronizar.GrupoEspera (sync.WaitGroup) e selecionar (select).</p>
-      <div class="file-ref">Definido em: <code>exemplos/concorrencia.vamos:5</code></div>
+      <p>Exemplo 4: Calculadora e Tratamento de Erros em VAMOS-LANG Demonstração de controle de fluxo, tratamento de erros e mapas.</p>
+      <div class="file-ref">Definido em: <code>exemplos/calculadora.vamos:4</code></div>
+    </div>
+    <div class="card doc-item" id="principal" data-name="principal">
+      <div class="symbol-title">
+        <span>principal</span>
+        <span class="badge">funcao</span>
+      </div>
+      <pre><code>funcao principal() </code></pre>
+      <p><em>Nenhuma descrição fornecida.</em></p>
+      <div class="file-ref">Definido em: <code>exemplos/c_nativo.vamos:23</code></div>
     </div>
     <div class="card doc-item" id="processarTarefa" data-name="processartarefa">
       <div class="symbol-title">
