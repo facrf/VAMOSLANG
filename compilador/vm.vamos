@@ -129,6 +129,46 @@ funcao formatarLista(itens []texto) texto {
 	retornar "[" + cordas.Juntar(elementos, ", ") + "]"
 }
 
+// extrairParesMapa decodifica uma representação de mapa ou estrutura em texto para pares chave/valor
+funcao extrairParesMapa(mapaStr texto) mapa[texto]texto {
+	pares := criar(mapa[texto]texto)
+	idxChaveAbre := cordas.Indice(mapaStr, "{")
+	idxChaveFecha := cordas.UltimoIndice(mapaStr, "}")
+	se idxChaveAbre < 0 || idxChaveFecha <= idxChaveAbre {
+		retornar pares
+	}
+
+	conteudo := cordas.ApararEspaco(mapaStr[idxChaveAbre+1 : idxChaveFecha])
+	se conteudo == "" {
+		retornar pares
+	}
+
+	itens := dividirForaParenteses(conteudo, ",")
+	para _, it := intervalo itens {
+		itLimpo := cordas.ApararEspaco(it)
+		idxDoisPontos := cordas.Indice(itLimpo, ":")
+		se idxDoisPontos > 0 {
+			k := cordas.ApararEspaco(itLimpo[:idxDoisPontos])
+			v := cordas.ApararEspaco(itLimpo[idxDoisPontos+1:])
+			k = cordas.Substituir(k, "\"", "", -1)
+			se cordas.TemPrefixo(v, "\"") && cordas.TemSufixo(v, "\"") && tamanho(v) >= 2 {
+				v = v[1 : tamanho(v)-1]
+			}
+			pares[k] = v
+		}
+	}
+	retornar pares
+}
+
+// formatarMapa codifica o mapa em texto {k1: v1, k2: v2}
+funcao formatarMapa(pares mapa[texto]texto) texto {
+	itens := criar([]texto, 0)
+	para k, v := intervalo pares {
+		itens = anexar(itens, formatar.Formatar("%s: %s", k, v))
+	}
+	retornar "{" + cordas.Juntar(itens, ", ") + "}"
+}
+
 // Interpretar executa as instruções de um ProgramaBytecode do início ao fim
 funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 	vm.ip = 0
@@ -365,7 +405,10 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 
 		caso OpTamanho:
 			val := vm.desempilhar()
-			se cordas.TemPrefixo(val, "[") && cordas.TemSufixo(val, "]") {
+			se cordas.TemPrefixo(val, "{") || cordas.Contem(val, "{") {
+				pares := extrairParesMapa(val)
+				vm.empilhar(conversao.InteiroParaTexto(tamanho(pares)))
+			} senao se cordas.TemPrefixo(val, "[") && cordas.TemSufixo(val, "]") {
 				itens := extrairItensLista(val)
 				vm.empilhar(conversao.InteiroParaTexto(tamanho(itens)))
 			} senao {
@@ -380,6 +423,25 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 			}
 			vm.empilhar(formatarLista(itens))
 
+		caso OpCriarMapa:
+			n := inst.Argumento
+			pares := criar(mapa[texto]texto)
+			chaves := criar([]texto, n)
+			valores := criar([]texto, n)
+			para i := n - 1; i >= 0; i-- {
+				valores[i] = vm.desempilhar()
+				chaves[i] = vm.desempilhar()
+			}
+			para i := 0; i < n; i++ {
+				k := cordas.Substituir(chaves[i], "\"", "", -1)
+				v := valores[i]
+				se cordas.TemPrefixo(v, "\"") && cordas.TemSufixo(v, "\"") && tamanho(v) >= 2 {
+					v = v[1 : tamanho(v)-1]
+				}
+				pares[k] = v
+			}
+			vm.empilhar(formatarMapa(pares))
+
 		caso OpAnexar:
 			item := vm.desempilhar()
 			lista := vm.desempilhar()
@@ -389,34 +451,53 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 
 		caso OpObterIndice:
 			idxStr := vm.desempilhar()
-			lista := vm.desempilhar()
-			idx, _ := conversao.ParaInteiro(idxStr)
-			itens := extrairItensLista(lista)
-			val := ""
-			se idx >= 0 && idx < tamanho(itens) {
-				val = itens[idx]
+			alvo := vm.desempilhar()
+			se cordas.TemPrefixo(alvo, "{") || cordas.Contem(alvo, "{") {
+				pares := extrairParesMapa(alvo)
+				k := cordas.Substituir(idxStr, "\"", "", -1)
+				val := pares[k]
+				vm.empilhar(val)
+			} senao {
+				idx, _ := conversao.ParaInteiro(idxStr)
+				itens := extrairItensLista(alvo)
+				val := ""
+				se idx >= 0 && idx < tamanho(itens) {
+					val = itens[idx]
+				}
+				vm.empilhar(val)
 			}
-			vm.empilhar(val)
 
 		caso OpDefinirIndice:
 			novoVal := vm.desempilhar()
 			idxStr := vm.desempilhar()
-			lista := vm.desempilhar()
-			idx, _ := conversao.ParaInteiro(idxStr)
-			itens := extrairItensLista(lista)
-			se idx >= 0 && idx < tamanho(itens) {
-				itens[idx] = novoVal
+			alvo := vm.desempilhar()
+			var resultadoAtualizado texto
+			se cordas.TemPrefixo(alvo, "{") || cordas.Contem(alvo, "{") {
+				pares := extrairParesMapa(alvo)
+				k := cordas.Substituir(idxStr, "\"", "", -1)
+				v := novoVal
+				se cordas.TemPrefixo(v, "\"") && cordas.TemSufixo(v, "\"") && tamanho(v) >= 2 {
+					v = v[1 : tamanho(v)-1]
+				}
+				pares[k] = v
+				resultadoAtualizado = formatarMapa(pares)
+			} senao {
+				idx, _ := conversao.ParaInteiro(idxStr)
+				itens := extrairItensLista(alvo)
+				se idx >= 0 && idx < tamanho(itens) {
+					itens[idx] = novoVal
+				}
+				resultadoAtualizado = formatarLista(itens)
 			}
-			listaAtualizada := formatarLista(itens)
 			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
 				nomeVar := prog.Identificadores[inst.Argumento]
 				se tamanho(vm.quadros) > 1 {
-					vm.quadros[tamanho(vm.quadros)-1].locais[nomeVar] = listaAtualizada
+					vm.quadros[tamanho(vm.quadros)-1].locais[nomeVar] = resultadoAtualizado
 				} senao {
-					vm.globais[nomeVar] = listaAtualizada
+					vm.globais[nomeVar] = resultadoAtualizado
 				}
 			}
-			vm.empilhar(listaAtualizada)
+			vm.empilhar(resultadoAtualizado)
 
 		caso OpParar:
 			interromper

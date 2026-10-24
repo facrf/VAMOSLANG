@@ -42,6 +42,7 @@ constante (
 	OpAnexar         inteiro = 26 // Anexa um item à lista
 	OpObterIndice    inteiro = 27 // Obtém elemento da lista pelo índice (lista[i])
 	OpDefinirIndice  inteiro = 28 // Atualiza elemento da lista pelo índice (lista[i] = val)
+	OpCriarMapa      inteiro = 29 // Cria um mapa ou estrutura com N pares chave/valor
 )
 
 // ObterNomeOpcode retorna o mnemônico de uma instrução em texto
@@ -103,6 +104,8 @@ funcao ObterNomeOpcode(op inteiro) texto {
 		retornar "OBTER_INDICE"
 	caso OpDefinirIndice:
 		retornar "DEFINIR_INDICE"
+	caso OpCriarMapa:
+		retornar "CRIAR_MAPA"
 	padrao:
 		retornar "OP_DESCONHECIDO"
 	}

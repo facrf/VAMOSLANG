@@ -11,6 +11,11 @@ importar (
 	"formatar"
 )
 
+tipo Usuario estrutura {
+	Nome  texto
+	Idade inteiro
+}
+
 funcao calcularPontuacao(base inteiro, bonus inteiro) inteiro {
 	retornar base * 4 + bonus
 }
@@ -60,6 +65,24 @@ funcao principal() {
 		formatar.ImprimirLinha(linguagens[idx])
 		idx = idx + 1
 	}
+
+	// 6. Mapas Dinâmicos Chave-Valor na VVM
+	formatar.ImprimirLinha("Operações com mapas chave-valor na VVM:")
+	capitais := mapa[texto]texto{"Brasil": "Brasília", "Portugal": "Lisboa"}
+	formatar.ImprimirLinha("Capital do Brasil:")
+	formatar.ImprimirLinha(capitais["Brasil"])
+	capitais["Franca"] = "Paris"
+	formatar.ImprimirLinha("Capital da França (adicionada dinamicamente):")
+	formatar.ImprimirLinha(capitais["Franca"])
+
+	// 7. Estruturas Customizadas e Acesso a Campos na VVM
+	formatar.ImprimirLinha("Estruturas na VVM:")
+	dev := Usuario{Nome: "Ana", Idade: 28}
+	formatar.ImprimirLinha("Nome do usuário na struct:")
+	formatar.ImprimirLinha(dev.Nome)
+	dev.Idade = 29
+	formatar.ImprimirLinha("Idade atualizada na struct:")
+	formatar.ImprimirLinha(dev.Idade)
 
 	formatar.ImprimirLinha("VVM: Execução de bytecode finalizada com sucesso!")
 }

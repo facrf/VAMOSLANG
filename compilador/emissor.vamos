@@ -328,6 +328,21 @@ funcao (e *EmissorBytecode) emitirExpressaoOuInstrucao(no *NoAST) {
 				retornar
 			}
 
+			// Atribuição a campo de estrutura: obj.campo = ...
+			se cordas.Contem(ladoEsq, ".") && !cordas.Contem(ladoEsq, "(") {
+				idxPonto := cordas.Indice(ladoEsq, ".")
+				nomeObj := cordas.ApararEspaco(ladoEsq[:idxPonto])
+				nomeCampo := cordas.ApararEspaco(ladoEsq[idxPonto+1:])
+				e.emitirAvaliacaoExpressao(nomeObj, no.Linha)
+				idxConstCampo := e.programa.AdicionarConstante(nomeCampo)
+				e.programa.Emitir(OpConstante, idxConstCampo, no.Linha)
+				e.emitirAvaliacaoExpressao(conteudoValor, no.Linha)
+				idxVar := e.programa.AdicionarIdentificador(nomeObj)
+				e.programa.Emitir(OpDefinirIndice, idxVar, no.Linha)
+				e.programa.Emitir(OpDescartar, 0, no.Linha)
+				retornar
+			}
+
 			e.emitirAvaliacaoExpressao(conteudoValor, no.Linha)
 			idxVar := e.programa.AdicionarIdentificador(ladoEsq)
 			e.programa.Emitir(OpDefinirGlobal, idxVar, no.Linha)
@@ -533,6 +548,25 @@ funcao (e *EmissorBytecode) emitirAvaliacaoExpressao(expr texto, linha inteiro) 
 			e.programa.Emitir(OpCriarLista, 0, linha)
 			retornar
 		}
+
+		se cordas.Contem(conteudoLista, ":") {
+			itens := dividirForaParenteses(conteudoLista, ",")
+			para _, it := intervalo itens {
+				itLimpo := cordas.ApararEspaco(it)
+				idxDoisPontos := cordas.Indice(itLimpo, ":")
+				se idxDoisPontos > 0 {
+					k := cordas.ApararEspaco(itLimpo[:idxDoisPontos])
+					v := cordas.ApararEspaco(itLimpo[idxDoisPontos+1:])
+					k = cordas.Substituir(k, "\"", "", -1)
+					idxK := e.programa.AdicionarConstante(k)
+					e.programa.Emitir(OpConstante, idxK, linha)
+					e.emitirAvaliacaoExpressao(v, linha)
+				}
+			}
+			e.programa.Emitir(OpCriarMapa, tamanho(itens), linha)
+			retornar
+		}
+
 		itens := dividirForaParenteses(conteudoLista, ",")
 		para _, it := intervalo itens {
 			e.emitirAvaliacaoExpressao(cordas.ApararEspaco(it), linha)
@@ -549,6 +583,20 @@ funcao (e *EmissorBytecode) emitirAvaliacaoExpressao(expr texto, linha inteiro) 
 		se !cordas.Contem(nomeAlvo, " ") && !cordas.Contem(nomeAlvo, "+") && !cordas.Contem(nomeAlvo, "-") {
 			e.emitirAvaliacaoExpressao(nomeAlvo, linha)
 			e.emitirAvaliacaoExpressao(idxExpr, linha)
+			e.programa.Emitir(OpObterIndice, 0, linha)
+			retornar
+		}
+	}
+
+	// Acesso a campo de estrutura: obj.campo
+	idxPonto := cordas.Indice(limpa, ".")
+	se idxPonto > 0 && !cordas.Contem(limpa, "(") && !cordas.TemPrefixo(limpa, "\"") && !cordas.TemPrefixo(limpa, "formatar.") {
+		nomeObj := cordas.ApararEspaco(limpa[:idxPonto])
+		nomeCampo := cordas.ApararEspaco(limpa[idxPonto+1:])
+		se !cordas.Contem(nomeObj, " ") && !cordas.Contem(nomeCampo, " ") {
+			e.emitirAvaliacaoExpressao(nomeObj, linha)
+			idxConstCampo := e.programa.AdicionarConstante(nomeCampo)
+			e.programa.Emitir(OpConstante, idxConstCampo, linha)
 			e.programa.Emitir(OpObterIndice, 0, linha)
 			retornar
 		}

@@ -68,13 +68,13 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
 5. **[`compilador/formatador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/formatador.vamos)**:
    - Formatador oficial de código escrito em VAMOS-LANG (`FormatarCodigo`), com indentação automática e preservação de raw strings.
 6. **[`compilador/bytecode.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/bytecode.vamos)**:
-   - Especificação de opcodes (`OpConstante`, `OpObterGlobal`, `OpDefinirGlobal`, `OpObterLocal`, `OpDefinirLocal`, `OpSomar`, `OpSubtrair`, `OpMultiplicar`, `OpDividir`, `OpIgual`, `OpSalto`, `OpSaltoSeFalso`, `OpImprimirLinha`, `OpChamar`, `OpRetornar`, `OpTamanho`, `OpCriarLista`, `OpAnexar`, `OpObterIndice`, `OpDefinirIndice`, `OpParar`).
+   - Especificação de opcodes (`OpConstante`, `OpObterGlobal`, `OpDefinirGlobal`, `OpObterLocal`, `OpDefinirLocal`, `OpSomar`, `OpSubtrair`, `OpMultiplicar`, `OpDividir`, `OpIgual`, `OpSalto`, `OpSaltoSeFalso`, `OpImprimirLinha`, `OpChamar`, `OpRetornar`, `OpTamanho`, `OpCriarLista`, `OpAnexar`, `OpObterIndice`, `OpDefinirIndice`, `OpCriarMapa`, `OpParar`).
    - Tabela de constantes, pool de identificadores, tabela de funções e disassembler legível em Assembly VVM.
    - Serialização e desserialização binária/textual padronizada para arquivos de bytecode `.vamosb`.
 7. **[`compilador/vm.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/vm.vamos)**:
-   - Máquina Virtual VVM baseada em pilha com ponteiro de instruções (`ip`), call stack (`QuadroChamada`), escopo local isolado, recursão e suporte completo a vetores/fatias dinâmicas.
+   - Máquina Virtual VVM baseada em pilha com ponteiro de instruções (`ip`), call stack (`QuadroChamada`), escopo local isolado, recursão, suporte completo a listas dinâmicas (`[]tipo`), mapas chave-valor (`mapa[k]v`) e estruturas com acesso e mutação de campos (`u.Nome`, `u.Idade = 29`).
 8. **[`compilador/emissor.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/emissor.vamos)**:
-   - Emissor direto de bytecode a partir da AST: compila funções com prólogo/epílogo, avaliação de expressões com precedência e parênteses (`dividirForaParenteses`), condicionais, laços `para`, literais de lista (`[]tipo{...}`) e indexação (`lista[i]`).
+   - Emissor direto de bytecode a partir da AST: compila funções com prólogo/epílogo, avaliação de expressões com precedência e parênteses (`dividirForaParenteses`), condicionais, laços `para`, literais compostos (`[]tipo{...}`, `mapa[k]v{...}`, `Struct{...}`), indexação (`lista[i]`, `mapa[k]`) e mutação de campos (`obj.campo = val`).
 9. **[`compilador/wasm.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/wasm.vamos)**:
    - Emissor nativo de WebAssembly 1.0 (MVP standard) em VAMOS-LANG puro.
    - Codificação de inteiros assinados e não-assinados no padrão LEB128 de 7 bits (`CodificarLEB128U`, `CodificarLEB128S`).
