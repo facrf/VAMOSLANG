@@ -54,6 +54,10 @@ run-examples: build
 	@echo ""
 	@echo "==> Testando exemplo 'pacotes_nativos.vamos' (Biblioteca Padrão em VAMOS puro):"
 	./$(BINARY_NAME) run exemplos/pacotes_nativos.vamos
+	@echo ""
+	@echo "==> Testando exemplo 'otimizacao.vamos' (Otimizador de Bytecode & Constant Folding):"
+	./$(BINARY_NAME) otimizar exemplos/otimizacao.vamos
+	./$(BINARY_NAME) run exemplos/otimizacao.vamos
 
 check: build
 	@echo "==> 1. Verificando formatação de código..."
@@ -108,8 +112,10 @@ bootstrap: build
 	@echo "==> 10. Prova de Backend C Nativo: Compilando binário nativo via GCC com G3..."
 	./compilador/vamosc-g3 compilar-c exemplos/c_nativo.vamos -o compilador/c_app
 	./compilador/c_app
+	@echo "==> 11. Prova do Otimizador com G3: Otimizando bytecode de exemplo..."
+	./compilador/vamosc-g3 otimizar exemplos/otimizacao.vamos
 	@rm -f compilador/vamosc-g2 compilador/vamosc-g3 compilador/modulo.wasm compilador/c_app
-	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm + C/GCC) CONCLUÍDO COM ÊXITO!"
+	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm + C/GCC + Otimizador) CONCLUÍDO COM ÊXITO!"
 
 clean:
 	@echo "==> Limpando arquivos compilados..."

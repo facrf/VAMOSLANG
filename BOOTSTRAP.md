@@ -33,7 +33,7 @@ flowchart TD
 
 ---
 
-## 🗺️ As 9 Etapas da Jornada de Bootstrapping
+## 🗺️ As 10 Etapas da Jornada de Bootstrapping
 
 | Etapa | Meta | Descrição | Status |
 | :---: | :--- | :--- | :---: |
@@ -45,7 +45,8 @@ flowchart TD
 | **6** | **Análise Semântica e Verificação de Tipos** | Tabela de símbolos com escopos léxicos, validação de tipos, variáveis não declaradas e assinaturas de funções. | ✅ **Concluído** |
 | **7** | **Backend C Nativo (C99) & Compilação via GCC** | Emissor de C99 nativo e geração de binários de máquina ELF sem dependência do compilador Go hospedeiro. | ✅ **Concluído** |
 | **8** | **Mapas, Estruturas e Mutação na VVM** | `OpCriarMapa`, indexação flexível de chaves dinâmicas, instanciação e mutação de structs (`struct.campo = val`). | ✅ **Concluído** |
-| **9** | **Biblioteca Padrão em VAMOS Puro** | Módulos canônicos (`pacotes/colecoes`, `pacotes/matematica_util`) escritos inteiramente na sintaxe VAMOS-LANG. | ✅ **Concluído** |
+| **9** | **Biblioteca Padrão em VAMOS Puro** | Módulos canônicos (`pacotes/colecoes`, `pacotes/matematica_util`, `pacotes/texto_util`) em sintaxe VAMOS-LANG. | ✅ **Concluído** |
+| **10** | **Otimizador de Bytecode (Constant Folding)** | Dobra estática de operações numéricas, peephole jump optimization e compactação de instruções. | ✅ **Concluído** |
 
 ---
 
@@ -101,6 +102,13 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
     - Métodos padrão: `Empilhar`, `Desempilhar`, `Topo`, `Enfileirar`, `Desenfileirar`, `Frente`, `Inserir`, `Add`, `Contem`, `Remover`, `ParaLista`.
 15. **[`pacotes/matematica_util/matematica_util.vamos`](file:///storage/www/projetos/VAMOSLANG/pacotes/matematica_util/matematica_util.vamos)**:
     - Biblioteca matemática autônoma: `Absoluto`, `Maximo`, `Minimo`, `Potencia`, `Fatorial`, `Fibonacci`, `MDC`, `MMC`, `EhPrimo`, `Clampar`.
+16. **[`pacotes/texto_util/texto_util.vamos`](file:///storage/www/projetos/VAMOSLANG/pacotes/texto_util/texto_util.vamos)**:
+    - Manipulação de strings em português: `Dividir`, `Juntar`, `Contem`, `ComecaCom`, `TerminaCom`, `ParaMaiusculas`, `ParaMinusculas`, `Aparar`, `Substituir`, `Repetir`, `IndiceDe`, `Inverter`.
+17. **[`compilador/otimizador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/otimizador.vamos)**:
+    - Otimizador estático de bytecode VVM (`OtimizarBytecode`):
+    - **Constant Folding**: Pré-computação em tempo de compilação de operações aritméticas binárias (`+`, `-`, `*`, `/`) entre literais inteiros.
+    - **Peephole Optimization**: Eliminação de saltos redundantes para o endereço sequencial (`i+1`).
+    - **Compactação e Remapeamento**: Reordenação atômica de endereços de salto e tabela de funções.
 
 ---
 

@@ -259,6 +259,8 @@ funcao TraduzirCaminhoImport(caminho texto) texto {
 		retornar "vamos/pacotes/colecoes"
 	caso "matematica_util":
 		retornar "vamos/pacotes/matematica_util"
+	caso "texto_util":
+		retornar "vamos/pacotes/texto_util"
 	caso "matematica/aleatorio", "aleatorio":
 		retornar "math/rand"
 	padrao:

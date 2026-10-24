@@ -1,0 +1,34 @@
+// Exemplo demonstrativo do Otimizador de Bytecode da VVM
+// Demonstração de Constant Folding (Dobra de Constantes) e Peephole Optimization
+
+pacote principal
+
+importar (
+	"formatar"
+	"texto_util"
+)
+
+funcao calcularDesconto(preco inteiro, cupom texto) inteiro {
+	se texto_util.Contem(cupom, "VAMOS") {
+		// O otimizador de bytecode pré-calcula operações entre constantes literais
+		retornar preco - (10 + 15) // Dobrado em tempo de compilação para preco - 25
+	}
+	retornar preco
+}
+
+funcao principal() {
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("   DEMONSTRAÇÃO DO OTIMIZADOR DE BYTECODE VVM  ")
+	formatar.ImprimirLinha("================================================")
+
+	precoOriginal := 100
+	cupom := "CUPOM_VAMOS_2026"
+	precoFinal := calcularDesconto(precoOriginal, cupom)
+
+	formatar.ImprimirFormatado("Preço original: R$ %d\n", precoOriginal)
+	formatar.ImprimirFormatado("Cupom aplicado: %s\n", cupom)
+	formatar.ImprimirFormatado("Preço final com desconto: R$ %d\n", precoFinal)
+
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("✓ Execução com otimizações concluída com sucesso!")
+}

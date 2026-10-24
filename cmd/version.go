@@ -51,6 +51,7 @@ func PrintHelp() {
 	fmt.Println("  run | rodar | executar <arquivo.vamos> [args...]   Transpila e executa diretamente")
 	fmt.Println("  vm | executar-vm <arquivo.vamos|.vamosb>           Executa na Máquina Virtual VVM nativa")
 	fmt.Println("  bytecode | desassemblar <arquivo.vamos> [-o]       Gera ou desassembla Bytecode VVM (.vamosb)")
+	fmt.Println("  otimizar <arquivo.vamos|.vamosb> [-o saida]        Otimiza bytecode (Constant Folding/Jump Opt)")
 	fmt.Println("  wasm <arquivo.vamos> [-o saida.wasm]               Compila diretamente para WebAssembly 1.0 (.wasm)")
 	fmt.Println("  c <arquivo.vamos> [-o saida.c]                     Gera código-fonte C99 nativo")
 	fmt.Println("  compilar-c <arquivo.vamos> [-o binario]            Compila para binário nativo de máquina via GCC")

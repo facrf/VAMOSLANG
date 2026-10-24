@@ -1,0 +1,79 @@
+// Pacote texto_util - Manipulação nativa de cadeias de caracteres em VAMOS-LANG
+// Oferece funções completas em Português para operações com textos/strings.
+
+pacote texto_util
+
+importar (
+	"cordas"
+)
+
+// Dividir separa uma string em partes utilizando um delimitador especificado
+funcao Dividir(s texto, separador texto) []texto {
+	retornar cordas.Dividir(s, separador)
+}
+
+// Juntar concatena uma lista de strings intercalando pelo separador indicado
+funcao Juntar(elementos []texto, separador texto) texto {
+	retornar cordas.Juntar(elementos, separador)
+}
+
+// Contem verifica se o texto principal engloba a substring informada
+funcao Contem(s texto, sub texto) booleano {
+	retornar cordas.Contem(s, sub)
+}
+
+// ComecaCom valida se o texto inicia com o prefixo informado
+funcao ComecaCom(s texto, prefixo texto) booleano {
+	retornar cordas.PossuiPrefixo(s, prefixo)
+}
+
+// TerminaCom valida se o texto termina com o sufixo informado
+funcao TerminaCom(s texto, sufixo texto) booleano {
+	retornar cordas.PossuiSufixo(s, sufixo)
+}
+
+// ParaMaiusculas converte todos os caracteres para caixa alta
+funcao ParaMaiusculas(s texto) texto {
+	retornar cordas.ParaMaiusculas(s)
+}
+
+// ParaMinusculas converte todos os caracteres para caixa baixa
+funcao ParaMinusculas(s texto) texto {
+	retornar cordas.ParaMinusculas(s)
+}
+
+// Aparar remove espaços em branco do início e do final da cadeia de caracteres
+funcao Aparar(s texto) texto {
+	retornar cordas.ApararEspaco(s)
+}
+
+// Substituir troca ocorrências de um trecho antigo por um novo
+funcao Substituir(s texto, antigo texto, novo texto) texto {
+	retornar cordas.SubstituirTudo(s, antigo, novo)
+}
+
+// Repetir produz uma nova string repetindo a original N vezes
+funcao Repetir(s texto, vezes inteiro) texto {
+	se vezes <= 0 {
+		retornar ""
+	}
+	retornar cordas.Repetir(s, vezes)
+}
+
+// IndiceDe retorna a posição inicial da primeira ocorrência da substring, ou -1 se não existir
+funcao IndiceDe(s texto, sub texto) inteiro {
+	retornar cordas.Indice(s, sub)
+}
+
+// Inverter inverte a ordem dos caracteres do texto informado
+funcao Inverter(s texto) texto {
+	runas := []runa(s)
+	n := tamanho(runas)
+	para i := 0; i < n/2; i++ {
+		j := n - 1 - i
+		temporario := runas[i]
+		runas[i] = runas[j]
+		runas[j] = temporario
+	}
+	retornar texto(runas)
+}

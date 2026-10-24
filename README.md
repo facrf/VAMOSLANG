@@ -39,6 +39,7 @@ A CLI oferece suporte completo com comandos e aliases em Português e Inglês:
 | `vamos run` \| `rodar` \| `executar <arquivo.vamos> [args...]` | Transpila e executa diretamente com `go run` |
 | `vamos vm` \| `executar-vm <arquivo.vamos\|.vamosb>` | Executa diretamente na Máquina Virtual VVM nativa |
 | `vamos bytecode` \| `desassemblar <arquivo.vamos> [-o]` | Gera ou desassembla Bytecode VVM serializável (`.vamosb`) |
+| `vamos otimizar <arquivo.vamos\|.vamosb> [-o]` | Otimiza bytecode com Constant Folding e Peephole Jumps |
 | `vamos wasm <arquivo.vamos> [-o saida.wasm]` | Compila diretamente para binário nativo WebAssembly 1.0 (`.wasm`) |
 | `vamos c <arquivo.vamos> [-o saida.c]` | Gera código-fonte C99 nativo diretamente da AST |
 | `vamos compilar-c <arquivo.vamos> [-o binario]` | Compila para executável binário nativo de máquina via GCC |
@@ -181,6 +182,9 @@ Acesse em: `http://localhost:8080`
 | `matematica_util.Fatorial(...)` | *Pacote Nativo* | `fat := matematica_util.Fatorial(6)` |
 | `matematica_util.MDC(...)` | *Pacote Nativo* | `mdc := matematica_util.MDC(48, 18)` |
 | `matematica_util.EhPrimo(...)` | *Pacote Nativo* | `primo := matematica_util.EhPrimo(29)` |
+| `texto_util.Dividir(...)` | *Pacote Nativo* | `partes := texto_util.Dividir("A,B,C", ",")` |
+| `texto_util.Juntar(...)` | *Pacote Nativo* | `txt := texto_util.Juntar(partes, " - ")` |
+| `texto_util.Inverter(...)` | *Pacote Nativo* | `rev := texto_util.Inverter("VAMOS")` |
 
 ---
 
@@ -399,7 +403,8 @@ make check
 ├── pacotes/                  # Pacotes e bibliotecas padrão nativas em PT-BR
 │   ├── servidor/             # Micro-framework web com roteamento e middlewares
 │   ├── colecoes/             # Estruturas genéricas em VAMOS: Pilha[T], Fila[T], Conjunto[T]
-│   └── matematica_util/      # Funções matemáticas em VAMOS: Fatorial, Fibonacci, MDC, MMC, Primos
+│   ├── matematica_util/      # Funções matemáticas em VAMOS: Fatorial, Fibonacci, MDC, MMC, Primos
+│   └── texto_util/           # Manipulação de strings: Dividir, Juntar, Aparar, Inverter, etc.
 ├── exemplos/                 # Coleção de exemplos práticos
 │   ├── ola_mundo.vamos
 │   ├── concorrencia.vamos
@@ -414,7 +419,8 @@ make check
 │   ├── maquina_virtual.vamos # Demonstração de execução direta VVM com mapas e structs
 │   ├── wasm_modulo.vamos     # Compilação nativa para WebAssembly 1.0 (Wasm)
 │   ├── c_nativo.vamos        # Backend C99 nativo e compilação binária GCC
-│   └── pacotes_nativos.vamos # Demonstração da biblioteca padrão em VAMOS puro
+│   ├── pacotes_nativos.vamos # Demonstração da biblioteca padrão em VAMOS puro
+│   └── otimizacao.vamos      # Otimizador de bytecode VVM e Constant Folding
 ├── wasm/                     # Ponto de entrada para compilação WebAssembly
 ├── transpiler/               # Motor do transpilador, validador Go AST e linter
 ├── cmd/                      # Comandos modulares da CLI (run, build, lsp, get, etc.)

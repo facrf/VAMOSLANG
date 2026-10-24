@@ -1,0 +1,158 @@
+// Pacote compilador - Otimizador de Código e Bytecode em VAMOS-LANG
+// Realiza Constant Folding (Dobra de Constantes), Peephole Jump Optimization
+// e Eliminação de Código Inalcançável/Instruções Redundantes.
+
+pacote principal
+
+importar (
+	"conversao"
+	"formatar"
+)
+
+// EstatisticasOtimizacao registra os ganhos obtidos durante as passadas de otimização
+tipo EstatisticasOtimizacao estrutura {
+	ConstantesDobradas        inteiro
+	SaltosRedundantesRemovidos inteiro
+	InstrucoesRemovidas       inteiro
+	PassadasExecutadas        inteiro
+}
+
+// Relatorio exibe um resumo amigável dos ganhos de otimização
+funcao (e *EstatisticasOtimizacao) Relatorio() texto {
+	retornar formatar.Formatar(
+		"✓ Otimizações aplicadas (%d passadas):\n  - Constantes dobradas em tempo de compilação: %d\n  - Saltos redundantes eliminados: %d\n  - Instruções desnecessárias removidas: %d",
+		e.PassadasExecutadas,
+		e.ConstantesDobradas,
+		e.SaltosRedundantesRemovidos,
+		e.InstrucoesRemovidas,
+	)
+}
+
+// OtimizarBytecode analisa e otimiza um programa VVM pré-compilado
+funcao OtimizarBytecode(prog *ProgramaBytecode) *EstatisticasOtimizacao {
+	stats := &EstatisticasOtimizacao{}
+	maxPassadas := 8
+
+	para passada := 0; passada < maxPassadas; passada++ {
+		stats.PassadasExecutadas++
+		houveAlteracao := falso
+		total := tamanho(prog.Instrucoes)
+		se total <= 1 {
+			interromper
+		}
+
+		// 1. Mapear todos os alvos de salto (nenhuma instrução que seja alvo pode ser mesclada no meio)
+		alvosSalto := criar(mapa[inteiro]booleano)
+		para _, inst := intervalo prog.Instrucoes {
+			se inst.Opcode == OpSalto || inst.Opcode == OpSaltoSeFalso {
+				alvosSalto[inst.Argumento] = verdadeiro
+			}
+		}
+		para _, endFn := intervalo prog.Funcoes {
+			alvosSalto[endFn] = verdadeiro
+		}
+
+		// 2. Constant Folding: Dobra de operações aritméticas binárias com constantes literais
+		para i := 0; i < total-2; i++ {
+			se prog.Instrucoes[i].Opcode == OpConstante && prog.Instrucoes[i+1].Opcode == OpConstante {
+				// Verifica se as instruções seguintes não são destinos de saltos externos
+				se !alvosSalto[i+1] && !alvosSalto[i+2] {
+					op := prog.Instrucoes[i+2].Opcode
+					se op == OpSomar || op == OpSubtrair || op == OpMultiplicar || op == OpDividir {
+						arg1 := prog.Instrucoes[i].Argumento
+						arg2 := prog.Instrucoes[i+1].Argumento
+
+						se arg1 >= 0 && arg1 < tamanho(prog.Constantes) && arg2 >= 0 && arg2 < tamanho(prog.Constantes) {
+							val1 := prog.Constantes[arg1]
+							val2 := prog.Constantes[arg2]
+
+							num1, err1 := conversao.ParaInteiro(val1)
+							num2, err2 := conversao.ParaInteiro(val2)
+
+							se err1 == nulo && err2 == nulo {
+								podeDobrar := verdadeiro
+								resultado := 0
+
+								se op == OpSomar {
+									resultado = num1 + num2
+								} senao se op == OpSubtrair {
+									resultado = num1 - num2
+								} senao se op == OpMultiplicar {
+									resultado = num1 * num2
+								} senao se op == OpDividir {
+									se num2 != 0 {
+										resultado = num1 / num2
+									} senao {
+										podeDobrar = falso
+									}
+								}
+
+								se podeDobrar {
+									novoIndice := prog.AdicionarConstante(conversao.InteiroParaTexto(resultado))
+									prog.Instrucoes[i].Argumento = novoIndice
+									prog.Instrucoes[i+1].Opcode = OpNulo
+									prog.Instrucoes[i+2].Opcode = OpNulo
+									stats.ConstantesDobradas++
+									houveAlteracao = verdadeiro
+									i = i + 2
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// 3. Peephole Jump Optimization: Salto incondicional para o endereço imediatamente seguinte (i+1)
+		para i := 0; i < total; i++ {
+			se prog.Instrucoes[i].Opcode == OpSalto && prog.Instrucoes[i].Argumento == i+1 {
+				prog.Instrucoes[i].Opcode = OpNulo
+				stats.SaltosRedundantesRemovidos++
+				houveAlteracao = verdadeiro
+			}
+		}
+
+		// 4. Compactação de instruções e remapeamento de endereços de salto
+		se houveAlteracao {
+			novoEndereco := criar([]inteiro, total+1)
+			novasInstrucoes := criar([]Instrucao, 0)
+			novoIp := 0
+
+			para ip := 0; ip < total; ip++ {
+				novoEndereco[ip] = novoIp
+				se prog.Instrucoes[ip].Opcode != OpNulo {
+					novasInstrucoes = anexar(novasInstrucoes, prog.Instrucoes[ip])
+					novoIp++
+				} senao {
+					stats.InstrucoesRemovidas++
+				}
+			}
+			novoEndereco[total] = novoIp
+
+			// Atualiza saltos para os novos endereços
+			para idx := 0; idx < tamanho(novasInstrucoes); idx++ {
+				op := novasInstrucoes[idx].Opcode
+				se op == OpSalto || op == OpSaltoSeFalso {
+					alvoAntigo := novasInstrucoes[idx].Argumento
+					se alvoAntigo >= 0 && alvoAntigo <= total {
+						novasInstrucoes[idx].Argumento = novoEndereco[alvoAntigo]
+					}
+				}
+			}
+
+			// Atualiza tabela de funções
+			para nomeFn, endAntigo := intervalo prog.Funcoes {
+				se endAntigo >= 0 && endAntigo <= total {
+					prog.Funcoes[nomeFn] = novoEndereco[endAntigo]
+				}
+			}
+
+			prog.Instrucoes = novasInstrucoes
+		} senao {
+			// Atingiu ponto de convergência estável (ponto fixo)
+			interromper
+		}
+	}
+
+	retornar stats
+}

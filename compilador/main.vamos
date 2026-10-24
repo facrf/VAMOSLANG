@@ -18,7 +18,7 @@ constante VersaoCompilador texto = "4.0.0-bootstrap"
 
 funcao exibirAjuda() {
 	formatar.ImprimirLinha("==================================================================")
-	formatar.ImprimirLinha("   COMPILADOR AUTO-HOSPEDADO VAMOS-LANG (vamosc) - ETAPAS 1 A 7  ")
+	formatar.ImprimirLinha("   COMPILADOR AUTO-HOSPEDADO VAMOS-LANG (vamosc) - ETAPAS 1 A 10 ")
 	formatar.ImprimirLinha("==================================================================")
 	formatar.ImprimirLinha("Uso: vamosc <comando> [arquivo.vamos] [opcoes...]")
 	formatar.ImprimirLinha("")
@@ -28,6 +28,7 @@ funcao exibirAjuda() {
 	formatar.ImprimirLinha("  rodar, run <arquivo.vamos> [args...]        Executa código VAMOS diretamente")
 	formatar.ImprimirLinha("  vm, executar-vm <arquivo.vamos|.vamosb>     Executa na Máquina Virtual VVM")
 	formatar.ImprimirLinha("  bytecode <arquivo.vamos> [-o saida.vamosb]  Gera/desassembla Bytecode VVM")
+	formatar.ImprimirLinha("  otimizar <arquivo.vamos|.vamosb> [-o saida] Otimiza bytecode com Constant Folding")
 	formatar.ImprimirLinha("  wasm <arquivo.vamos> [-o saida.wasm]        Gera binário WebAssembly (.wasm)")
 	formatar.ImprimirLinha("  c <arquivo.vamos> [-o saida.c]              Gera código-fonte C99 nativo")
 	formatar.ImprimirLinha("  checar, semantico <arquivo.vamos>           Verificação semântica estática e tipos")
@@ -158,6 +159,56 @@ funcao executarBytecode(caminhoArquivo texto, destinoSaida texto) {
 		}
 		formatar.ImprimirFormatado("Bytecode VVM gravado com sucesso em '%s'\n", destinoSaida)
 	} senao {
+		formatar.ImprimirLinha(progBytecode.Desassemblar())
+	}
+}
+
+funcao executarOtimizacao(caminhoArquivo texto, destinoSaida texto) {
+	var progBytecode *ProgramaBytecode
+	se cordas.TemSufixo(caminhoArquivo, ".vamosb") {
+		carregado, err := CarregarBytecodeDeArquivo(caminhoArquivo)
+		se err != nulo {
+			formatar.ImprimirFormatado("Erro ao carregar bytecode '%s': %v\n", caminhoArquivo, err)
+			so.Sair(1)
+		}
+		progBytecode = carregado
+	} senao {
+		dados, err := so.LerArquivo(caminhoArquivo)
+		se err != nulo {
+			formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+			so.Sair(1)
+		}
+
+		lexer := NovoAnalisadorLexico(texto(dados))
+		tokens, errLex := lexer.TokenizarTodos()
+		se errLex != nulo {
+			formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+			so.Sair(1)
+		}
+
+		parser := NovoAnalisadorSintatico(tokens)
+		ast, errParse := parser.AnalisarPrograma()
+		se errParse != nulo {
+			formatar.ImprimirFormatado("Erro sintático: %v\n", errParse)
+			so.Sair(1)
+		}
+
+		emissor := NovoEmissorBytecode()
+		progBytecode = emissor.CompilarAST(ast)
+	}
+
+	stats := OtimizarBytecode(progBytecode)
+	formatar.ImprimirLinha(stats.Relatorio())
+
+	se destinoSaida != "" {
+		errSalvar := progBytecode.SalvarArquivo(destinoSaida)
+		se errSalvar != nulo {
+			formatar.ImprimirFormatado("Erro ao salvar arquivo de bytecode otimizado '%s': %v\n", destinoSaida, errSalvar)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("Bytecode VVM otimizado gravado com sucesso em '%s'\n", destinoSaida)
+	} senao {
+		formatar.ImprimirLinha("\n=== BYTECODE VVM OTIMIZADO ===")
 		formatar.ImprimirLinha(progBytecode.Desassemblar())
 	}
 }
@@ -678,6 +729,26 @@ funcao teste() {
 		so.Sair(1)
 	}
 
+	// 9. Teste do Otimizador de Bytecode (Constant Folding e Peephole Jumps)
+	progOpt := NovoProgramaBytecode()
+	id1 := progOpt.AdicionarConstante("15")
+	id2 := progOpt.AdicionarConstante("4")
+	progOpt.Emitir(OpConstante, id1, 1)
+	progOpt.Emitir(OpConstante, id2, 1)
+	progOpt.Emitir(OpMultiplicar, 0, 1) // 15 * 4 = 60
+	progOpt.Emitir(OpSalto, 4, 2)       // Salto redundante para i+1 (4)
+	progOpt.Emitir(OpRetornar, 0, 3)
+
+	statsOpt := OtimizarBytecode(progOpt)
+	se statsOpt.ConstantesDobradas < 1 || statsOpt.SaltosRedundantesRemovidos < 1 {
+		formatar.ImprimirLinha("Falha na otimização de bytecode (Constant Folding/Jump Opt).")
+		so.Sair(1)
+	}
+	se tamanho(progOpt.Instrucoes) != 2 {
+		formatar.ImprimirFormatado("Falha na redução de instruções: esperava 2, obteve %d\n", tamanho(progOpt.Instrucoes))
+		so.Sair(1)
+	}
+
 	formatar.ImprimirLinha("✓ 1. Análise léxica em VAMOS-LANG: APROVADA")
 	formatar.ImprimirLinha("✓ 2. Parser sintático descendente recursivo (AST) em VAMOS-LANG: APROVADO")
 	formatar.ImprimirLinha("✓ 3. Formatador automático em VAMOS-LANG: APROVADO")
@@ -686,7 +757,8 @@ funcao teste() {
 	formatar.ImprimirLinha("✓ 6. Emissão Nativa WebAssembly 1.0 (Wasm) em VAMOS-LANG: APROVADA")
 	formatar.ImprimirLinha("✓ 7. Análise Semântica Estática e Tipos em VAMOS-LANG: APROVADA")
 	formatar.ImprimirLinha("✓ 8. Emissão Nativa C (C99) para GCC/Clang em VAMOS-LANG: APROVADA")
-	formatar.ImprimirLinha("✓ Auto-teste de Bootstrapping (Etapas 1 a 7) concluído com 100% de êxito!")
+	formatar.ImprimirLinha("✓ 9. Otimizador de Bytecode (Constant Folding & Peephole): APROVADO")
+	formatar.ImprimirLinha("✓ Auto-teste de Bootstrapping (Etapas 1 a 10) concluído com 100% de êxito!")
 }
 
 funcao principal() {
@@ -742,6 +814,18 @@ funcao principal() {
 			destinoBytecode = args[3]
 		}
 		executarBytecode(args[1], destinoBytecode)
+		so.Sair(0)
+
+	caso "otimizar", "--otimizar":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o arquivo para otimizar o bytecode.")
+			so.Sair(1)
+		}
+		destinoOpt := ""
+		se tamanho(args) >= 4 && args[2] == "-o" {
+			destinoOpt = args[3]
+		}
+		executarOtimizacao(args[1], destinoOpt)
 		so.Sair(0)
 
 	caso "wasm", "--wasm":

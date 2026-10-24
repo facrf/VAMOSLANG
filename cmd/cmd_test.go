@@ -192,3 +192,12 @@ func TestRunSemanticCheck(t *testing.T) {
 		t.Errorf("RunSemanticCheck falhou para arquivo válido: %d", codeCheck)
 	}
 }
+
+func TestRunOptimize(t *testing.T) {
+	root := FindProjectRoot(".")
+	exemploPath := filepath.Join(root, "exemplos", "otimizacao.vamos")
+	codeOpt := RunOptimize([]string{exemploPath})
+	if codeOpt != 0 {
+		t.Errorf("RunOptimize falhou para arquivo de exemplo: %d", codeOpt)
+	}
+}

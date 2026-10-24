@@ -216,3 +216,32 @@ func RunSemanticCheck(args []string) int {
 	}
 	return 0
 }
+
+// RunOptimize otimiza o bytecode VVM com Constant Folding e Peephole Jump Optimization
+func RunOptimize(args []string) int {
+	if len(args) == 0 {
+		fmt.Println("Erro: informe o arquivo .vamos ou .vamosb para otimizar.")
+		fmt.Println("Uso: vamos otimizar <arquivo.vamos|.vamosb> [-o saida.vamosb]")
+		return 1
+	}
+
+	vamoscPath, err := findVamosc()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Erro: %v\n", err)
+		return 1
+	}
+
+	execArgs := append([]string{"otimizar"}, args...)
+	cmd := exec.Command(vamoscPath, execArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.ExitCode()
+		}
+		return 1
+	}
+	return 0
+}

@@ -24,6 +24,8 @@ func main() {
 		os.Exit(cmd.RunVM(args))
 	case "bytecode", "desassemblar":
 		os.Exit(cmd.RunBytecode(args))
+	case "otimizar", "optimize":
+		os.Exit(cmd.RunOptimize(args))
 	case "wasm":
 		os.Exit(cmd.RunWasm(args))
 	case "c":

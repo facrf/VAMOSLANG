@@ -224,6 +224,7 @@ var StdlibImportPathsMap = map[string]string{
 	"servidor":            "vamos/pacotes/servidor",
 	"colecoes":            "vamos/pacotes/colecoes",
 	"matematica_util":     "vamos/pacotes/matematica_util",
+	"texto_util":          "vamos/pacotes/texto_util",
 }
 
 // ReverseStdlibImportsMap mapeia import paths do Go para pacotes PT-BR.
@@ -369,7 +370,9 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"Substituir":     "Replace",
 		"SubstituirTudo": "ReplaceAll",
 		"TemPrefixo":     "HasPrefix",
+		"PossuiPrefixo":  "HasPrefix",
 		"TemSufixo":      "HasSuffix",
+		"PossuiSufixo":   "HasSuffix",
 		"Aparar":         "Trim",
 		"ApararEspaco":   "TrimSpace",
 		"Indice":         "Index",
