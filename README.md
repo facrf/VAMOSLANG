@@ -400,6 +400,17 @@ make check
 │   ├── wasm_exec.js          # Ponte de execução WebAssembly
 │   └── README.md
 ├── blocodenotasBR/           # Aplicação real completa (Bloco de Notas CLI + JSON)
+├── compilador/               # Compilador auto-hospedado (vamosc) escrito 100% em VAMOS-LANG
+│   ├── main.vamos            # CLI auto-hospedada (compilar, bytecode, wasm, c, etc.)
+│   ├── lexico.vamos          # Analisador léxico nativo com suporte a Unicode
+│   ├── sintatico.vamos       # Parser sintático descendente recursivo (AST)
+│   ├── semantico.vamos       # Verificador semântico e checagem estática de tipos
+│   ├── bytecode.vamos        # Especificação de opcodes e formato .vamosb
+│   ├── vm.vamos              # Máquina Virtual VVM com listas, mapas e structs
+│   ├── otimizador.vamos      # Otimizador de bytecode (Constant Folding e Peephole Jumps)
+│   ├── wasm.vamos            # Emissor nativo WebAssembly 1.0 (MVP standard)
+│   ├── emissor_c.vamos       # Emissor C nativo (C99) para GCC/Clang
+│   └── README.md             # Documentação técnica completa do compilador
 ├── pacotes/                  # Pacotes e bibliotecas padrão nativas em PT-BR
 │   ├── servidor/             # Micro-framework web com roteamento e middlewares
 │   ├── colecoes/             # Estruturas genéricas em VAMOS: Pilha[T], Fila[T], Conjunto[T]
