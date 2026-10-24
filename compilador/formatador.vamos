@@ -1,0 +1,70 @@
+// Pacote compilador - Formatador Oficial de Código em VAMOS-LANG
+// Padroniza a indentação com tabs, limpa espaços sobressalentes e preserva strings brutas.
+
+pacote principal
+
+importar (
+	"cordas"
+)
+
+// FormatarCodigo recebe o código-fonte em VAMOS e retorna o código com indentação padronizada
+funcao FormatarCodigo(fonte texto) texto {
+	linhas := cordas.Dividir(fonte, "\n")
+	resultado := criar([]texto, 0)
+	indentacao := 0
+	dentroStringBruta := falso
+
+	para _, linha := intervalo linhas {
+		// 1. Tratamento de Strings Brutas (backticks `...`)
+		contagemBacktick := 0
+		para _, r := intervalo []runa(linha) {
+			se r == '`' {
+				contagemBacktick++
+			}
+		}
+
+		se dentroStringBruta {
+			resultado = anexar(resultado, linha)
+			se contagemBacktick%2 != 0 {
+				dentroStringBruta = falso
+			}
+			continuar
+		}
+
+		se contagemBacktick%2 != 0 {
+			dentroStringBruta = verdadeiro
+		}
+
+		// 2. Limpeza de espaços da linha
+		aparada := cordas.ApararEspaco(linha)
+
+		// 3. Linhas vazias: nunca duplica linhas vazias consecutivas
+		se aparada == "" {
+			se tamanho(resultado) > 0 && resultado[tamanho(resultado)-1] != "" {
+				resultado = anexar(resultado, "")
+			}
+			continuar
+		}
+
+		// 4. Reduz a indentação se a linha começar com fechamento de bloco
+		se cordas.TemPrefixo(aparada, "}") || cordas.TemPrefixo(aparada, ")") || cordas.TemPrefixo(aparada, "]") {
+			se indentacao > 0 {
+				indentacao--
+			}
+		}
+
+		// 5. Aplica a indentação por tabs
+		prefixoTabs := ""
+		para i := 0; i < indentacao; i++ {
+			prefixoTabs = prefixoTabs + "\t"
+		}
+		resultado = anexar(resultado, prefixoTabs+aparada)
+
+		// 6. Aumenta a indentação para as próximas linhas se abrir bloco
+		se cordas.TemSufixo(aparada, "{") || cordas.TemSufixo(aparada, "(") || cordas.TemSufixo(aparada, "[") {
+			indentacao++
+		}
+	}
+
+	retornar cordas.Juntar(resultado, "\n") + "\n"
+}

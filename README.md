@@ -354,6 +354,7 @@ make check
 │   ├── lexico.vamos          # Scanner léxico com suporte a Unicode e operadores
 │   ├── ast.vamos             # Estrutura de nós da árvore sintática
 │   ├── sintatico.vamos       # Parser descendente recursivo em VAMOS-LANG
+│   ├── formatador.vamos      # Formatador de código em VAMOS-LANG
 │   ├── transpilador.vamos    # Motor de transpilação em VAMOS-LANG
 │   └── main.vamos            # Ponto de entrada do compilador 'vamosc'
 ├── lsp/                      # Language Server Protocol (LSP JSON-RPC 2.0 nativo)

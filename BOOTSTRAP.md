@@ -39,8 +39,8 @@ flowchart TD
 | :---: | :--- | :--- | :---: |
 | **1** | **Frontend Léxico e AST em VAMOS** | Implementar o tokenizador, nós da AST e analisador léxico 100% em arquivos `.vamos`. | ✅ **Concluído** |
 | **2** | **Parser Sintático Descendente Recursivo** | Implementar o parser sintático e gerador visual de AST diretamente em VAMOS-LANG. | ✅ **Concluído** |
-| **3** | **CLI Auto-Hospedada (`vamosc`) & Transpilação** | Compilar o executável `vamosc` usando a G0 e provar que ele compila programas `.vamos`. | 🚀 **Em Execução** |
-| **4** | **Independência Total e Emissão Direta** | Adicionar backend nativo para WebAssembly ou representação intermediária sem intermediários. | ⏳ Futuro |
+| **3** | **CLI Auto-Hospedada (`vamosc`) & Prova de Ouro** | CLI com `compilar`, `rodar`, `fmt` e ciclo completo de auto-compilação (G0 ➔ G1 ➔ G2 ➔ G3). | ✅ **Concluído** |
+| **4** | **Independência Total e Emissão Direta** | Adicionar backend nativo para WebAssembly ou representação intermediária sem intermediários. | 🚀 **Próxima Etapa** |
 
 ---
 
@@ -62,29 +62,34 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
 4. **[`compilador/sintatico.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/sintatico.vamos)**:
    - Analisador sintático descendente recursivo (`AnalisadorSintatico`) em VAMOS-LANG.
    - Suporte completo a parsing de pacotes, importações, structs, interfaces, assinaturas de métodos com receptores, laços, condicionais e generics.
-5. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
-   - Motor de emissão e transpilação em VAMOS-LANG.
-6. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
-   - Ponto de entrada CLI do compilador auto-hospedado (`vamosc`).
-   - Permite inspecionar tokens (`--tokens`), gerar árvores sintáticas (`--ast`), executar auto-teste (`--auto-teste`) e transpilar fontes `.vamos`.
+5. **[`compilador/formatador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/formatador.vamos)**:
+   - Formatador oficial de código escrito em VAMOS-LANG (`FormatarCodigo`), com indentação automática e preservação de raw strings.
+6. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
+   - Motor de emissão e transpilação em VAMOS-LANG com suporte a múltiplos arquivos de pacotes e stdlib.
+7. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
+   - Ponto de entrada CLI completo do compilador auto-hospedado (`vamosc`).
+   - Comandos oficiais: `compilar`, `rodar`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
 
 ---
 
-## 🛠️ Como Executar e Validar as Etapas 1 e 2
+## 🛠️ Como Executar e Validar as Etapas 1, 2 e 3
 
 ```bash
-# 1. Executar a validação completa de Bootstrapping:
+# 1. Executar o Ciclo de Ouro completo de Bootstrapping (G0 -> G1 -> G2 -> G3):
 make bootstrap
 
-# 2. Inspecionar tokens léxicos via vamosc:
-./compilador/vamosc --tokens exemplos/ola_mundo.vamos
+# 2. Compilar qualquer projeto ou exemplo diretamente com o 'vamosc':
+./compilador/vamosc compilar exemplos/calculadora.vamos -o /tmp/calc
+/tmp/calc
 
-# 3. Gerar e visualizar a Árvore Sintática Abstrata (AST):
-./compilador/vamosc --ast exemplos/estruturas_interfaces.vamos
+# 3. Executar código VAMOS diretamente pelo 'vamosc':
+./compilador/vamosc rodar exemplos/ola_mundo.vamos
 
-# 4. Transpilar código utilizando o próprio compilador em VAMOS:
-./compilador/vamosc --transpilar exemplos/ola_mundo.vamos -o /tmp/saida.go
-go run /tmp/saida.go
+# 4. Formatar código usando o formatador em VAMOS:
+./compilador/vamosc formatar exemplos/ola_mundo.vamos
+
+# 5. Visualizar a AST de um arquivo:
+./compilador/vamosc ast exemplos/estruturas_interfaces.vamos
 ```
 # 1. Executar o compilador auto-hospedado diretamente pelo runtime VAMOS:
 ./vamos run compilador/main.vamos --tokens exemplos/ola_mundo.vamos

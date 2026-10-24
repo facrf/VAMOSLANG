@@ -124,6 +124,31 @@ funcao mapearMetodoPacote(pacoteIdent texto, metodoIdent texto) (texto, texto, b
 			retornar "os", "WriteFile", verdadeiro
 		caso "ObterVariavelAmbiente":
 			retornar "os", "Getenv", verdadeiro
+		caso "LerDiretorio":
+			retornar "os", "ReadDir", verdadeiro
+		caso "RemoverTodos":
+			retornar "os", "RemoveAll", verdadeiro
+		caso "Remover":
+			retornar "os", "Remove", verdadeiro
+		caso "CriarDiretorio":
+			retornar "os", "Mkdir", verdadeiro
+		caso "CriarTodosDiretorios":
+			retornar "os", "MkdirAll", verdadeiro
+		}
+	}
+
+	se pacoteIdent == "caminho" || pacoteIdent == "filepath" {
+		escolha metodoIdent {
+		caso "Juntar":
+			retornar "filepath", "Join", verdadeiro
+		caso "Diretorio":
+			retornar "filepath", "Dir", verdadeiro
+		caso "Base":
+			retornar "filepath", "Base", verdadeiro
+		caso "Absoluto":
+			retornar "filepath", "Abs", verdadeiro
+		caso "Listar":
+			retornar "filepath", "Glob", verdadeiro
 		}
 	}
 
@@ -155,7 +180,44 @@ funcao mapearMetodoPacote(pacoteIdent texto, metodoIdent texto) (texto, texto, b
 		}
 	}
 
+	se pacoteIdent == "executar" || pacoteIdent == "processo" || pacoteIdent == "exec" {
+		escolha metodoIdent {
+		caso "Comando":
+			retornar "exec", "Command", verdadeiro
+		caso "BuscarCaminho":
+			retornar "exec", "LookPath", verdadeiro
+		}
+	}
+
 	retornar pacoteIdent, metodoIdent, falso
+}
+
+// traduzirIdentificadorPacote traduz identificadores de pacotes padrão para Go nativo
+funcao traduzirIdentificadorPacote(pkg texto) (texto, booleano) {
+	escolha pkg {
+	caso "formatar", "fmt":
+		retornar "fmt", verdadeiro
+	caso "tempo", "time":
+		retornar "time", verdadeiro
+	caso "cordas", "textos", "strings":
+		retornar "strings", verdadeiro
+	caso "so", "sistema", "os":
+		retornar "os", verdadeiro
+	caso "caminho", "filepath":
+		retornar "filepath", verdadeiro
+	caso "executar", "processo", "exec":
+		retornar "exec", verdadeiro
+	caso "sincronizar", "sync":
+		retornar "sync", verdadeiro
+	caso "erros", "errors":
+		retornar "errors", verdadeiro
+	caso "atomico", "atomic":
+		retornar "atomic", verdadeiro
+	caso "url":
+		retornar "url", verdadeiro
+	padrao:
+		retornar pkg, falso
+	}
 }
 
 // traduzirMetodoObjeto traduz métodos encadeados em instâncias de objetos
@@ -163,6 +225,12 @@ funcao traduzirMetodoObjeto(metodo texto) (texto, booleano) {
 	escolha metodo {
 	caso "Formato", "Formatar":
 		retornar "Format", verdadeiro
+	caso "SaidaCombinada":
+		retornar "CombinedOutput", verdadeiro
+	caso "Saida":
+		retornar "Output", verdadeiro
+	caso "Iniciar":
+		retornar "Start", verdadeiro
 	caso "Concluido", "Feito":
 		retornar "Done", verdadeiro
 	caso "Esperar":
@@ -296,7 +364,23 @@ funcao (t *Transpilador) Transpilar() texto {
 						sb = anexar(sb, formatar.Formatar("%s.%s", pkgGo, metGo))
 						continuar
 					}
+					pkgGoDireto, okPkg := traduzirIdentificadorPacote(tok.Valor)
+					se okPkg {
+						t.proximo() // consome pacote
+						t.proximo() // consome '.'
+						t.proximo() // consome metodo
+						sb = anexar(sb, formatar.Formatar("%s.%s", pkgGoDireto, prox2.Valor))
+						continuar
+					}
 				}
+			}
+
+			// Pacote isolado
+			pkgGoIsolado, okPkgIsolado := traduzirIdentificadorPacote(tok.Valor)
+			se okPkgIsolado {
+				t.proximo()
+				sb = anexar(sb, pkgGoIsolado)
+				continuar
 			}
 
 			// Tipos e Builtins ou Identificador Comum

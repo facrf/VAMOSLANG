@@ -218,6 +218,9 @@ var StdlibImportPathsMap = map[string]string{
 	"atomico":             "sync/atomic",
 	"redes/url":           "net/url",
 	"url":                 "net/url",
+	"sistema/executar":    "os/exec",
+	"executar":            "os/exec",
+	"processo":            "os/exec",
 	"servidor":            "vamos/pacotes/servidor",
 }
 
@@ -245,6 +248,7 @@ var ReverseStdlibImportsMap = map[string]string{
 	"math/rand":     "matematica/aleatorio",
 	"sync/atomic":   "sincronizar/atomico",
 	"net/url":       "redes/url",
+	"os/exec":       "sistema/executar",
 }
 
 // StdlibIdentMap mapeia os identificadores de pacotes em código (ex: servidor_http. -> http., formatar. -> fmt.).
@@ -261,6 +265,9 @@ var StdlibIdentMap = map[string]string{
 	"so":                  "os",
 	"sistema":             "os",
 	"os":                  "os",
+	"executar":            "exec",
+	"processo":            "exec",
+	"exec":                "exec",
 	"sincronizar":         "sync",
 	"sync":                "sync",
 	"atomico":             "atomic",
@@ -406,6 +413,7 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"ObterDiretorioAtual":     "Getwd",
 		"MudarDiretorio":          "Chdir",
 		"NomeHost":                "Hostname",
+		"LerDiretorio":            "ReadDir",
 	},
 	"log": {
 		"ImprimirLinha":     "Println",
@@ -457,6 +465,7 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"CaminharDiretorio": "WalkDir",
 		"Corresponder":      "Match",
 		"Relativo":          "Rel",
+		"Listar":            "Glob",
 	},
 	"sort": {
 		"Strings":      "Strings",
@@ -571,6 +580,10 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"CaminhoEscape":      "PathEscape",
 		"CaminhoDesescape":   "PathUnescape",
 	},
+	"exec": {
+		"Comando":       "Command",
+		"BuscarCaminho": "LookPath",
+	},
 }
 
 // MethodAliasesMap mapeia nomes de métodos de objetos e interfaces em PT-BR para Go.
@@ -620,6 +633,9 @@ var MethodAliasesMap = map[string]string{
 	"Prazo":            "Deadline",
 	"Cancelar":         "Cancel",
 	"Codificar":        "Encode",
+	"SaidaCombinada":   "CombinedOutput",
+	"Saida":            "Output",
+	"Iniciar":          "Start",
 }
 
 // ReverseMethodAliasesMap mapeia métodos Go para PT-BR.
@@ -650,4 +666,7 @@ var ReverseMethodAliasesMap = map[string]string{
 	"Deadline":       "Prazo",
 	"Cancel":         "Cancelar",
 	"Encode":         "Codificar",
+	"CombinedOutput": "SaidaCombinada",
+	"Output":         "Saida",
+	"Start":          "Iniciar",
 }

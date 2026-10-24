@@ -227,6 +227,8 @@ funcao TraduzirCaminhoImport(caminho texto) texto {
 		retornar "sync/atomic"
 	caso "redes/url", "url":
 		retornar "net/url"
+	caso "sistema/executar", "executar", "processo":
+		retornar "os/exec"
 	caso "erros":
 		retornar "errors"
 	caso "io":

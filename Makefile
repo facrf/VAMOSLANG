@@ -70,22 +70,27 @@ run-games: build
 	./$(BINARY_NAME) run jogos/damas.vamos --demo
 
 bootstrap: build
-	@echo "==> 1. Compilando o compilador auto-hospedado (G1) 'compilador/vamosc'..."
+	@echo "==> 1. Compilando G1 'compilador/vamosc' via G0 (vamos)..."
 	./$(BINARY_NAME) build -o compilador/vamosc compilador/main.vamos
-	@echo "==> 2. Executando auto-teste de integridade em VAMOS-LANG..."
+	@echo "==> 2. Auto-teste de integridade da G1 em VAMOS-LANG..."
 	./compilador/vamosc --auto-teste
-	@echo "==> 3. Gerando AST de 'exemplos/ola_mundo.vamos' com o parser auto-hospedado..."
-	./compilador/vamosc --ast exemplos/ola_mundo.vamos
-	@echo "==> 4. Transpilando 'exemplos/ola_mundo.vamos' com o compilador auto-hospedado..."
-	./compilador/vamosc --transpilar exemplos/ola_mundo.vamos -o /tmp/saida_bootstrap.go
-	@go run /tmp/saida_bootstrap.go
-	@rm -f /tmp/saida_bootstrap.go
-	@echo "✓ Etapas 1 e 2 do Bootstrapping validadas com sucesso!"
+	@echo "==> 3. Gerando AST com o parser nativo em VAMOS-LANG..."
+	./compilador/vamosc ast exemplos/ola_mundo.vamos
+	@echo "==> 4. Testando formatador de código em VAMOS-LANG..."
+	./compilador/vamosc fmt exemplos/ola_mundo.vamos
+	@echo "==> 5. Prova de Ouro: G1 compilando G2 (vamosc-g2)..."
+	./compilador/vamosc compilar compilador/main.vamos -o compilador/vamosc-g2
+	@echo "==> 6. Prova de Ouro: G2 compilando G3 (vamosc-g3)..."
+	./compilador/vamosc-g2 compilar compilador/main.vamos -o compilador/vamosc-g3
+	@echo "==> 7. Executando auto-teste com G3..."
+	./compilador/vamosc-g3 --auto-teste
+	@rm -f compilador/vamosc-g2 compilador/vamosc-g3
+	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3) CONCLUÍDO COM ÊXITO!"
 
 clean:
 	@echo "==> Limpando arquivos compilados..."
 	rm -f $(BINARY_NAME)
-	rm -f compilador/vamosc
+	rm -f compilador/vamosc*
 	rm -f bin_*
 	rm -f exemplos/*.go
 
