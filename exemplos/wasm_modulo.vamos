@@ -1,0 +1,49 @@
+// Exemplo de Módulo WebAssembly (.wasm) gerado nativamente pelo VAMOS-LANG
+// Sem nenhuma dependência externa, compilado diretamente para binário WebAssembly 1.0.
+
+pacote principal
+
+// Função de soma de inteiros
+funcao somar(a inteiro, b inteiro) inteiro {
+	retornar a + b
+}
+
+// Função de subtração
+funcao subtrair(a inteiro, b inteiro) inteiro {
+	retornar a - b
+}
+
+// Função de multiplicação
+funcao multiplicar(a inteiro, b inteiro) inteiro {
+	retornar a * b
+}
+
+// Função de divisão inteira
+funcao dividir(a inteiro, b inteiro) inteiro {
+	retornar a / b
+}
+
+// Função de cálculo de fatorial com recursão nativa Wasm
+funcao fatorial(n inteiro) inteiro {
+	se n <= 1 {
+		retornar 1
+	} senao {
+		retornar n * fatorial(n - 1)
+	}
+}
+
+// Função de Fibonacci recursivo executado na pilha Wasm
+funcao fibonacci(n inteiro) inteiro {
+	se n <= 1 {
+		retornar n
+	} senao {
+		retornar fibonacci(n - 1) + fibonacci(n - 2)
+	}
+}
+
+// Polinômio quadrático com variáveis locais: x^2 + 2x + c
+funcao polinomio(x inteiro, c inteiro) inteiro {
+	a := x * x
+	b := 2 * x
+	retornar a + b + c
+}

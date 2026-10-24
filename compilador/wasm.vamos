@@ -1,0 +1,509 @@
+// Pacote compilador - Emissor Nativo WebAssembly (Wasm) em VAMOS-LANG
+// Produz binários WebAssembly 1.0 (.wasm) diretamente a partir da AST sem compiladores externos.
+
+pacote principal
+
+importar (
+	"conversao"
+	"cordas"
+	"erros"
+	"so"
+)
+
+constante (
+	// Tipos de valor Wasm
+	WasmTipoI32   byte = 0x7F
+	WasmTipoVazio byte = 0x40
+
+	// Opcodes de controle Wasm
+	WasmOpUnreachable byte = 0x00
+	WasmOpNop         byte = 0x01
+	WasmOpBlock       byte = 0x02
+	WasmOpLoop        byte = 0x03
+	WasmOpIf          byte = 0x04
+	WasmOpElse        byte = 0x05
+	WasmOpEnd         byte = 0x0B
+	WasmOpBr          byte = 0x0C
+	WasmOpBrIf        byte = 0x0D
+	WasmOpReturn      byte = 0x0F
+	WasmOpCall        byte = 0x10
+
+	// Opcodes de variáveis locais
+	WasmOpLocalGet byte = 0x20
+	WasmOpLocalSet byte = 0x21
+
+	// Opcodes de constantes e comparações
+	WasmOpI32Const byte = 0x41
+	WasmOpI32Eqz   byte = 0x45
+	WasmOpI32Eq    byte = 0x46
+	WasmOpI32Ne    byte = 0x47
+	WasmOpI32LtS   byte = 0x48
+	WasmOpI32GtS   byte = 0x4A
+	WasmOpI32LeS   byte = 0x4C
+	WasmOpI32GeS   byte = 0x4E
+
+	// Aritmética i32
+	WasmOpI32Add  byte = 0x6A
+	WasmOpI32Sub  byte = 0x6B
+	WasmOpI32Mul  byte = 0x6C
+	WasmOpI32DivS byte = 0x6D
+)
+
+// CodificarLEB128U codifica um inteiro sem sinal no padrão LEB128 de 7 bits
+funcao CodificarLEB128U(val inteiro) []byte {
+	resultado := criar([]byte, 0)
+	para {
+		b := byte(val & 0x7F)
+		val = val >> 7
+		se val != 0 {
+			b = b | 0x80
+			resultado = anexar(resultado, b)
+		} senao {
+			resultado = anexar(resultado, b)
+			interromper
+		}
+	}
+	retornar resultado
+}
+
+// CodificarLEB128S codifica um inteiro com sinal no padrão LEB128
+funcao CodificarLEB128S(val inteiro) []byte {
+	resultado := criar([]byte, 0)
+	mais := verdadeiro
+	para mais {
+		b := byte(val & 0x7F)
+		val = val >> 7
+		temBitSinal := (b & 0x40) != 0
+		se (val == 0 && !temBitSinal) || (val == -1 && temBitSinal) {
+			mais = falso
+		} senao {
+			b = b | 0x80
+		}
+		resultado = anexar(resultado, b)
+	}
+	retornar resultado
+}
+
+// CriarSecaoWasm empacota um id de seção e seu payload com cabeçalho LEB128
+funcao CriarSecaoWasm(id byte, payload []byte) []byte {
+	se tamanho(payload) == 0 {
+		retornar criar([]byte, 0)
+	}
+	secao := criar([]byte, 0)
+	secao = anexar(secao, id)
+	tamLEB := CodificarLEB128U(tamanho(payload))
+	para _, b := intervalo tamLEB {
+		secao = anexar(secao, b)
+	}
+	para _, b := intervalo payload {
+		secao = anexar(secao, b)
+	}
+	retornar secao
+}
+
+// EmissorWasm compila a AST para binário WebAssembly MVP (.wasm)
+tipo EmissorWasm estrutura {
+	funcoes        []*NoAST
+	indicesFuncoes mapa[texto]inteiro
+}
+
+// NovoEmissorWasm instancia o emissor WebAssembly
+funcao NovoEmissorWasm() *EmissorWasm {
+	retornar &EmissorWasm{
+		funcoes:        criar([]*NoAST, 0),
+		indicesFuncoes: criar(mapa[texto]inteiro),
+	}
+}
+
+// CompilarAST sintetiza o módulo binário WebAssembly completo a partir da AST
+funcao (e *EmissorWasm) CompilarAST(raiz *NoAST) ([]byte, erro) {
+	se raiz == nulo {
+		retornar criar([]byte, 0), erros.Novo("AST nula fornecida ao emissor Wasm")
+	}
+
+	// 1. Identifica e indexa todas as funções do programa
+	para _, filho := intervalo raiz.Filhos {
+		se filho.Tipo == NoTipoFuncao {
+			e.indicesFuncoes[filho.Nome] = tamanho(e.funcoes)
+			e.funcoes = anexar(e.funcoes, filho)
+		}
+	}
+
+	totalFuncs := tamanho(e.funcoes)
+
+	// 2. Seção 1: Tipos (Type Section)
+	secaoTiposPayload := criar([]byte, 0)
+	secaoTiposPayload = anexar(secaoTiposPayload, CodificarLEB128U(totalFuncs)...)
+
+	para _, fn := intervalo e.funcoes {
+		// Conta parâmetros da função
+		numParams := 0
+		para _, p := intervalo fn.Filhos {
+			se p.Tipo == NoTipoParametro {
+				numParams++
+			}
+		}
+
+		secaoTiposPayload = anexar(secaoTiposPayload, 0x60) // Tipo de função
+		secaoTiposPayload = anexar(secaoTiposPayload, CodificarLEB128U(numParams)...)
+		para i := 0; i < numParams; i++ {
+			secaoTiposPayload = anexar(secaoTiposPayload, WasmTipoI32)
+		}
+		// Resultado: 1 valor i32 de retorno
+		secaoTiposPayload = anexar(secaoTiposPayload, 0x01, WasmTipoI32)
+	}
+
+	// 3. Seção 3: Funções (Function Section)
+	secaoFuncsPayload := criar([]byte, 0)
+	secaoFuncsPayload = anexar(secaoFuncsPayload, CodificarLEB128U(totalFuncs)...)
+	para i := 0; i < totalFuncs; i++ {
+		secaoFuncsPayload = anexar(secaoFuncsPayload, CodificarLEB128U(i)...)
+	}
+
+	// 4. Seção 7: Exportações (Export Section)
+	secaoExportsPayload := criar([]byte, 0)
+	secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(totalFuncs)...)
+	para i, fn := intervalo e.funcoes {
+		nomeBytes := []byte(fn.Nome)
+		secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(tamanho(nomeBytes))...)
+		para _, b := intervalo nomeBytes {
+			secaoExportsPayload = anexar(secaoExportsPayload, b)
+		}
+		secaoExportsPayload = anexar(secaoExportsPayload, 0x00) // Tipo de exportação: Função
+		secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(i)...)
+	}
+
+	// 5. Seção 10: Códigos dos Corpos das Funções (Code Section)
+	secaoCodigosPayload := criar([]byte, 0)
+	secaoCodigosPayload = anexar(secaoCodigosPayload, CodificarLEB128U(totalFuncs)...)
+
+	para _, fn := intervalo e.funcoes {
+		corpoFn, errFn := e.compilarCorpoFuncao(fn)
+		se errFn != nulo {
+			retornar criar([]byte, 0), errFn
+		}
+		secaoCodigosPayload = anexar(secaoCodigosPayload, CodificarLEB128U(tamanho(corpoFn))...)
+		para _, b := intervalo corpoFn {
+			secaoCodigosPayload = anexar(secaoCodigosPayload, b)
+		}
+	}
+
+	// 6. Montagem final do binário WebAssembly
+	modulo := []byte{0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00}
+	modulo = anexar(modulo, CriarSecaoWasm(1, secaoTiposPayload)...)
+	modulo = anexar(modulo, CriarSecaoWasm(3, secaoFuncsPayload)...)
+	modulo = anexar(modulo, CriarSecaoWasm(7, secaoExportsPayload)...)
+	modulo = anexar(modulo, CriarSecaoWasm(10, secaoCodigosPayload)...)
+
+	retornar modulo, nulo
+}
+
+// compilarCorpoFuncao gera os opcodes Wasm para uma função individual
+funcao (e *EmissorWasm) compilarCorpoFuncao(fn *NoAST) ([]byte, erro) {
+	locais := criar(mapa[texto]inteiro)
+	idxLocal := 0
+
+	// Parâmetros são os primeiros índices locais
+	para _, p := intervalo fn.Filhos {
+		se p.Tipo == NoTipoParametro {
+			locais[p.Nome] = idxLocal
+			idxLocal++
+		}
+	}
+
+	totalParams := idxLocal
+
+	// Identifica variáveis declaradas no bloco da função
+	para _, filho := intervalo fn.Filhos {
+		se filho.Tipo == NoTipoBloco {
+			para _, instrucao := intervalo filho.Filhos {
+				se instrucao.Tipo == NoTipoVariavel || instrucao.Tipo == NoTipoConstante {
+					se _, jaExiste := locais[instrucao.Nome]; !jaExiste {
+						locais[instrucao.Nome] = idxLocal
+						idxLocal++
+					}
+				} senao se instrucao.Tipo == NoTipoExpressao {
+					expr := cordas.ApararEspaco(instrucao.Valor)
+					se cordas.Contem(expr, ":=") {
+						partes := cordas.Dividir(expr, ":=")
+						nomeVar := cordas.ApararEspaco(partes[0])
+						se _, jaExiste := locais[nomeVar]; !jaExiste {
+							locais[nomeVar] = idxLocal
+							idxLocal++
+						}
+					}
+				}
+			}
+		}
+	}
+
+	locaisExtras := idxLocal - totalParams
+
+	// Emite instruções
+	bufInstrucoes := criar([]byte, 0)
+	para _, filho := intervalo fn.Filhos {
+		se filho.Tipo == NoTipoBloco {
+			errBloco := e.emitirBloco(filho, &bufInstrucoes, locais)
+			se errBloco != nulo {
+				retornar criar([]byte, 0), errBloco
+			}
+		}
+	}
+
+	// Garante que o corpo encerra com o opcode 'end' (0x0B)
+	se tamanho(bufInstrucoes) == 0 || bufInstrucoes[tamanho(bufInstrucoes)-1] != WasmOpEnd {
+		bufInstrucoes = anexar(bufInstrucoes, WasmOpI32Const, 0x00, WasmOpReturn, WasmOpEnd)
+	}
+
+	// Montagem do corpo com contagem de declarações locais
+	corpo := criar([]byte, 0)
+	se locaisExtras == 0 {
+		corpo = anexar(corpo, 0x00) // 0 blocos de locais adicionais
+	} senao {
+		corpo = anexar(corpo, 0x01) // 1 entrada de vetor
+		corpo = anexar(corpo, CodificarLEB128U(locaisExtras)...)
+		corpo = anexar(corpo, WasmTipoI32)
+	}
+
+	para _, b := intervalo bufInstrucoes {
+		corpo = anexar(corpo, b)
+	}
+
+	retornar corpo, nulo
+}
+
+// emitirBloco percorre os nós dentro de um bloco de código
+funcao (e *EmissorWasm) emitirBloco(bloco *NoAST, buf *[]byte, locais mapa[texto]inteiro) erro {
+	para _, no := intervalo bloco.Filhos {
+		escolha no.Tipo {
+		caso NoTipoBloco:
+			errSub := e.emitirBloco(no, buf, locais)
+			se errSub != nulo {
+				retornar errSub
+			}
+
+		caso NoTipoRetorno:
+			val := cordas.ApararEspaco(no.Valor)
+			se val != "" {
+				errExp := e.emitirExpressao(val, buf, locais)
+				se errExp != nulo {
+					retornar errExp
+				}
+			} senao {
+				*buf = anexar(*buf, WasmOpI32Const, 0x00)
+			}
+			*buf = anexar(*buf, WasmOpReturn)
+
+		caso NoTipoCondicional:
+			cond := cordas.ApararEspaco(no.Valor)
+			errCond := e.emitirExpressao(cond, buf, locais)
+			se errCond != nulo {
+				retornar errCond
+			}
+			*buf = anexar(*buf, WasmOpIf, WasmTipoI32)
+
+			temSenao := falso
+			var noSenao *NoAST = nulo
+			para _, filho := intervalo no.Filhos {
+				se filho.Tipo == NoTipoCondicional && filho.Nome == "Senao" {
+					temSenao = verdadeiro
+					noSenao = filho
+				} senao {
+					errFilho := e.emitirBloco(filho, buf, locais)
+					se errFilho != nulo {
+						retornar errFilho
+					}
+				}
+			}
+
+			se temSenao && noSenao != nulo {
+				*buf = anexar(*buf, WasmOpElse)
+				errSenao := e.emitirBloco(noSenao, buf, locais)
+				se errSenao != nulo {
+					retornar errSenao
+				}
+			} senao {
+				// Valor padrão do ramo falso se omitido
+				*buf = anexar(*buf, WasmOpElse, WasmOpI32Const, 0x00)
+			}
+			*buf = anexar(*buf, WasmOpEnd)
+
+		caso NoTipoExpressao:
+			expr := cordas.ApararEspaco(no.Valor)
+			se cordas.Contem(expr, ":=") || cordas.Contem(expr, "=") {
+				sep := ":="
+				se !cordas.Contem(expr, ":=") {
+					sep = "="
+				}
+				partes := cordas.Dividir(expr, sep)
+				se tamanho(partes) >= 2 {
+					nomeVar := cordas.ApararEspaco(partes[0])
+					conteudoValor := cordas.ApararEspaco(partes[1])
+					errExp := e.emitirExpressao(conteudoValor, buf, locais)
+					se errExp != nulo {
+						retornar errExp
+					}
+					se idx, ok := locais[nomeVar]; ok {
+						*buf = anexar(*buf, WasmOpLocalSet)
+						*buf = anexar(*buf, CodificarLEB128U(idx)...)
+					}
+				}
+			}
+		}
+	}
+	retornar nulo
+}
+
+// emitirExpressao gera instruções em pilha para operações aritméticas, lógicas ou chamadas
+funcao (e *EmissorWasm) emitirExpressao(expr texto, buf *[]byte, locais mapa[texto]inteiro) erro {
+	limpa := cordas.ApararEspaco(expr)
+
+	// Remoção de parênteses externos envolventes: (expr)
+	se cordas.TemPrefixo(limpa, "(") && cordas.TemSufixo(limpa, ")") {
+		nivel := 0
+		fechaNoFim := verdadeiro
+		para i := 0; i < tamanho(limpa)-1; i++ {
+			resto := limpa[i:]
+			se cordas.TemPrefixo(resto, "(") {
+				nivel++
+			} senao se cordas.TemPrefixo(resto, ")") {
+				nivel--
+				se nivel == 0 {
+					fechaNoFim = falso
+					interromper
+				}
+			}
+		}
+		se fechaNoFim {
+			retornar e.emitirExpressao(cordas.ApararEspaco(limpa[1:tamanho(limpa)-1]), buf, locais)
+		}
+	}
+
+	// Comparações relacionais
+	p := dividirForaParenteses(limpa, "<=")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		e.emitirExpressao(p[1], buf, locais)
+		*buf = anexar(*buf, WasmOpI32LeS)
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, ">=")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		e.emitirExpressao(p[1], buf, locais)
+		*buf = anexar(*buf, WasmOpI32GeS)
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, "==")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		e.emitirExpressao(p[1], buf, locais)
+		*buf = anexar(*buf, WasmOpI32Eq)
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, "!=")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		e.emitirExpressao(p[1], buf, locais)
+		*buf = anexar(*buf, WasmOpI32Ne)
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, "<")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		e.emitirExpressao(p[1], buf, locais)
+		*buf = anexar(*buf, WasmOpI32LtS)
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, ">")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		e.emitirExpressao(p[1], buf, locais)
+		*buf = anexar(*buf, WasmOpI32GtS)
+		retornar nulo
+	}
+
+	// Operações aritméticas
+	p = dividirForaParenteses(limpa, "+")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		para i := 1; i < tamanho(p); i++ {
+			e.emitirExpressao(p[i], buf, locais)
+			*buf = anexar(*buf, WasmOpI32Add)
+		}
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, "-")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		para i := 1; i < tamanho(p); i++ {
+			e.emitirExpressao(p[i], buf, locais)
+			*buf = anexar(*buf, WasmOpI32Sub)
+		}
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, "*")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		para i := 1; i < tamanho(p); i++ {
+			e.emitirExpressao(p[i], buf, locais)
+			*buf = anexar(*buf, WasmOpI32Mul)
+		}
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, "/")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		para i := 1; i < tamanho(p); i++ {
+			e.emitirExpressao(p[i], buf, locais)
+			*buf = anexar(*buf, WasmOpI32DivS)
+		}
+		retornar nulo
+	}
+
+	// Chamada de função: func(arg1, arg2)
+	idxAbre := cordas.Indice(limpa, "(")
+	idxFecha := cordas.UltimoIndice(limpa, ")")
+	se idxAbre > 0 && idxFecha == tamanho(limpa)-1 {
+		nomeFn := cordas.ApararEspaco(limpa[:idxAbre])
+		se idxFn, ok := e.indicesFuncoes[nomeFn]; ok {
+			conteudoArgs := cordas.ApararEspaco(limpa[idxAbre+1 : idxFecha])
+			se conteudoArgs != "" {
+				args := dividirForaParenteses(conteudoArgs, ",")
+				para _, arg := intervalo args {
+					e.emitirExpressao(cordas.ApararEspaco(arg), buf, locais)
+				}
+			}
+			*buf = anexar(*buf, WasmOpCall)
+			*buf = anexar(*buf, CodificarLEB128U(idxFn)...)
+			retornar nulo
+		}
+	}
+
+	// Variável local
+	se idx, ok := locais[limpa]; ok {
+		*buf = anexar(*buf, WasmOpLocalGet)
+		*buf = anexar(*buf, CodificarLEB128U(idx)...)
+		retornar nulo
+	}
+
+	// Literal numérico inteiro
+	valInt, errInt := conversao.ParaInteiro(limpa)
+	se errInt == nulo {
+		*buf = anexar(*buf, WasmOpI32Const)
+		*buf = anexar(*buf, CodificarLEB128S(valInt)...)
+		retornar nulo
+	}
+
+	retornar nulo
+}
+
+// SalvarWasm compila a AST para WebAssembly e salva no disco
+funcao SalvarWasm(caminhoArquivo texto, raiz *NoAST) erro {
+	emissor := NovoEmissorWasm()
+	bytesWasm, err := emissor.CompilarAST(raiz)
+	se err != nulo {
+		retornar err
+	}
+	retornar so.EscreverArquivo(caminhoArquivo, bytesWasm, 0644)
+}

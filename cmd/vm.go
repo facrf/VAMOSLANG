@@ -100,3 +100,32 @@ func RunBytecode(args []string) int {
 	}
 	return 0
 }
+
+// RunWasm compila código VAMOS-LANG diretamente em módulo WebAssembly 1.0 (.wasm)
+func RunWasm(args []string) int {
+	if len(args) == 0 {
+		fmt.Println("Erro: informe o arquivo .vamos para compilar em WebAssembly.")
+		fmt.Println("Uso: vamos wasm <arquivo.vamos> [-o saida.wasm]")
+		return 1
+	}
+
+	vamoscPath, err := findVamosc()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Erro: %v\n", err)
+		return 1
+	}
+
+	execArgs := append([]string{"wasm"}, args...)
+	cmd := exec.Command(vamoscPath, execArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.ExitCode()
+		}
+		return 1
+	}
+	return 0
+}

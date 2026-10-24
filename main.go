@@ -24,6 +24,8 @@ func main() {
 		os.Exit(cmd.RunVM(args))
 	case "bytecode", "desassemblar":
 		os.Exit(cmd.RunBytecode(args))
+	case "wasm":
+		os.Exit(cmd.RunWasm(args))
 	case "build", "compilar", "construir":
 		os.Exit(cmd.RunBuild(args))
 	case "test", "testar", "teste":

@@ -135,3 +135,23 @@ func TestRunVMAndBytecode(t *testing.T) {
 		t.Errorf("RunBytecode retornou código de erro: %d", codeBytecode)
 	}
 }
+
+func TestRunWasm(t *testing.T) {
+	root := FindProjectRoot(".")
+	exemploPath := filepath.Join(root, "exemplos", "wasm_modulo.vamos")
+	saidaWasm := filepath.Join(os.TempDir(), "teste_wasm.wasm")
+	defer os.Remove(saidaWasm)
+
+	codeWasm := RunWasm([]string{exemploPath, "-o", saidaWasm})
+	if codeWasm != 0 {
+		t.Errorf("RunWasm retornou código de erro: %d", codeWasm)
+	}
+
+	dados, err := os.ReadFile(saidaWasm)
+	if err != nil {
+		t.Fatalf("Arquivo .wasm não foi gerado: %v", err)
+	}
+	if len(dados) < 8 || string(dados[:4]) != "\x00asm" {
+		t.Errorf("Módulo WebAssembly inválido ou cabeçalho incorreto")
+	}
+}

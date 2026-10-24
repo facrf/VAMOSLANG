@@ -51,6 +51,7 @@ func PrintHelp() {
 	fmt.Println("  run | rodar | executar <arquivo.vamos> [args...]   Transpila e executa diretamente")
 	fmt.Println("  vm | executar-vm <arquivo.vamos|.vamosb>           Executa na Máquina Virtual VVM nativa")
 	fmt.Println("  bytecode | desassemblar <arquivo.vamos> [-o]       Gera ou desassembla Bytecode VVM (.vamosb)")
+	fmt.Println("  wasm <arquivo.vamos> [-o saida.wasm]               Compila diretamente para WebAssembly 1.0 (.wasm)")
 	fmt.Println("  build | compilar | construir [flags...]            Transpila o projeto e compila binário")
 	fmt.Println("  test | testar | teste [flags...]                   Transpila e executa os testes (go test)")
 	fmt.Println("  transpile | converter | transpilar <origem> [-o]   Converte .vamos para Go (.go)")

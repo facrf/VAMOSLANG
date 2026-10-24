@@ -37,6 +37,9 @@ A CLI oferece suporte completo com comandos e aliases em Português e Inglês:
 | Comando / Aliases | Descrição |
 | :--- | :--- |
 | `vamos run` \| `rodar` \| `executar <arquivo.vamos> [args...]` | Transpila e executa diretamente com `go run` |
+| `vamos vm` \| `executar-vm <arquivo.vamos\|.vamosb>` | Executa diretamente na Máquina Virtual VVM nativa |
+| `vamos bytecode` \| `desassemblar <arquivo.vamos> [-o]` | Gera ou desassembla Bytecode VVM serializável (`.vamosb`) |
+| `vamos wasm <arquivo.vamos> [-o saida.wasm]` | Compila diretamente para binário nativo WebAssembly 1.0 (`.wasm`) |
 | `vamos build` \| `compilar` \| `construir [flags...]` | Transpila o projeto e compila para binário nativo executável |
 | `vamos test` \| `testar` \| `teste [flags...]` | Transpila o projeto e executa os testes (`go test`) |
 | `vamos transpile` \| `converter` \| `transpilar <origem> [-o]` | Converte arquivo `.vamos` para Go puro (`.go`) |

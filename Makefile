@@ -42,6 +42,10 @@ run-examples: build
 	@echo ""
 	@echo "==> Testando exemplo 'maquina_virtual.vamos' (Execução Direta VVM):"
 	./$(BINARY_NAME) run exemplos/maquina_virtual.vamos
+	@echo ""
+	@echo "==> Testando exemplo 'wasm_modulo.vamos' (Compilação Nativa WebAssembly):"
+	./$(BINARY_NAME) wasm exemplos/wasm_modulo.vamos -o /tmp/modulo.wasm
+	@rm -f /tmp/modulo.wasm
 
 check: build
 	@echo "==> 1. Verificando formatação de código..."
@@ -91,8 +95,10 @@ bootstrap: build
 	./compilador/vamosc-g2 compilar compilador/main.vamos -o compilador/vamosc-g3
 	@echo "==> 8. Executando auto-teste com G3..."
 	./compilador/vamosc-g3 --auto-teste
-	@rm -f compilador/vamosc-g2 compilador/vamosc-g3
-	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3) CONCLUÍDO COM ÊXITO!"
+	@echo "==> 9. Prova de WebAssembly Nativo: Compilando binário Wasm 1.0 com G3..."
+	./compilador/vamosc-g3 wasm exemplos/wasm_modulo.vamos -o compilador/modulo.wasm
+	@rm -f compilador/vamosc-g2 compilador/vamosc-g3 compilador/modulo.wasm
+	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm) CONCLUÍDO COM ÊXITO!"
 
 clean:
 	@echo "==> Limpando arquivos compilados..."

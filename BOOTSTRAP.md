@@ -33,7 +33,7 @@ flowchart TD
 
 ---
 
-## 🗺️ As 4 Etapas da Jornada de Bootstrapping
+## 🗺️ As 5 Etapas da Jornada de Bootstrapping
 
 | Etapa | Meta | Descrição | Status |
 | :---: | :--- | :--- | :---: |
@@ -41,6 +41,7 @@ flowchart TD
 | **2** | **Parser Sintático Descendente Recursivo** | Implementar o parser sintático e gerador visual de AST diretamente em VAMOS-LANG. | ✅ **Concluído** |
 | **3** | **CLI Auto-Hospedada (`vamosc`) & Prova de Ouro** | CLI com `compilar`, `rodar`, `fmt` e ciclo completo de auto-compilação (G0 ➔ G1 ➔ G2 ➔ G3). | ✅ **Concluído** |
 | **4** | **Emissão Direta e Máquina Virtual (VVM)** | Emissor de bytecode, execução na Máquina Virtual VVM, formato `.vamosb` serializável e persistente. | ✅ **Concluído** |
+| **5** | **Emissão Nativa WebAssembly 1.0 (Wasm)** | Emissor direto de binários `.wasm` autônomos sem compiladores externos, com LEB128 e seção de exportação. | ✅ **Concluído** |
 
 ---
 
@@ -72,39 +73,50 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
    - Máquina Virtual VVM baseada em pilha com ponteiro de instruções (`ip`), call stack (`QuadroChamada`), escopo local isolado, recursão e suporte completo a vetores/fatias dinâmicas.
 8. **[`compilador/emissor.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/emissor.vamos)**:
    - Emissor direto de bytecode a partir da AST: compila funções com prólogo/epílogo, avaliação de expressões com precedência e parênteses (`dividirForaParenteses`), condicionais, laços `para`, literais de lista (`[]tipo{...}`) e indexação (`lista[i]`).
-9. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
-   - Motor de emissão Go em VAMOS-LANG para geração de binários nativos de máquina.
-10. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
+9. **[`compilador/wasm.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/wasm.vamos)**:
+   - Emissor nativo de WebAssembly 1.0 (MVP standard) em VAMOS-LANG puro.
+   - Codificação de inteiros assinados e não-assinados no padrão LEB128 de 7 bits (`CodificarLEB128U`, `CodificarLEB128S`).
+   - Seções canônicas de módulo Wasm: Type (1), Function (3), Export (7) e Code (10).
+   - Opcodes de pilha: aritmética i32 (`add`, `sub`, `mul`, `div_s`), comparações relacionais (`eq`, `ne`, `lt_s`, `gt_s`, `le_s`, `ge_s`), fluxo condicional (`if`, `else`, `end`), chamadas diretas com recursão (`call`) e variáveis locais (`local.get`, `local.set`).
+   - Gera módulos `.wasm` ultra-compactos (menos de 300 bytes) sem dependências externas.
+10. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
+    - Motor de emissão Go em VAMOS-LANG para geração de binários nativos de máquina.
+11. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
     - Ponto de entrada CLI completo do compilador auto-hospedado (`vamosc`).
-    - Comandos oficiais: `compilar`, `rodar`, `vm`, `bytecode`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
+    - Comandos oficiais: `compilar`, `rodar`, `vm`, `bytecode`, `wasm`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
 
 ---
 
 ## 🛠️ Como Executar e Validar
 
 ```bash
-# 1. Executar o Ciclo de Ouro completo de Bootstrapping (G0 -> G1 -> G2 -> G3):
+# 1. Executar o Ciclo de Ouro completo de Bootstrapping (G0 -> G1 -> G2 -> G3 + Wasm):
 make bootstrap
 
-# 2. Executar código diretamente na Máquina Virtual VVM:
+# 2. Compilar diretamente para WebAssembly 1.0 nativo (.wasm):
+./vamos wasm exemplos/wasm_modulo.vamos -o modulo.wasm
+# ou via compilador auto-hospedado:
+./compilador/vamosc wasm exemplos/wasm_modulo.vamos -o modulo.wasm
+
+# 3. Executar código diretamente na Máquina Virtual VVM:
 ./compilador/vamosc vm exemplos/maquina_virtual.vamos
 
-# 3. Gerar e salvar arquivo de Bytecode VVM (.vamosb):
+# 4. Gerar e salvar arquivo de Bytecode VVM (.vamosb):
 ./compilador/vamosc bytecode exemplos/maquina_virtual.vamos -o app.vamosb
 
-# 4. Executar arquivo de Bytecode (.vamosb) diretamente na VM:
+# 5. Executar arquivo de Bytecode (.vamosb) diretamente na VM:
 ./compilador/vamosc vm app.vamosb
 
-# 5. Desassemblar bytecode de um arquivo .vamos ou .vamosb:
+# 6. Desassemblar bytecode de um arquivo .vamos ou .vamosb:
 ./compilador/vamosc bytecode app.vamosb
 
-# 6. Compilar executável binário de máquina com o 'vamosc':
+# 7. Compilar executável binário de máquina com o 'vamosc':
 ./compilador/vamosc compilar exemplos/calculadora.vamos -o /tmp/calc
 /tmp/calc
 
-# 7. Formatar código usando o formatador em VAMOS:
+# 8. Formatar código usando o formatador em VAMOS:
 ./compilador/vamosc formatar exemplos/ola_mundo.vamos
 
-# 8. Visualizar a Árvore Sintática Abstrata (AST):
+# 9. Visualizar a Árvore Sintática Abstrata (AST):
 ./compilador/vamosc ast exemplos/estruturas_interfaces.vamos
 ```
