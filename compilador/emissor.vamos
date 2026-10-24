@@ -1,0 +1,324 @@
+// Pacote compilador - Emissor de Bytecode VVM a partir da AST em VAMOS-LANG
+// Percorre a árvore sintática abstrata e sintetiza o ProgramaBytecode executável.
+
+pacote principal
+
+importar (
+	"cordas"
+)
+
+// EmissorBytecode transforma a AST em sequência linear de instruções VVM
+tipo EmissorBytecode estrutura {
+	programa *ProgramaBytecode
+}
+
+// NovoEmissorBytecode instancia um novo emissor
+funcao NovoEmissorBytecode() *EmissorBytecode {
+	retornar &EmissorBytecode{
+		programa: NovoProgramaBytecode(),
+	}
+}
+
+// limparTextoLiteral remove aspas envolventes de literais de texto
+funcao limparTextoLiteral(s texto) texto {
+	se tamanho(s) >= 2 && cordas.TemPrefixo(s, "\"") && cordas.TemSufixo(s, "\"") {
+		retornar s[1 : tamanho(s)-1]
+	}
+	retornar s
+}
+
+// CompilarAST processa o nó raiz da AST e produz o programa em bytecode
+funcao (e *EmissorBytecode) CompilarAST(raiz *NoAST) *ProgramaBytecode {
+	se raiz == nulo {
+		retornar e.programa
+	}
+
+	e.visitarNo(raiz)
+	e.programa.Emitir(OpParar, 0, raiz.Linha)
+	retornar e.programa
+}
+
+// visitarNo percorre recursivamente nós da AST
+funcao (e *EmissorBytecode) visitarNo(no *NoAST) {
+	se no == nulo {
+		retornar
+	}
+
+	escolha no.Tipo {
+	caso NoTipoPrograma:
+		para _, filho := intervalo no.Filhos {
+			e.visitarNo(filho)
+		}
+
+	caso NoTipoFuncao:
+		// Se for 'principal' ou função comum, visita seu corpo
+		para _, filho := intervalo no.Filhos {
+			se filho.Tipo == NoTipoBloco {
+				e.visitarNo(filho)
+			}
+		}
+
+	caso NoTipoBloco:
+		para _, filho := intervalo no.Filhos {
+			e.visitarNo(filho)
+		}
+
+	caso NoTipoVariavel, NoTipoConstante:
+		e.emitirDeclaracaoVariavel(no)
+
+	caso NoTipoCondicional:
+		e.emitirCondicional(no)
+
+	caso NoTipoLaco:
+		e.emitirLaco(no)
+
+	caso NoTipoExpressao:
+		e.emitirExpressaoOuInstrucao(no)
+	}
+}
+
+// emitirDeclaracaoVariavel processa variáveis globais ou locais
+funcao (e *EmissorBytecode) emitirDeclaracaoVariavel(no *NoAST) {
+	idxVar := e.programa.AdicionarIdentificador(no.Nome)
+	valStr := cordas.ApararEspaco(no.Valor)
+
+	// Extrai o valor inicial após '=' se houver
+	se cordas.Contem(valStr, "=") {
+		partes := cordas.Dividir(valStr, "=")
+		se tamanho(partes) >= 2 {
+			literalVal := limparTextoLiteral(cordas.ApararEspaco(partes[1]))
+			idxConst := e.programa.AdicionarConstante(literalVal)
+			e.programa.Emitir(OpConstante, idxConst, no.Linha)
+			e.programa.Emitir(OpDefinirGlobal, idxVar, no.Linha)
+			retornar
+		}
+	}
+
+	// Valor padrão vazio se não inicializado
+	idxConstZero := e.programa.AdicionarConstante("")
+	e.programa.Emitir(OpConstante, idxConstZero, no.Linha)
+	e.programa.Emitir(OpDefinirGlobal, idxVar, no.Linha)
+}
+
+// emitirCondicional compila estruturas 'se condicao { ... } senao { ... }'
+funcao (e *EmissorBytecode) emitirCondicional(no *NoAST) {
+	cond := cordas.ApararEspaco(no.Valor)
+	e.emitirAvaliacaoExpressao(cond, no.Linha)
+
+	// Emite salto se falso com endereço provisório 0
+	idxSaltoSeFalso := e.programa.Emitir(OpSaltoSeFalso, 0, no.Linha)
+
+	// Visita os blocos internos
+	temSenao := falso
+	var noSenao *NoAST = nulo
+
+	para _, filho := intervalo no.Filhos {
+		se filho.Tipo == NoTipoCondicional && filho.Nome == "Senao" {
+			temSenao = verdadeiro
+			noSenao = filho
+		} senao {
+			e.visitarNo(filho)
+		}
+	}
+
+	se temSenao && noSenao != nulo {
+		// Pula o bloco senao após executar o bloco se
+		idxSaltoFim := e.programa.Emitir(OpSalto, 0, no.Linha)
+		// O salto se falso vai para o início do senao
+		e.programa.ModificarArgumento(idxSaltoSeFalso, tamanho(e.programa.Instrucoes))
+		e.visitarNo(noSenao)
+		// O salto do fim do se vai para depois do senao
+		e.programa.ModificarArgumento(idxSaltoFim, tamanho(e.programa.Instrucoes))
+	} senao {
+		// Corrige endereço para após o bloco se
+		e.programa.ModificarArgumento(idxSaltoSeFalso, tamanho(e.programa.Instrucoes))
+	}
+}
+
+// emitirLaco compila laços 'para'
+funcao (e *EmissorBytecode) emitirLaco(no *NoAST) {
+	enderecoInicio := tamanho(e.programa.Instrucoes)
+	cond := cordas.ApararEspaco(no.Valor)
+
+	se cond != "" {
+		e.emitirAvaliacaoExpressao(cond, no.Linha)
+	} senao {
+		idxConstVerdade := e.programa.AdicionarConstante("verdadeiro")
+		e.programa.Emitir(OpConstante, idxConstVerdade, no.Linha)
+	}
+
+	idxSaltoSaida := e.programa.Emitir(OpSaltoSeFalso, 0, no.Linha)
+
+	para _, filho := intervalo no.Filhos {
+		e.visitarNo(filho)
+	}
+
+	// Volta ao início do laço
+	e.programa.Emitir(OpSalto, enderecoInicio, no.Linha)
+	// Ajusta salto de saída do laço
+	e.programa.ModificarArgumento(idxSaltoSaida, tamanho(e.programa.Instrucoes))
+}
+
+// emitirExpressaoOuInstrucao trata linhas com atribuição ou chamadas da stdlib
+funcao (e *EmissorBytecode) emitirExpressaoOuInstrucao(no *NoAST) {
+	expr := cordas.ApararEspaco(no.Valor)
+
+	// 1. Chamada de ImprimirLinha / fmt.Println
+	se cordas.Contem(expr, "ImprimirLinha") || cordas.Contem(expr, "Println") {
+		idxAbre := cordas.Indice(expr, "(")
+		idxFecha := cordas.UltimoIndice(expr, ")")
+		se idxAbre != -1 && idxFecha != -1 && idxFecha > idxAbre {
+			conteudoParam := cordas.ApararEspaco(expr[idxAbre+1 : idxFecha])
+			e.emitirAvaliacaoExpressao(conteudoParam, no.Linha)
+			e.programa.Emitir(OpImprimirLinha, 0, no.Linha)
+			retornar
+		}
+	} senao se cordas.Contem(expr, "Imprimir") || cordas.Contem(expr, "Print") {
+		idxAbre := cordas.Indice(expr, "(")
+		idxFecha := cordas.UltimoIndice(expr, ")")
+		se idxAbre != -1 && idxFecha != -1 && idxFecha > idxAbre {
+			conteudoParam := cordas.ApararEspaco(expr[idxAbre+1 : idxFecha])
+			e.emitirAvaliacaoExpressao(conteudoParam, no.Linha)
+			e.programa.Emitir(OpImprimir, 0, no.Linha)
+			retornar
+		}
+	}
+
+	// 2. Atribuição rápida (x := ...) ou atribuição simples (x = ...)
+	se cordas.Contem(expr, ":=") || cordas.Contem(expr, "=") {
+		sep := ":="
+		se !cordas.Contem(expr, ":=") {
+			sep = "="
+		}
+		partes := cordas.Dividir(expr, sep)
+		se tamanho(partes) >= 2 {
+			nomeVar := cordas.ApararEspaco(partes[0])
+			conteudoValor := cordas.ApararEspaco(partes[1])
+			e.emitirAvaliacaoExpressao(conteudoValor, no.Linha)
+			idxVar := e.programa.AdicionarIdentificador(nomeVar)
+			e.programa.Emitir(OpDefinirGlobal, idxVar, no.Linha)
+			retornar
+		}
+	}
+}
+
+// emitirAvaliacaoExpressao decompõe expressões aritméticas ou literais e gera instruções na pilha
+funcao (e *EmissorBytecode) emitirAvaliacaoExpressao(expr texto, linha inteiro) {
+	limpa := cordas.ApararEspaco(expr)
+
+	// Literais de texto puros entre aspas
+	se cordas.TemPrefixo(limpa, "\"") && cordas.TemSufixo(limpa, "\"") && cordas.Contar(limpa, "\"") == 2 {
+		idx := e.programa.AdicionarConstante(limparTextoLiteral(limpa))
+		e.programa.Emitir(OpConstante, idx, linha)
+		retornar
+	}
+
+	// Comparações relacionais
+	se cordas.Contem(limpa, ">=") {
+		p := cordas.Dividir(limpa, ">=")
+		e.emitirAvaliacaoExpressao(p[0], linha)
+		e.emitirAvaliacaoExpressao(p[1], linha)
+		e.programa.Emitir(OpMaiorIgual, 0, linha)
+		retornar
+	}
+	se cordas.Contem(limpa, "<=") {
+		p := cordas.Dividir(limpa, "<=")
+		e.emitirAvaliacaoExpressao(p[0], linha)
+		e.emitirAvaliacaoExpressao(p[1], linha)
+		e.programa.Emitir(OpMenorIgual, 0, linha)
+		retornar
+	}
+	se cordas.Contem(limpa, "==") {
+		p := cordas.Dividir(limpa, "==")
+		e.emitirAvaliacaoExpressao(p[0], linha)
+		e.emitirAvaliacaoExpressao(p[1], linha)
+		e.programa.Emitir(OpIgual, 0, linha)
+		retornar
+	}
+	se cordas.Contem(limpa, "!=") {
+		p := cordas.Dividir(limpa, "!=")
+		e.emitirAvaliacaoExpressao(p[0], linha)
+		e.emitirAvaliacaoExpressao(p[1], linha)
+		e.programa.Emitir(OpDiferente, 0, linha)
+		retornar
+	}
+	se cordas.Contem(limpa, ">") {
+		p := cordas.Dividir(limpa, ">")
+		e.emitirAvaliacaoExpressao(p[0], linha)
+		e.emitirAvaliacaoExpressao(p[1], linha)
+		e.programa.Emitir(OpMaior, 0, linha)
+		retornar
+	}
+	se cordas.Contem(limpa, "<") {
+		p := cordas.Dividir(limpa, "<")
+		e.emitirAvaliacaoExpressao(p[0], linha)
+		e.emitirAvaliacaoExpressao(p[1], linha)
+		e.programa.Emitir(OpMenor, 0, linha)
+		retornar
+	}
+
+	// Operações aritméticas
+	se cordas.Contem(limpa, "+") {
+		partes := cordas.Dividir(limpa, "+")
+		se tamanho(partes) >= 2 {
+			e.emitirAvaliacaoExpressao(partes[0], linha)
+			para i := 1; i < tamanho(partes); i++ {
+				e.emitirAvaliacaoExpressao(partes[i], linha)
+				e.programa.Emitir(OpSomar, 0, linha)
+			}
+			retornar
+		}
+	}
+	se cordas.Contem(limpa, "-") {
+		partes := cordas.Dividir(limpa, "-")
+		se tamanho(partes) >= 2 {
+			e.emitirAvaliacaoExpressao(partes[0], linha)
+			para i := 1; i < tamanho(partes); i++ {
+				e.emitirAvaliacaoExpressao(partes[i], linha)
+				e.programa.Emitir(OpSubtrair, 0, linha)
+			}
+			retornar
+		}
+	}
+	se cordas.Contem(limpa, "*") {
+		partes := cordas.Dividir(limpa, "*")
+		se tamanho(partes) >= 2 {
+			e.emitirAvaliacaoExpressao(partes[0], linha)
+			para i := 1; i < tamanho(partes); i++ {
+				e.emitirAvaliacaoExpressao(partes[i], linha)
+				e.programa.Emitir(OpMultiplicar, 0, linha)
+			}
+			retornar
+		}
+	}
+	se cordas.Contem(limpa, "/") {
+		partes := cordas.Dividir(limpa, "/")
+		se tamanho(partes) >= 2 {
+			e.emitirAvaliacaoExpressao(partes[0], linha)
+			para i := 1; i < tamanho(partes); i++ {
+				e.emitirAvaliacaoExpressao(partes[i], linha)
+				e.programa.Emitir(OpDividir, 0, linha)
+			}
+			retornar
+		}
+	}
+
+	// Se for texto literal com aspas
+	se cordas.TemPrefixo(limpa, "\"") && cordas.TemSufixo(limpa, "\"") {
+		idx := e.programa.AdicionarConstante(limparTextoLiteral(limpa))
+		e.programa.Emitir(OpConstante, idx, linha)
+		retornar
+	}
+
+	// Se for número puro ou identificador
+	idxConst := e.programa.AdicionarConstante(limpa)
+	para _, id := intervalo e.programa.Identificadores {
+		se id == limpa {
+			idxId := e.programa.AdicionarIdentificador(limpa)
+			e.programa.Emitir(OpObterGlobal, idxId, linha)
+			retornar
+		}
+	}
+
+	e.programa.Emitir(OpConstante, idxConst, linha)
+}

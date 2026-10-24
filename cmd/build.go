@@ -99,7 +99,16 @@ func RunBuild(args []string) int {
 			if entryDir != "." {
 				matches, _ := filepath.Glob(filepath.Join(tempDir, entryDir, "*.go"))
 				if len(matches) > 1 {
-					buildTarget = "./" + filepath.ToSlash(entryDir)
+					mainCount := 0
+					for _, m := range matches {
+						data, err := os.ReadFile(m)
+						if err == nil && strings.Contains(string(data), "func main(") {
+							mainCount++
+						}
+					}
+					if mainCount <= 1 {
+						buildTarget = "./" + filepath.ToSlash(entryDir)
+					}
 				}
 			}
 

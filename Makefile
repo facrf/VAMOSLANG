@@ -39,6 +39,9 @@ run-examples: build
 	@echo ""
 	@echo "==> Testando exemplo 'genericos.vamos' (Tipos Genéricos e Restrições):"
 	./$(BINARY_NAME) run exemplos/genericos.vamos
+	@echo ""
+	@echo "==> Testando exemplo 'maquina_virtual.vamos' (Execução Direta VVM):"
+	./$(BINARY_NAME) run exemplos/maquina_virtual.vamos
 
 check: build
 	@echo "==> 1. Verificando formatação de código..."
@@ -78,11 +81,15 @@ bootstrap: build
 	./compilador/vamosc ast exemplos/ola_mundo.vamos
 	@echo "==> 4. Testando formatador de código em VAMOS-LANG..."
 	./compilador/vamosc fmt exemplos/ola_mundo.vamos
-	@echo "==> 5. Prova de Ouro: G1 compilando G2 (vamosc-g2)..."
+	@echo "==> 5. Prova de VVM: Executando bytecode e Máquina Virtual nativa..."
+	./compilador/vamosc bytecode exemplos/maquina_virtual.vamos -o compilador/mv.vamosb
+	./compilador/vamosc vm compilador/mv.vamosb
+	@rm -f compilador/mv.vamosb
+	@echo "==> 6. Prova de Ouro: G1 compilando G2 (vamosc-g2)..."
 	./compilador/vamosc compilar compilador/main.vamos -o compilador/vamosc-g2
-	@echo "==> 6. Prova de Ouro: G2 compilando G3 (vamosc-g3)..."
+	@echo "==> 7. Prova de Ouro: G2 compilando G3 (vamosc-g3)..."
 	./compilador/vamosc-g2 compilar compilador/main.vamos -o compilador/vamosc-g3
-	@echo "==> 7. Executando auto-teste com G3..."
+	@echo "==> 8. Executando auto-teste com G3..."
 	./compilador/vamosc-g3 --auto-teste
 	@rm -f compilador/vamosc-g2 compilador/vamosc-g3
 	@echo "✓ Ciclo de Ouro de Bootstrapping (G0 -> G1 -> G2 -> G3) CONCLUÍDO COM ÊXITO!"

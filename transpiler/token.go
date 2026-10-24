@@ -369,6 +369,7 @@ var StdlibMethodsMap = map[string]map[string]string{
 		"Aparar":         "Trim",
 		"ApararEspaco":   "TrimSpace",
 		"Indice":         "Index",
+		"UltimoIndice":   "LastIndex",
 		"Repetir":        "Repeat",
 		"Contar":         "Count",
 		"Comparar":       "Compare",

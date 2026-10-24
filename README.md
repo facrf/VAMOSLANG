@@ -13,7 +13,7 @@
 **VAMOS-LANG** é uma linguagem de programação de alto desempenho e tipagem estática com sintaxe idêntica ao Go, porém totalmente expressa no idioma Português (PT-BR). 
 
 O ecossistema VAMOS-LANG inclui:
-- **Compilador Auto-Hospedado (`vamosc` / Bootstrapping)**: Compilador escrito 100% na própria linguagem VAMOS-LANG ([`compilador/`](compilador/)), iniciando a jornada de auto-hospedagem e independência (consulte [`BOOTSTRAP.md`](BOOTSTRAP.md)).
+- **Compilador Auto-Hospedado (`vamosc` / Bootstrapping)**: Compilador escrito 100% na própria linguagem VAMOS-LANG ([`compilador/`](compilador/)), com parser de AST, formatador, emissor de bytecode e Máquina Virtual (VVM) independente (consulte [`BOOTSTRAP.md`](BOOTSTRAP.md)).
 - **Transpilador Ultra-Rápido**: Em Go puro, sem dependências externas pesadas, com suporte completo a **Tipos Genéricos (Generics)** (`qualquer`, `comparavel`, aproximações `~`).
 - **CLI Completa (`vamos`)**: Com comandos e aliases em Português e Inglês, e tradução amigável de diagnósticos/stacktraces.
 - **Extensão Oficial para VS Code**: Realce de sintaxe oficial e snippets inteligentes.
@@ -355,6 +355,9 @@ make check
 │   ├── ast.vamos             # Estrutura de nós da árvore sintática
 │   ├── sintatico.vamos       # Parser descendente recursivo em VAMOS-LANG
 │   ├── formatador.vamos      # Formatador de código em VAMOS-LANG
+│   ├── bytecode.vamos        # Opcodes, instruções e serialização (.vamosb) da VVM
+│   ├── vm.vamos              # Máquina Virtual baseada em pilha (VVM) em VAMOS-LANG
+│   ├── emissor.vamos         # Emissor direto de bytecode a partir da AST
 │   ├── transpilador.vamos    # Motor de transpilação em VAMOS-LANG
 │   └── main.vamos            # Ponto de entrada do compilador 'vamosc'
 ├── lsp/                      # Language Server Protocol (LSP JSON-RPC 2.0 nativo)

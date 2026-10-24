@@ -1,0 +1,222 @@
+// Pacote compilador - Máquina Virtual VVM (VAMOS Virtual Machine) em VAMOS-LANG
+// Executa o bytecode VVM diretamente sem dependência de compilação intermediária ou toolchain Go.
+
+pacote principal
+
+importar (
+	"conversao"
+	"erros"
+	"formatar"
+)
+
+// MaquinaVirtual executa as instruções de bytecode na pilha
+tipo MaquinaVirtual estrutura {
+	pilha    []texto
+	topo     inteiro
+	globais  mapa[texto]texto
+	ip       inteiro
+}
+
+// NovaMaquinaVirtual cria uma nova instância de execução da VM
+funcao NovaMaquinaVirtual() *MaquinaVirtual {
+	retornar &MaquinaVirtual{
+		pilha:   criar([]texto, 1024),
+		topo:    0,
+		globais: criar(mapa[texto]texto),
+		ip:      0,
+	}
+}
+
+// empilhar insere um valor no topo da pilha de execução
+funcao (vm *MaquinaVirtual) empilhar(valor texto) {
+	se vm.topo < tamanho(vm.pilha) {
+		vm.pilha[vm.topo] = valor
+		vm.topo++
+	}
+}
+
+// desempilhar retira e retorna o valor do topo da pilha
+funcao (vm *MaquinaVirtual) desempilhar() texto {
+	se vm.topo <= 0 {
+		retornar ""
+	}
+	vm.topo--
+	retornar vm.pilha[vm.topo]
+}
+
+// espiarTopo consulta o valor do topo da pilha sem desempilhar
+funcao (vm *MaquinaVirtual) espiarTopo() texto {
+	se vm.topo <= 0 {
+		retornar ""
+	}
+	retornar vm.pilha[vm.topo-1]
+}
+
+// ehVerdadeiro verifica se o valor avalia para verdadeiro na lógica da VM
+funcao ehVerdadeiro(v texto) booleano {
+	retornar v != "falso" && v != "0" && v != "" && v != "nulo"
+}
+
+// Interpretar executa as instruções de um ProgramaBytecode do início ao fim
+funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
+	vm.ip = 0
+	totalInstrucoes := tamanho(prog.Instrucoes)
+
+	para vm.ip < totalInstrucoes {
+		inst := prog.Instrucoes[vm.ip]
+		vm.ip++
+
+		escolha inst.Opcode {
+		caso OpConstante:
+			val := ""
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Constantes) {
+				val = prog.Constantes[inst.Argumento]
+			}
+			vm.empilhar(val)
+
+		caso OpDefinirGlobal:
+			val := vm.desempilhar()
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
+				nome := prog.Identificadores[inst.Argumento]
+				vm.globais[nome] = val
+			}
+
+		caso OpObterGlobal:
+			val := ""
+			se inst.Argumento >= 0 && inst.Argumento < tamanho(prog.Identificadores) {
+				nome := prog.Identificadores[inst.Argumento]
+				se v, ok := vm.globais[nome]; ok {
+					val = v
+				}
+			}
+			vm.empilhar(val)
+
+		caso OpSomar:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			// Tenta somar como inteiros
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				vm.empilhar(conversao.InteiroParaTexto(intA + intB))
+			} senao {
+				// Concatenação de texto
+				vm.empilhar(a + b)
+			}
+
+		caso OpSubtrair:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, _ := conversao.ParaInteiro(a)
+			intB, _ := conversao.ParaInteiro(b)
+			vm.empilhar(conversao.InteiroParaTexto(intA - intB))
+
+		caso OpMultiplicar:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, _ := conversao.ParaInteiro(a)
+			intB, _ := conversao.ParaInteiro(b)
+			vm.empilhar(conversao.InteiroParaTexto(intA * intB))
+
+		caso OpDividir:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, _ := conversao.ParaInteiro(a)
+			intB, _ := conversao.ParaInteiro(b)
+			se intB == 0 {
+				retornar erros.Novo("erro na VM: divisão por zero")
+			}
+			vm.empilhar(conversao.InteiroParaTexto(intA / intB))
+
+		caso OpIgual:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			se a == b {
+				vm.empilhar("verdadeiro")
+			} senao {
+				vm.empilhar("falso")
+			}
+
+		caso OpDiferente:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			se a != b {
+				vm.empilhar("verdadeiro")
+			} senao {
+				vm.empilhar("falso")
+			}
+
+		caso OpMaior:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, _ := conversao.ParaInteiro(a)
+			intB, _ := conversao.ParaInteiro(b)
+			se intA > intB {
+				vm.empilhar("verdadeiro")
+			} senao {
+				vm.empilhar("falso")
+			}
+
+		caso OpMenor:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, _ := conversao.ParaInteiro(a)
+			intB, _ := conversao.ParaInteiro(b)
+			se intA < intB {
+				vm.empilhar("verdadeiro")
+			} senao {
+				vm.empilhar("falso")
+			}
+
+		caso OpMaiorIgual:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, _ := conversao.ParaInteiro(a)
+			intB, _ := conversao.ParaInteiro(b)
+			se intA >= intB {
+				vm.empilhar("verdadeiro")
+			} senao {
+				vm.empilhar("falso")
+			}
+
+		caso OpMenorIgual:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, _ := conversao.ParaInteiro(a)
+			intB, _ := conversao.ParaInteiro(b)
+			se intA <= intB {
+				vm.empilhar("verdadeiro")
+			} senao {
+				vm.empilhar("falso")
+			}
+
+		caso OpSalto:
+			vm.ip = inst.Argumento
+
+		caso OpSaltoSeFalso:
+			cond := vm.desempilhar()
+			se !ehVerdadeiro(cond) {
+				vm.ip = inst.Argumento
+			}
+
+		caso OpImprimirLinha:
+			val := vm.desempilhar()
+			formatar.ImprimirLinha(val)
+
+		caso OpImprimir:
+			val := vm.desempilhar()
+			formatar.Imprimir(val)
+
+		caso OpDescartar:
+			vm.desempilhar()
+
+		caso OpParar:
+			interromper
+
+		padrao:
+			retornar erros.Novo(formatar.Formatar("instrução desconhecida %d na linha %d", inst.Opcode, inst.Linha))
+		}
+	}
+
+	retornar nulo
+}

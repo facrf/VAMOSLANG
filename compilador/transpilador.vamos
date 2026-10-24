@@ -109,6 +109,14 @@ funcao mapearMetodoPacote(pacoteIdent texto, metodoIdent texto) (texto, texto, b
 			retornar "strings", "Trim", verdadeiro
 		caso "ApararEspaco":
 			retornar "strings", "TrimSpace", verdadeiro
+		caso "Indice":
+			retornar "strings", "Index", verdadeiro
+		caso "UltimoIndice":
+			retornar "strings", "LastIndex", verdadeiro
+		caso "Repetir":
+			retornar "strings", "Repeat", verdadeiro
+		caso "Contar":
+			retornar "strings", "Count", verdadeiro
 		}
 	}
 
@@ -180,6 +188,27 @@ funcao mapearMetodoPacote(pacoteIdent texto, metodoIdent texto) (texto, texto, b
 		}
 	}
 
+	se pacoteIdent == "conversao" || pacoteIdent == "strconv" {
+		escolha metodoIdent {
+		caso "ParaInteiro":
+			retornar "strconv", "Atoi", verdadeiro
+		caso "InteiroParaTexto":
+			retornar "strconv", "Itoa", verdadeiro
+		caso "FormatarInteiro":
+			retornar "strconv", "FormatInt", verdadeiro
+		caso "AnalisarInteiro":
+			retornar "strconv", "ParseInt", verdadeiro
+		caso "AnalisarDecimal":
+			retornar "strconv", "ParseFloat", verdadeiro
+		caso "FormatarDecimal":
+			retornar "strconv", "FormatFloat", verdadeiro
+		caso "AnalisarBooleano":
+			retornar "strconv", "ParseBool", verdadeiro
+		caso "FormatarBooleano":
+			retornar "strconv", "FormatBool", verdadeiro
+		}
+	}
+
 	se pacoteIdent == "executar" || pacoteIdent == "processo" || pacoteIdent == "exec" {
 		escolha metodoIdent {
 		caso "Comando":
@@ -213,6 +242,8 @@ funcao traduzirIdentificadorPacote(pkg texto) (texto, booleano) {
 		retornar "errors", verdadeiro
 	caso "atomico", "atomic":
 		retornar "atomic", verdadeiro
+	caso "conversao", "strconv":
+		retornar "strconv", verdadeiro
 	caso "url":
 		retornar "url", verdadeiro
 	padrao:

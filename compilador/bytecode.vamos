@@ -1,0 +1,274 @@
+// Pacote compilador - Especificação de Bytecode da VVM (VAMOS Virtual Machine)
+// Define os códigos de operação (Opcodes), tabelas de constantes e formato do binário .vamosb.
+
+pacote principal
+
+importar (
+	"conversao"
+	"cordas"
+	"erros"
+	"formatar"
+	"so"
+)
+
+// Códigos de Operação (Opcodes) da Máquina Virtual VVM
+constante (
+	OpNulo           inteiro = 0
+	OpConstante      inteiro = 1  // Carrega constante da tabela para o topo da pilha
+	OpObterGlobal    inteiro = 2  // Lê variável global
+	OpDefinirGlobal  inteiro = 3  // Grava variável global
+	OpObterLocal     inteiro = 4  // Lê variável local do quadro de pilha
+	OpDefinirLocal   inteiro = 5  // Grava variável local no quadro de pilha
+	OpSomar          inteiro = 6  // Soma os 2 valores do topo da pilha
+	OpSubtrair       inteiro = 7  // Subtrai os 2 valores do topo da pilha
+	OpMultiplicar    inteiro = 8  // Multiplica os 2 valores do topo da pilha
+	OpDividir        inteiro = 9  // Divide os 2 valores do topo da pilha
+	OpIgual          inteiro = 10 // Compara igualdade (==)
+	OpDiferente      inteiro = 11 // Compara desigualdade (!=)
+	OpMaior          inteiro = 12 // Compara maior (>)
+	OpMenor          inteiro = 13 // Compara menor (<)
+	OpMaiorIgual     inteiro = 14 // Compara maior ou igual (>=)
+	OpMenorIgual     inteiro = 15 // Compara menor ou igual (<=)
+	OpSalto          inteiro = 16 // Salto incondicional para endereço
+	OpSaltoSeFalso   inteiro = 17 // Salta se topo da pilha for falso
+	OpImprimirLinha  inteiro = 18 // Imprime valor com quebra de linha
+	OpImprimir       inteiro = 19 // Imprime valor sem quebra de linha
+	OpChamar         inteiro = 20 // Executa chamada de função
+	OpRetornar       inteiro = 21 // Retorna de função
+	OpDescartar      inteiro = 22 // Descarta valor do topo da pilha
+	OpParar          inteiro = 23 // Encerra a execução da VM
+)
+
+// ObterNomeOpcode retorna o mnemônico de uma instrução em texto
+funcao ObterNomeOpcode(op inteiro) texto {
+	escolha op {
+	caso OpConstante:
+		retornar "CARREGAR_CONST"
+	caso OpObterGlobal:
+		retornar "OBTER_GLOBAL"
+	caso OpDefinirGlobal:
+		retornar "DEFINIR_GLOBAL"
+	caso OpObterLocal:
+		retornar "OBTER_LOCAL"
+	caso OpDefinirLocal:
+		retornar "DEFINIR_LOCAL"
+	caso OpSomar:
+		retornar "SOMAR"
+	caso OpSubtrair:
+		retornar "SUBTRAIR"
+	caso OpMultiplicar:
+		retornar "MULTIPLICAR"
+	caso OpDividir:
+		retornar "DIVIDIR"
+	caso OpIgual:
+		retornar "IGUAL"
+	caso OpDiferente:
+		retornar "DIFERENTE"
+	caso OpMaior:
+		retornar "MAIOR"
+	caso OpMenor:
+		retornar "MENOR"
+	caso OpMaiorIgual:
+		retornar "MAIOR_IGUAL"
+	caso OpMenorIgual:
+		retornar "MENOR_IGUAL"
+	caso OpSalto:
+		retornar "SALTO"
+	caso OpSaltoSeFalso:
+		retornar "SALTO_SE_FALSO"
+	caso OpImprimirLinha:
+		retornar "IMPRIMIR_LINHA"
+	caso OpImprimir:
+		retornar "IMPRIMIR"
+	caso OpChamar:
+		retornar "CHAMAR"
+	caso OpRetornar:
+		retornar "RETORNAR"
+	caso OpDescartar:
+		retornar "DESCARTAR"
+	caso OpParar:
+		retornar "PARAR"
+	padrao:
+		retornar "OP_DESCONHECIDO"
+	}
+}
+
+// Instrucao representa uma instrução de bytecode individual
+tipo Instrucao estrutura {
+	Opcode    inteiro
+	Argumento inteiro
+	Linha     inteiro
+}
+
+// ProgramaBytecode encapsula um programa compilado para a VVM
+tipo ProgramaBytecode estrutura {
+	Constantes  []texto
+	Instrucoes  []Instrucao
+	Identificadores []texto
+}
+
+// NovoProgramaBytecode instancia um programa vazio
+funcao NovoProgramaBytecode() *ProgramaBytecode {
+	retornar &ProgramaBytecode{
+		Constantes:      criar([]texto, 0),
+		Instrucoes:      criar([]Instrucao, 0),
+		Identificadores: criar([]texto, 0),
+	}
+}
+
+// AdicionarConstante insere uma constante e retorna seu índice
+funcao (p *ProgramaBytecode) AdicionarConstante(val texto) inteiro {
+	para i, c := intervalo p.Constantes {
+		se c == val {
+			retornar i
+		}
+	}
+	p.Constantes = anexar(p.Constantes, val)
+	retornar tamanho(p.Constantes) - 1
+}
+
+// AdicionarIdentificador insere um identificador e retorna seu índice
+funcao (p *ProgramaBytecode) AdicionarIdentificador(nome texto) inteiro {
+	para i, id := intervalo p.Identificadores {
+		se id == nome {
+			retornar i
+		}
+	}
+	p.Identificadores = anexar(p.Identificadores, nome)
+	retornar tamanho(p.Identificadores) - 1
+}
+
+// Emitir anexa uma nova instrução de bytecode ao programa
+funcao (p *ProgramaBytecode) Emitir(opcode inteiro, argumento inteiro, linha inteiro) inteiro {
+	inst := Instrucao{
+		Opcode:    opcode,
+		Argumento: argumento,
+		Linha:     linha,
+	}
+	p.Instrucoes = anexar(p.Instrucoes, inst)
+	retornar tamanho(p.Instrucoes) - 1
+}
+
+// ModificarArgumento ajusta o endereço de salto de uma instrução anterior
+funcao (p *ProgramaBytecode) ModificarArgumento(indice inteiro, novoArgumento inteiro) {
+	se indice >= 0 && indice < tamanho(p.Instrucoes) {
+		p.Instrucoes[indice].Argumento = novoArgumento
+	}
+}
+
+// Desassemblar gera a listagem formatada legível em Assembly VVM
+funcao (p *ProgramaBytecode) Desassemblar() texto {
+	linhas := criar([]texto, 0)
+	linhas = anexar(linhas, "=== LISTAGEM DE BYTECODE VVM (VAMOS VIRTUAL MACHINE) ===")
+	linhas = anexar(linhas, formatar.Formatar("Tabela de Constantes (%d itens):", tamanho(p.Constantes)))
+	para i, c := intervalo p.Constantes {
+		linhas = anexar(linhas, formatar.Formatar("  [%03d] %s", i, c))
+	}
+
+	linhas = anexar(linhas, "")
+	linhas = anexar(linhas, "Sequência de Instruções:")
+	para i, inst := intervalo p.Instrucoes {
+		mnemonico := ObterNomeOpcode(inst.Opcode)
+		argStr := ""
+		se inst.Opcode == OpConstante {
+			val := "<nulo>"
+			se inst.Argumento < tamanho(p.Constantes) {
+				val = p.Constantes[inst.Argumento]
+			}
+			argStr = formatar.Formatar("%d (%s)", inst.Argumento, val)
+		} senao se inst.Opcode == OpObterGlobal || inst.Opcode == OpDefinirGlobal {
+			nome := "<id>"
+			se inst.Argumento < tamanho(p.Identificadores) {
+				nome = p.Identificadores[inst.Argumento]
+			}
+			argStr = formatar.Formatar("%d (%s)", inst.Argumento, nome)
+		} senao se inst.Opcode == OpSalto || inst.Opcode == OpSaltoSeFalso {
+			argStr = formatar.Formatar("-> endereco %04d", inst.Argumento)
+		} senao se inst.Argumento != 0 {
+			argStr = formatar.Formatar("%d", inst.Argumento)
+		}
+
+		linhas = anexar(linhas, formatar.Formatar("  %04d | Linha %3d | %-16s %s", i, inst.Linha, mnemonico, argStr))
+	}
+	linhas = anexar(linhas, "==========================================================")
+	retornar cordas.Juntar(linhas, "\n")
+}
+
+// Serializar converte a estrutura do bytecode para representação textual compatível com .vamosb
+funcao (p *ProgramaBytecode) Serializar() texto {
+	linhas := criar([]texto, 0)
+	linhas = anexar(linhas, "VVM1")
+	linhas = anexar(linhas, formatar.Formatar("[CONSTANTES:%d]", tamanho(p.Constantes)))
+	para _, c := intervalo p.Constantes {
+		escapado := cordas.SubstituirTudo(c, "\\", "\\\\")
+		escapado = cordas.SubstituirTudo(escapado, "\n", "\\n")
+		linhas = anexar(linhas, "C:" + escapado)
+	}
+
+	linhas = anexar(linhas, formatar.Formatar("[IDENTIFICADORES:%d]", tamanho(p.Identificadores)))
+	para _, id := intervalo p.Identificadores {
+		linhas = anexar(linhas, "I:" + id)
+	}
+
+	linhas = anexar(linhas, formatar.Formatar("[INSTRUCOES:%d]", tamanho(p.Instrucoes)))
+	para _, inst := intervalo p.Instrucoes {
+		linhas = anexar(linhas, formatar.Formatar("X:%d %d %d", inst.Opcode, inst.Argumento, inst.Linha))
+	}
+
+	linhas = anexar(linhas, "[FIM]")
+	retornar cordas.Juntar(linhas, "\n")
+}
+
+// DesserializarBytecode reconstrói um ProgramaBytecode a partir do conteúdo serializado
+funcao DesserializarBytecode(dados texto) (*ProgramaBytecode, erro) {
+	linhas := cordas.Dividir(dados, "\n")
+	se tamanho(linhas) == 0 || cordas.ApararEspaco(linhas[0]) != "VVM1" {
+		retornar nulo, erros.Novo("formato de bytecode VVM inválido ou versão incompatível")
+	}
+
+	prog := NovoProgramaBytecode()
+
+	para i := 1; i < tamanho(linhas); i++ {
+		linha := cordas.ApararEspaco(linhas[i])
+		se linha == "" || cordas.TemPrefixo(linha, "[") {
+			se linha == "[FIM]" {
+				interromper
+			}
+			continuar
+		}
+
+		se cordas.TemPrefixo(linha, "C:") {
+			conteudo := linha[2:]
+			desescapado := cordas.SubstituirTudo(conteudo, "\\n", "\n")
+			desescapado = cordas.SubstituirTudo(desescapado, "\\\\", "\\")
+			prog.Constantes = anexar(prog.Constantes, desescapado)
+		} senao se cordas.TemPrefixo(linha, "I:") {
+			prog.Identificadores = anexar(prog.Identificadores, linha[2:])
+		} senao se cordas.TemPrefixo(linha, "X:") {
+			partes := cordas.Dividir(cordas.ApararEspaco(linha[2:]), " ")
+			se tamanho(partes) >= 3 {
+				op, _ := conversao.ParaInteiro(partes[0])
+				arg, _ := conversao.ParaInteiro(partes[1])
+				lin, _ := conversao.ParaInteiro(partes[2])
+				prog.Emitir(op, arg, lin)
+			}
+		}
+	}
+
+	retornar prog, nulo
+}
+
+// SalvarArquivo exporta o bytecode compilado para um arquivo em disco (.vamosb)
+funcao (p *ProgramaBytecode) SalvarArquivo(caminhoArquivo texto) erro {
+	conteudo := p.Serializar()
+	retornar so.EscreverArquivo(caminhoArquivo, []byte(conteudo), 0644)
+}
+
+// CarregarBytecodeDeArquivo lê e reconstrói o bytecode de um arquivo (.vamosb)
+funcao CarregarBytecodeDeArquivo(caminhoArquivo texto) (*ProgramaBytecode, erro) {
+	dados, err := so.LerArquivo(caminhoArquivo)
+	se err != nulo {
+		retornar nulo, err
+	}
+	retornar DesserializarBytecode(texto(dados))
+}

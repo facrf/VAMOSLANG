@@ -1,0 +1,44 @@
+// Exemplo de execução direta na Máquina Virtual VVM (VAMOS Virtual Machine)
+// Este código pode ser executado diretamente na VVM via:
+//    vamosc vm exemplos/maquina_virtual.vamos
+// Ou compilado para bytecode independente (.vamosb):
+//    vamosc bytecode exemplos/maquina_virtual.vamos -o vm_app.vamosb
+//    vamosc vm vm_app.vamosb
+
+pacote principal
+
+importar (
+	"formatar"
+)
+
+funcao principal() {
+	formatar.ImprimirLinha("================================================")
+	formatar.ImprimirLinha("   DEMONSTRAÇÃO DA MÁQUINA VIRTUAL VVM         ")
+	formatar.ImprimirLinha("================================================")
+
+	// 1. Aritmética e Variáveis
+	base := 15
+	multiplicador := 4
+	resultado := base * multiplicador + 10
+
+	formatar.ImprimirLinha("Cálculo aritmético na VVM (15 * 4 + 10):")
+	formatar.ImprimirLinha(resultado)
+
+	// 2. Condicionais Relacionais
+	se resultado >= 70 {
+		formatar.ImprimirLinha("Avaliação: resultado atingiu a meta (>= 70)!")
+	} senao {
+		formatar.ImprimirLinha("Avaliação: resultado abaixo da meta.")
+	}
+
+	// 3. Estrutura de Repetição
+	formatar.ImprimirLinha("Executando laço de repetição na pilha VVM:")
+	contador := 1
+	para contador <= 3 {
+		formatar.ImprimirLinha("Passo do laço:")
+		formatar.ImprimirLinha(contador)
+		contador = contador + 1
+	}
+
+	formatar.ImprimirLinha("VVM: Execução de bytecode finalizada com sucesso!")
+}

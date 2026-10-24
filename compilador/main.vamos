@@ -14,17 +14,19 @@ importar (
 	"so"
 )
 
-constante VersaoCompilador texto = "3.0.0-bootstrap"
+constante VersaoCompilador texto = "4.0.0-bootstrap"
 
 funcao exibirAjuda() {
 	formatar.ImprimirLinha("==================================================================")
-	formatar.ImprimirLinha("   COMPILADOR AUTO-HOSPEDADO VAMOS-LANG (vamosc) - ETAPA 3       ")
+	formatar.ImprimirLinha("   COMPILADOR AUTO-HOSPEDADO VAMOS-LANG (vamosc) - ETAPAS 1 A 4  ")
 	formatar.ImprimirLinha("==================================================================")
 	formatar.ImprimirLinha("Uso: vamosc <comando> [arquivo.vamos] [opcoes...]")
 	formatar.ImprimirLinha("")
 	formatar.ImprimirLinha("Comandos disponíveis:")
 	formatar.ImprimirLinha("  compilar, build <arquivo.vamos> [-o saida]  Compila para executável binário")
 	formatar.ImprimirLinha("  rodar, run <arquivo.vamos> [args...]        Executa código VAMOS diretamente")
+	formatar.ImprimirLinha("  vm, executar-vm <arquivo.vamos|.vamosb>     Executa na Máquina Virtual VVM")
+	formatar.ImprimirLinha("  bytecode <arquivo.vamos> [-o saida.vamosb]  Gera/desassembla Bytecode VVM")
 	formatar.ImprimirLinha("  formatar, fmt <arquivo.vamos>               Formata código padronizado")
 	formatar.ImprimirLinha("  ast, --ast <arquivo.vamos>                  Exibe a Árvore Sintática (AST)")
 	formatar.ImprimirLinha("  tokens, --tokens <arquivo.vamos>            Lista tokens léxicos identificados")
@@ -108,6 +110,94 @@ funcao inspecionarAST(caminhoArquivo texto) {
 	formatar.ImprimirLinha("==================================================================")
 	ImprimirArvore(ast, "", verdadeiro)
 	formatar.ImprimirLinha("==================================================================")
+}
+
+funcao executarBytecode(caminhoArquivo texto, destinoSaida texto) {
+	var progBytecode *ProgramaBytecode
+	se cordas.TemSufixo(caminhoArquivo, ".vamosb") {
+		carregado, err := CarregarBytecodeDeArquivo(caminhoArquivo)
+		se err != nulo {
+			formatar.ImprimirFormatado("Erro ao carregar bytecode '%s': %v\n", caminhoArquivo, err)
+			so.Sair(1)
+		}
+		progBytecode = carregado
+	} senao {
+		dados, err := so.LerArquivo(caminhoArquivo)
+		se err != nulo {
+			formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+			so.Sair(1)
+		}
+
+		lexer := NovoAnalisadorLexico(texto(dados))
+		tokens, errLex := lexer.TokenizarTodos()
+		se errLex != nulo {
+			formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+			so.Sair(1)
+		}
+
+		parser := NovoAnalisadorSintatico(tokens)
+		ast, errParse := parser.AnalisarPrograma()
+		se errParse != nulo {
+			formatar.ImprimirFormatado("Erro sintático: %v\n", errParse)
+			so.Sair(1)
+		}
+
+		emissor := NovoEmissorBytecode()
+		progBytecode = emissor.CompilarAST(ast)
+	}
+
+	se destinoSaida != "" {
+		errSalvar := progBytecode.SalvarArquivo(destinoSaida)
+		se errSalvar != nulo {
+			formatar.ImprimirFormatado("Erro ao salvar arquivo de bytecode '%s': %v\n", destinoSaida, errSalvar)
+			so.Sair(1)
+		}
+		formatar.ImprimirFormatado("Bytecode VVM gravado com sucesso em '%s'\n", destinoSaida)
+	} senao {
+		formatar.ImprimirLinha(progBytecode.Desassemblar())
+	}
+}
+
+funcao executarVM(caminhoArquivo texto) {
+	var progBytecode *ProgramaBytecode
+	se cordas.TemSufixo(caminhoArquivo, ".vamosb") {
+		carregado, err := CarregarBytecodeDeArquivo(caminhoArquivo)
+		se err != nulo {
+			formatar.ImprimirFormatado("Erro ao carregar bytecode '%s': %v\n", caminhoArquivo, err)
+			so.Sair(1)
+		}
+		progBytecode = carregado
+	} senao {
+		dados, err := so.LerArquivo(caminhoArquivo)
+		se err != nulo {
+			formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
+			so.Sair(1)
+		}
+
+		lexer := NovoAnalisadorLexico(texto(dados))
+		tokens, errLex := lexer.TokenizarTodos()
+		se errLex != nulo {
+			formatar.ImprimirFormatado("Erro léxico: %v\n", errLex)
+			so.Sair(1)
+		}
+
+		parser := NovoAnalisadorSintatico(tokens)
+		ast, errParse := parser.AnalisarPrograma()
+		se errParse != nulo {
+			formatar.ImprimirFormatado("Erro sintático: %v\n", errParse)
+			so.Sair(1)
+		}
+
+		emissor := NovoEmissorBytecode()
+		progBytecode = emissor.CompilarAST(ast)
+	}
+
+	vm := NovaMaquinaVirtual()
+	errVM := vm.Interpretar(progBytecode)
+	se errVM != nulo {
+		formatar.ImprimirFormatado("Erro na execução da Máquina Virtual VVM: %v\n", errVM)
+		so.Sair(1)
+	}
 }
 
 funcao executarTranspilacao(caminhoArquivo texto, destinoSaida texto) {
@@ -343,11 +433,34 @@ funcao principal() {
 		so.Sair(1)
 	}
 
+	// 5. Teste de Emissão de Bytecode, Serialização e Execução na Máquina Virtual (VVM)
+	emissor := NovoEmissorBytecode()
+	progBytecode := emissor.CompilarAST(ast)
+	se tamanho(progBytecode.Instrucoes) == 0 {
+		formatar.ImprimirLinha("Falha na geração de bytecode VVM.")
+		so.Sair(1)
+	}
+
+	serializado := progBytecode.Serializar()
+	progRecarregado, errDes := DesserializarBytecode(serializado)
+	se errDes != nulo || tamanho(progRecarregado.Instrucoes) != tamanho(progBytecode.Instrucoes) {
+		formatar.ImprimirLinha("Falha na serialização/desserialização de bytecode VVM.")
+		so.Sair(1)
+	}
+
+	vm := NovaMaquinaVirtual()
+	errVM := vm.Interpretar(progRecarregado)
+	se errVM != nulo {
+		formatar.ImprimirFormatado("Falha na execução da Máquina Virtual VVM: %v\n", errVM)
+		so.Sair(1)
+	}
+
 	formatar.ImprimirLinha("✓ 1. Análise léxica em VAMOS-LANG: APROVADA")
 	formatar.ImprimirLinha("✓ 2. Parser sintático descendente recursivo (AST) em VAMOS-LANG: APROVADO")
 	formatar.ImprimirLinha("✓ 3. Formatador automático em VAMOS-LANG: APROVADO")
 	formatar.ImprimirLinha("✓ 4. Mapeamento e transpilação em VAMOS-LANG: APROVADOS")
-	formatar.ImprimirLinha("✓ Auto-teste de Bootstrapping (Etapas 1, 2 e 3) concluído com 100% de êxito!")
+	formatar.ImprimirLinha("✓ 5. Emissão de Bytecode e Máquina Virtual VVM em VAMOS-LANG: APROVADOS")
+	formatar.ImprimirLinha("✓ Auto-teste de Bootstrapping (Etapas 1 a 4) concluído com 100% de êxito!")
 }
 
 funcao principal() {
@@ -383,6 +496,26 @@ funcao principal() {
 			destino = args[3]
 		}
 		executarCompilacaoNativa(arquivo, destino)
+		so.Sair(0)
+
+	caso "vm", "executar-vm", "--vm":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o arquivo .vamos ou .vamosb para executar na VM.")
+			so.Sair(1)
+		}
+		executarVM(args[1])
+		so.Sair(0)
+
+	caso "bytecode", "desassemblar", "--bytecode", "--desassemblar":
+		se tamanho(args) < 2 {
+			formatar.ImprimirLinha("Erro: informe o arquivo para gerar/desassemblar o bytecode.")
+			so.Sair(1)
+		}
+		destinoBytecode := ""
+		se tamanho(args) >= 4 && args[2] == "-o" {
+			destinoBytecode = args[3]
+		}
+		executarBytecode(args[1], destinoBytecode)
 		so.Sair(0)
 
 	caso "rodar", "run", "--rodar":

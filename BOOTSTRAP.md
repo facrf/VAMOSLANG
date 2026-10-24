@@ -40,13 +40,13 @@ flowchart TD
 | **1** | **Frontend Léxico e AST em VAMOS** | Implementar o tokenizador, nós da AST e analisador léxico 100% em arquivos `.vamos`. | ✅ **Concluído** |
 | **2** | **Parser Sintático Descendente Recursivo** | Implementar o parser sintático e gerador visual de AST diretamente em VAMOS-LANG. | ✅ **Concluído** |
 | **3** | **CLI Auto-Hospedada (`vamosc`) & Prova de Ouro** | CLI com `compilar`, `rodar`, `fmt` e ciclo completo de auto-compilação (G0 ➔ G1 ➔ G2 ➔ G3). | ✅ **Concluído** |
-| **4** | **Independência Total e Emissão Direta** | Adicionar backend nativo para WebAssembly ou representação intermediária sem intermediários. | 🚀 **Próxima Etapa** |
+| **4** | **Emissão Direta e Máquina Virtual (VVM)** | Emissor de bytecode, execução na Máquina Virtual VVM, formato `.vamosb` serializável e persistente. | ✅ **Concluído** |
 
 ---
 
 ## 📂 Arquitetura do Compilador Auto-Hospedado: [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador)
 
-A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) contém a implementação do compilador escrita na própria sintaxe VAMOS-LANG:
+A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) contém a implementação do compilador e máquina virtual escrita integralmente na própria sintaxe VAMOS-LANG:
 
 1. **[`compilador/token.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/token.vamos)**:
    - Tipos de tokens (`TokenPalavraChave`, `TokenIdentificador`, `TokenLiteral`, `TokenOperador`, `TokenDelimitador`, `TokenFimArquivo`).
@@ -64,39 +64,47 @@ A pasta [`compilador/`](file:///storage/www/projetos/VAMOSLANG/compilador) cont�
    - Suporte completo a parsing de pacotes, importações, structs, interfaces, assinaturas de métodos com receptores, laços, condicionais e generics.
 5. **[`compilador/formatador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/formatador.vamos)**:
    - Formatador oficial de código escrito em VAMOS-LANG (`FormatarCodigo`), com indentação automática e preservação de raw strings.
-6. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
-   - Motor de emissão e transpilação em VAMOS-LANG com suporte a múltiplos arquivos de pacotes e stdlib.
-7. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
-   - Ponto de entrada CLI completo do compilador auto-hospedado (`vamosc`).
-   - Comandos oficiais: `compilar`, `rodar`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
+6. **[`compilador/bytecode.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/bytecode.vamos)**:
+   - Especificação de opcodes (`OpConstante`, `OpObterGlobal`, `OpDefinirGlobal`, `OpSomar`, `OpSubtrair`, `OpMultiplicar`, `OpDividir`, `OpIgual`, `OpSalto`, `OpSaltoSeFalso`, `OpImprimirLinha`, `OpParar`).
+   - Tabela de constantes, pool de identificadores e disassembler legível em Assembly VVM.
+   - Serialização e desserialização binária/textual padronizada para arquivos de bytecode `.vamosb`.
+7. **[`compilador/vm.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/vm.vamos)**:
+   - Máquina Virtual VVM baseada em pilha com ponteiro de instruções (`ip`), tabela global de símbolos e avaliador polimórfico de expressões aritméticas e lógicas.
+8. **[`compilador/emissor.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/emissor.vamos)**:
+   - Emissor direto de bytecode a partir da AST: gera código para variáveis, avaliações aritméticas encadeadas, condicionais com ramificações de saltos e laços `para`.
+9. **[`compilador/transpilador.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/transpilador.vamos)**:
+   - Motor de emissão Go em VAMOS-LANG para geração de binários nativos de máquina.
+10. **[`compilador/main.vamos`](file:///storage/www/projetos/VAMOSLANG/compilador/main.vamos)**:
+    - Ponto de entrada CLI completo do compilador auto-hospedado (`vamosc`).
+    - Comandos oficiais: `compilar`, `rodar`, `vm`, `bytecode`, `formatar`, `ast`, `tokens`, `transpilar` e `auto-teste`.
 
 ---
 
-## 🛠️ Como Executar e Validar as Etapas 1, 2 e 3
+## 🛠️ Como Executar e Validar
 
 ```bash
 # 1. Executar o Ciclo de Ouro completo de Bootstrapping (G0 -> G1 -> G2 -> G3):
 make bootstrap
 
-# 2. Compilar qualquer projeto ou exemplo diretamente com o 'vamosc':
+# 2. Executar código diretamente na Máquina Virtual VVM:
+./compilador/vamosc vm exemplos/maquina_virtual.vamos
+
+# 3. Gerar e salvar arquivo de Bytecode VVM (.vamosb):
+./compilador/vamosc bytecode exemplos/maquina_virtual.vamos -o app.vamosb
+
+# 4. Executar arquivo de Bytecode (.vamosb) diretamente na VM:
+./compilador/vamosc vm app.vamosb
+
+# 5. Desassemblar bytecode de um arquivo .vamos ou .vamosb:
+./compilador/vamosc bytecode app.vamosb
+
+# 6. Compilar executável binário de máquina com o 'vamosc':
 ./compilador/vamosc compilar exemplos/calculadora.vamos -o /tmp/calc
 /tmp/calc
 
-# 3. Executar código VAMOS diretamente pelo 'vamosc':
-./compilador/vamosc rodar exemplos/ola_mundo.vamos
-
-# 4. Formatar código usando o formatador em VAMOS:
+# 7. Formatar código usando o formatador em VAMOS:
 ./compilador/vamosc formatar exemplos/ola_mundo.vamos
 
-# 5. Visualizar a AST de um arquivo:
+# 8. Visualizar a Árvore Sintática Abstrata (AST):
 ./compilador/vamosc ast exemplos/estruturas_interfaces.vamos
-```
-# 1. Executar o compilador auto-hospedado diretamente pelo runtime VAMOS:
-./vamos run compilador/main.vamos --tokens exemplos/ola_mundo.vamos
-
-# 2. Compilar o executável nativo do compilador:
-./vamos build -o compilador/vamosc compilador/main.vamos
-
-# 3. Executar o binário compilado em VAMOS-LANG:
-./compilador/vamosc --tokens exemplos/genericos.vamos
 ```
