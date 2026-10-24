@@ -78,6 +78,20 @@ func TestLSPHoverAndCompletion(t *testing.T) {
 	if !strings.Contains(string(cOut), "ImprimirLinha") {
 		t.Errorf("Esperado 'ImprimirLinha' no completion de 'formatar.', obteve: %s", string(cOut))
 	}
+
+	// 4. Simula completion de pacote nativo 'texto_util.'
+	codeTexto := "pacote principal\nfuncao principal() {\n\ttexto_util.\n}"
+	srv.ProcessSingleMessage(makeRPCRequest("", "textDocument/didOpen", map[string]interface{}{
+		"textDocument": map[string]interface{}{"uri": uri, "text": codeTexto},
+	}))
+	compTextoReq := makeRPCRequest("5", "textDocument/completion", map[string]interface{}{
+		"textDocument": map[string]interface{}{"uri": uri},
+		"position":     position{Line: 2, Character: 12},
+	})
+	cTextoOut, errTexto := srv.ProcessSingleMessage(compTextoReq)
+	if errTexto != nil || !strings.Contains(string(cTextoOut), "Dividir") || !strings.Contains(string(cTextoOut), "Inverter") {
+		t.Errorf("Esperado 'Dividir' e 'Inverter' no completion de 'texto_util.', obteve: %s", string(cTextoOut))
+	}
 }
 
 func TestLSPFormatting(t *testing.T) {

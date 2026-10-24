@@ -102,7 +102,7 @@
         },
         {
           "name": "support.class.stdlib.vamos",
-          "match": "\\b(formatar|tempo|matematica|cordas|textos|so|sistema|sincronizar|atomico|erros|io|leitor|json|servidor_http|url|contexto|registrador|caminho|ordenacao|banco_dados|conversao|servidor)\\b"
+          "match": "\\b(formatar|tempo|matematica|cordas|textos|so|sistema|sincronizar|atomico|erros|io|leitor|json|servidor_http|url|contexto|registrador|caminho|ordenacao|banco_dados|conversao|servidor|colecoes|matematica_util|texto_util)\\b"
         }
       ]
     },

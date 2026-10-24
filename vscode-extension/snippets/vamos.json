@@ -127,5 +127,21 @@
       "}"
     ],
     "description": "Declaração de estrutura genérica parametrizada"
+  },
+  "Pilha Genérica": {
+    "prefix": "pilha",
+    "body": [
+      "${1:p} := colecoes.NovaPilha[${2:texto}]()",
+      "${1:p}.Empilhar(${3:item})"
+    ],
+    "description": "Cria e utiliza uma Pilha genérica (LIFO) de colecoes"
+  },
+  "Conjunto Genérico": {
+    "prefix": "conjunto",
+    "body": [
+      "${1:c} := colecoes.NovoConjunto[${2:texto}]()",
+      "${1:c}.Inserir(${3:item})"
+    ],
+    "description": "Cria e utiliza um Conjunto de valores únicos de colecoes"
   }
 }

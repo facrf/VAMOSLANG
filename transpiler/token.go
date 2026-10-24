@@ -306,6 +306,7 @@ var StdlibIdentMap = map[string]string{
 	"servidor":            "servidor",
 	"colecoes":            "colecoes",
 	"matematica_util":     "matematica_util",
+	"texto_util":          "texto_util",
 }
 
 // StdlibMethodsMap mapeia métodos/funções conhecidos para o identificador do pacote Go.
@@ -591,6 +592,37 @@ var StdlibMethodsMap = map[string]map[string]string{
 	"exec": {
 		"Comando":       "Command",
 		"BuscarCaminho": "LookPath",
+	},
+	"colecoes": {
+		"NovaPilha":    "NovaPilha",
+		"NovaFila":     "NovaFila",
+		"NovoConjunto": "NovoConjunto",
+	},
+	"matematica_util": {
+		"Absoluto":  "Absoluto",
+		"Maximo":    "Maximo",
+		"Minimo":    "Minimo",
+		"Potencia":  "Potencia",
+		"Fatorial":  "Fatorial",
+		"Fibonacci": "Fibonacci",
+		"MDC":       "MDC",
+		"MMC":       "MMC",
+		"EhPrimo":   "EhPrimo",
+		"Clampar":   "Clampar",
+	},
+	"texto_util": {
+		"Dividir":        "Dividir",
+		"Juntar":         "Juntar",
+		"Contem":         "Contem",
+		"ComecaCom":      "ComecaCom",
+		"TerminaCom":     "TerminaCom",
+		"ParaMaiusculas": "ParaMaiusculas",
+		"ParaMinusculas": "ParaMinusculas",
+		"Aparar":         "Aparar",
+		"Substituir":     "Substituir",
+		"Repetir":        "Repetir",
+		"IndiceDe":       "IndiceDe",
+		"Inverter":       "Inverter",
 	},
 }
 
