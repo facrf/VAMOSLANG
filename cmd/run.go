@@ -66,7 +66,7 @@ func RunExecute(args []string) int {
 
 	// Caso A: Projeto com módulos locais ou múltiplos arquivos .vamos
 	if hasOtherVamosFiles {
-		tempDir, cleanup, err := PrepareWorkspace(projectRoot)
+		tempDir, cleanup, err := PrepareWorkspace(projectRoot, absSrc)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Erro ao preparar workspace: %v\n", err)
 			return 1
@@ -82,17 +82,20 @@ func RunExecute(args []string) int {
 		runTarget := goEntryRelPath
 		entryDir := filepath.Dir(goEntryRelPath)
 		if entryDir != "." {
-			matches, _ := filepath.Glob(filepath.Join(tempDir, entryDir, "*.go"))
-			if len(matches) > 1 {
-				mainCount := 0
-				for _, m := range matches {
-					data, err := os.ReadFile(m)
-					if err == nil && strings.Contains(string(data), "func main(") {
-						mainCount++
+			srcEntryDir := filepath.Join(projectRoot, entryDir)
+			if GetDirMainCount(srcEntryDir) <= 1 {
+				matches, _ := filepath.Glob(filepath.Join(tempDir, entryDir, "*.go"))
+				if len(matches) > 1 {
+					mainCount := 0
+					for _, m := range matches {
+						data, err := os.ReadFile(m)
+						if err == nil && strings.Contains(string(data), "func main(") {
+							mainCount++
+						}
 					}
-				}
-				if mainCount <= 1 {
-					runTarget = "./" + filepath.ToSlash(entryDir)
+					if mainCount <= 1 {
+						runTarget = "./" + filepath.ToSlash(entryDir)
+					}
 				}
 			}
 		}

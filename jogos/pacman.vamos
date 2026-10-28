@@ -48,7 +48,7 @@ tipo JogoPacman estrutura {
 }
 
 // Mapa inicial do labirinto (19 colunas x 11 linhas)
-var MapaPadrao = []texto{
+variavel MapaPadrao = []texto{
 	"###################",
 	"#........#........#",
 	"#.##.###.#.###.##.#",

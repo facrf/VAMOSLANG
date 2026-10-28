@@ -47,6 +47,7 @@ constante (
 	WasmOpI32Sub  byte = 0x6B
 	WasmOpI32Mul  byte = 0x6C
 	WasmOpI32DivS byte = 0x6D
+	WasmOpI32RemS byte = 0x6F
 )
 
 // CodificarLEB128U codifica um inteiro sem sinal no padrão LEB128 de 7 bits
@@ -160,9 +161,15 @@ funcao (e *EmissorWasm) CompilarAST(raiz *NoAST) ([]byte, erro) {
 		secaoFuncsPayload = anexar(secaoFuncsPayload, CodificarLEB128U(i)...)
 	}
 
-	// 4. Seção 7: Exportações (Export Section)
+	// 4. Seção 5: Memória Linear (Memory Section) - 1 página inicial (64 KB)
+	secaoMemoriaPayload := criar([]byte, 0)
+	secaoMemoriaPayload = anexar(secaoMemoriaPayload, 0x01) // 1 instância de memória
+	secaoMemoriaPayload = anexar(secaoMemoriaPayload, 0x00, 0x01) // limite: flag 0 (apenas min), 1 página
+
+	// 5. Seção 7: Exportações (Export Section - Funções + Memória)
+	totalExports := totalFuncs + 1
 	secaoExportsPayload := criar([]byte, 0)
-	secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(totalFuncs)...)
+	secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(totalExports)...)
 	para i, fn := intervalo e.funcoes {
 		nomeBytes := []byte(fn.Nome)
 		secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(tamanho(nomeBytes))...)
@@ -172,8 +179,16 @@ funcao (e *EmissorWasm) CompilarAST(raiz *NoAST) ([]byte, erro) {
 		secaoExportsPayload = anexar(secaoExportsPayload, 0x00) // Tipo de exportação: Função
 		secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(i)...)
 	}
+	// Exportação da Memória Linear ("memoria")
+	nomeMemoria := []byte("memoria")
+	secaoExportsPayload = anexar(secaoExportsPayload, CodificarLEB128U(tamanho(nomeMemoria))...)
+	para _, b := intervalo nomeMemoria {
+		secaoExportsPayload = anexar(secaoExportsPayload, b)
+	}
+	secaoExportsPayload = anexar(secaoExportsPayload, 0x02) // Tipo de exportação: Memória
+	secaoExportsPayload = anexar(secaoExportsPayload, 0x00) // Índice da memória 0
 
-	// 5. Seção 10: Códigos dos Corpos das Funções (Code Section)
+	// 6. Seção 10: Códigos dos Corpos das Funções (Code Section)
 	secaoCodigosPayload := criar([]byte, 0)
 	secaoCodigosPayload = anexar(secaoCodigosPayload, CodificarLEB128U(totalFuncs)...)
 
@@ -188,10 +203,11 @@ funcao (e *EmissorWasm) CompilarAST(raiz *NoAST) ([]byte, erro) {
 		}
 	}
 
-	// 6. Montagem final do binário WebAssembly
+	// 7. Montagem final do binário WebAssembly
 	modulo := []byte{0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00}
 	modulo = anexar(modulo, CriarSecaoWasm(1, secaoTiposPayload)...)
 	modulo = anexar(modulo, CriarSecaoWasm(3, secaoFuncsPayload)...)
+	modulo = anexar(modulo, CriarSecaoWasm(5, secaoMemoriaPayload)...)
 	modulo = anexar(modulo, CriarSecaoWasm(7, secaoExportsPayload)...)
 	modulo = anexar(modulo, CriarSecaoWasm(10, secaoCodigosPayload)...)
 
@@ -457,6 +473,15 @@ funcao (e *EmissorWasm) emitirExpressao(expr texto, buf *[]byte, locais mapa[tex
 		para i := 1; i < tamanho(p); i++ {
 			e.emitirExpressao(p[i], buf, locais)
 			*buf = anexar(*buf, WasmOpI32DivS)
+		}
+		retornar nulo
+	}
+	p = dividirForaParenteses(limpa, "%")
+	se tamanho(p) >= 2 {
+		e.emitirExpressao(p[0], buf, locais)
+		para i := 1; i < tamanho(p); i++ {
+			e.emitirExpressao(p[i], buf, locais)
+			*buf = anexar(*buf, WasmOpI32RemS)
 		}
 		retornar nulo
 	}

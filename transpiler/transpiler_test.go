@@ -578,3 +578,42 @@ funcao principal() {
 		}
 	}
 }
+
+func TestTranspileTestingPackage(t *testing.T) {
+	input := `pacote calculos
+
+importar (
+	"teste"
+)
+
+funcao TesteSoma(t *teste.T) {
+	resultado := 2 + 3
+	se resultado != 5 {
+		t.ErroFormatado("esperava 5, obteve %d", resultado)
+	}
+	se falso {
+		t.Falhar()
+	}
+	t.Registrar("Teste de soma finalizado")
+}
+`
+	got, err := TranspileSource(input)
+	if err != nil {
+		t.Fatalf("Erro ao transpilar pacote de teste: %v", err)
+	}
+
+	expectedPhrases := []string{
+		`package calculos`,
+		`"testing"`,
+		`func TestSoma(t *testing.T) {`,
+		`t.Errorf("esperava 5, obteve %d", resultado)`,
+		`t.Fail()`,
+		`t.Log("Teste de soma finalizado")`,
+	}
+
+	for _, phrase := range expectedPhrases {
+		if !strings.Contains(got, phrase) {
+			t.Errorf("Esperava encontrar %q no código gerado, mas não encontrou:\n%s", phrase, got)
+		}
+	}
+}

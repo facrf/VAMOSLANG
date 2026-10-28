@@ -477,6 +477,15 @@ funcao (e *EmissorBytecode) emitirAvaliacaoExpressao(expr texto, linha inteiro) 
 		}
 		retornar
 	}
+	partesMod := dividirForaParenteses(limpa, "%")
+	se tamanho(partesMod) >= 2 {
+		e.emitirAvaliacaoExpressao(partesMod[0], linha)
+		para i := 1; i < tamanho(partesMod); i++ {
+			e.emitirAvaliacaoExpressao(partesMod[i], linha)
+			e.programa.Emitir(OpModulo, 0, linha)
+		}
+		retornar
+	}
 
 	// Chamada de função: func(arg1, arg2)
 	idxAbre := cordas.Indice(limpa, "(")

@@ -118,3 +118,96 @@ func TestLSPFormatting(t *testing.T) {
 		t.Errorf("Esperado código formatado com indentação tab, obteve: %s", string(fOut))
 	}
 }
+
+func TestLSPDefinition(t *testing.T) {
+	srv := NewServer(nil, nil)
+	uri := "file:///definicao.vamos"
+	code := `pacote principal
+
+funcao somar(a inteiro, b inteiro) inteiro {
+	retornar a + b
+}
+
+tipo Pessoa estrutura {
+	Nome texto
+}
+
+funcao principal() {
+	resultado := somar(10, 20)
+	p := Pessoa{Nome: "Maria"}
+}`
+
+	srv.ProcessSingleMessage(makeRPCRequest("", "textDocument/didOpen", map[string]interface{}{
+		"textDocument": map[string]interface{}{"uri": uri, "text": code},
+	}))
+
+	// Procura definição de 'somar' na linha da chamada (linha 11)
+	defReq := makeRPCRequest("10", "textDocument/definition", map[string]interface{}{
+		"textDocument": map[string]interface{}{"uri": uri},
+		"position":     position{Line: 11, Character: 15},
+	})
+	dOut, err := srv.ProcessSingleMessage(defReq)
+	if err != nil {
+		t.Fatalf("Erro no definition: %v", err)
+	}
+	outStr := string(dOut)
+	if !strings.Contains(outStr, `"line":2`) {
+		t.Errorf("Esperado definição de 'somar' na linha 2, obteve: %s", outStr)
+	}
+
+	// Procura definição de 'Pessoa' na linha de instanciação (linha 12)
+	defTipoReq := makeRPCRequest("11", "textDocument/definition", map[string]interface{}{
+		"textDocument": map[string]interface{}{"uri": uri},
+		"position":     position{Line: 12, Character: 7},
+	})
+	dTipoOut, err := srv.ProcessSingleMessage(defTipoReq)
+	if err != nil {
+		t.Fatalf("Erro no definition de tipo: %v", err)
+	}
+	if !strings.Contains(string(dTipoOut), `"line":6`) {
+		t.Errorf("Esperado definição de 'Pessoa' na linha 6, obteve: %s", string(dTipoOut))
+	}
+}
+
+func TestLSPDocumentSymbol(t *testing.T) {
+	srv := NewServer(nil, nil)
+	uri := "file:///simbolos.vamos"
+	code := `pacote principal
+
+constante VersaoApp texto = "1.0"
+variavel Contador inteiro = 0
+
+tipo Servico interface {
+	Executar()
+}
+
+tipo Configuracao estrutura {
+	Porta inteiro
+}
+
+funcao Iniciar() {
+}
+
+funcao (c Configuracao) ObterPorta() inteiro {
+	retornar c.Porta
+}`
+
+	srv.ProcessSingleMessage(makeRPCRequest("", "textDocument/didOpen", map[string]interface{}{
+		"textDocument": map[string]interface{}{"uri": uri, "text": code},
+	}))
+
+	symReq := makeRPCRequest("20", "textDocument/documentSymbol", map[string]interface{}{
+		"textDocument": map[string]interface{}{"uri": uri},
+	})
+	sOut, err := srv.ProcessSingleMessage(symReq)
+	if err != nil {
+		t.Fatalf("Erro no documentSymbol: %v", err)
+	}
+	outStr := string(sOut)
+	expectedSymbols := []string{"VersaoApp", "Contador", "Servico", "Configuracao", "Iniciar", "ObterPorta"}
+	for _, sym := range expectedSymbols {
+		if !strings.Contains(outStr, sym) {
+			t.Errorf("Esperado símbolo '%s' na lista do documento, obteve: %s", sym, outStr)
+		}
+	}
+}

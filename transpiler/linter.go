@@ -39,6 +39,32 @@ func LintSource(source string) []LintIssue {
 				Message: "Convenção: 'pacote principal' deve ser todo em minúsculas",
 			})
 		}
+
+		// Alerta 3: Uso acidental de palavras-chave do Go em inglês em vez do português
+		if strings.HasPrefix(trimmed, "func ") {
+			issues = append(issues, LintIssue{
+				Line:    lineNum,
+				Message: "Convenção: use 'funcao' em vez de 'func' em código VAMOS-LANG",
+			})
+		} else if strings.HasPrefix(trimmed, "var ") {
+			issues = append(issues, LintIssue{
+				Line:    lineNum,
+				Message: "Convenção: use 'variavel' em vez de 'var' em código VAMOS-LANG",
+			})
+		} else if strings.HasPrefix(trimmed, "package ") {
+			issues = append(issues, LintIssue{
+				Line:    lineNum,
+				Message: "Convenção: use 'pacote' em vez de 'package' em código VAMOS-LANG",
+			})
+		}
+
+		// Alerta 4: Bloco de tratamento de erro vazio
+		if strings.Contains(trimmed, "se err != nulo {}") || strings.Contains(trimmed, "se erro != nulo {}") {
+			issues = append(issues, LintIssue{
+				Line:    lineNum,
+				Message: "Aviso: Bloco de tratamento de erro vazio detectado",
+			})
+		}
 	}
 
 	return issues

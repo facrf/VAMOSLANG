@@ -406,7 +406,7 @@ funcao executarCompilacaoGCC(caminhoArquivo texto, destinoBinario texto) {
 		so.Sair(1)
 	}
 
-	tempC := "/tmp/vamosc_temp_gcc.c"
+	tempC := formatar.Formatar("/tmp/vamosc_temp_gcc_%d.c", so.Obterpid())
 	emissor := NovoEmissorC()
 	codigoC := emissor.CompilarAST(ast)
 	errG := so.EscreverArquivo(tempC, []byte(codigoC), 0644)
@@ -472,9 +472,22 @@ funcao executarCompilacaoNativa(caminhoArquivo texto, destinoBinario texto) {
 	dirFonte := caminho.Diretorio(caminhoArquivo)
 	arquivosPacote, _ := caminho.Listar(caminho.Juntar(dirFonte, "*.vamos"))
 
-	// Caso A: Pacote com múltiplos arquivos .vamos (ex: o próprio compilador/)
-	se tamanho(arquivosPacote) > 1 {
-		dirTemp := "/tmp/vamosc_build_ws"
+	// Verifica se o diretório é um pacote único multifonte (apenas 1 'funcao principal')
+	// ou se possui múltiplos programas independentes (como na pasta exemplos/ ou jogos/)
+	totalMains := 0
+	para _, arq := intervalo arquivosPacote {
+		d, errD := so.LerArquivo(arq)
+		se errD == nulo {
+			conteudoStr := texto(d)
+			se cordas.Contem(conteudoStr, "funcao principal(") || cordas.Contem(conteudoStr, "funcao principal ()") {
+				totalMains++
+			}
+		}
+	}
+
+	// Caso A: Pacote com múltiplos arquivos .vamos de um único programa (ex: compilador/)
+	se tamanho(arquivosPacote) > 1 && totalMains <= 1 {
+		dirTemp := formatar.Formatar("/tmp/vamosc_build_ws_%d", so.Obterpid())
 		so.RemoverTodos(dirTemp)
 		so.CriarDiretorio(dirTemp, 0755)
 
@@ -496,6 +509,10 @@ funcao executarCompilacaoNativa(caminhoArquivo texto, destinoBinario texto) {
 		} senao {
 			_ = so.EscreverArquivo(caminho.Juntar(dirTemp, "go.mod"), []byte("module app\n\ngo 1.22\n"), 0644)
 		}
+		dadosSum, errSum := so.LerArquivo("go.sum")
+		se errSum == nulo {
+			_ = so.EscreverArquivo(caminho.Juntar(dirTemp, "go.sum"), dadosSum, 0644)
+		}
 
 		cmd := executar.Comando("go", "build", "-o", absDestino, ".")
 		cmd.Dir = dirTemp
@@ -511,7 +528,7 @@ funcao executarCompilacaoNativa(caminhoArquivo texto, destinoBinario texto) {
 		retornar
 	}
 
-	// Caso B: Arquivo único simples
+	// Caso B: Arquivo único simples ou arquivo individual de pasta com múltiplos scripts
 	dados, err := so.LerArquivo(caminhoArquivo)
 	se err != nulo {
 		formatar.ImprimirFormatado("Erro ao abrir arquivo '%s': %v\n", caminhoArquivo, err)
@@ -528,7 +545,7 @@ funcao executarCompilacaoNativa(caminhoArquivo texto, destinoBinario texto) {
 	transpilador := NovoTranspilador(tokens)
 	codigoGo := transpilador.Transpilar()
 
-	arquivoTemp := "/tmp/vamosc_temp.go"
+	arquivoTemp := formatar.Formatar("/tmp/vamosc_temp_%d.go", so.Obterpid())
 	errGravar := so.EscreverArquivo(arquivoTemp, []byte(codigoGo), 0644)
 	se errGravar != nulo {
 		formatar.ImprimirFormatado("Erro ao gravar arquivo temporário: %v\n", errGravar)
@@ -564,7 +581,7 @@ funcao executarExecucaoDireta(caminhoArquivo texto, progArgs []texto) {
 	transpilador := NovoTranspilador(tokens)
 	codigoGo := transpilador.Transpilar()
 
-	arquivoTemp := "/tmp/vamosc_run_temp.go"
+	arquivoTemp := formatar.Formatar("/tmp/vamosc_run_temp_%d.go", so.Obterpid())
 	errGravar := so.EscreverArquivo(arquivoTemp, []byte(codigoGo), 0644)
 	se errGravar != nulo {
 		formatar.ImprimirFormatado("Erro ao gravar arquivo temporário: %v\n", errGravar)

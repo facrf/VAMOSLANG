@@ -52,12 +52,15 @@ func RunTrace(args []string) int {
 		return 1
 	}
 
-	// Copia go.mod se existir no projeto original
+	// Copia go.mod e go.sum se existirem no projeto original
 	projectRoot := FindProjectRoot(srcFile)
 	if modData, err := os.ReadFile(filepath.Join(projectRoot, "go.mod")); err == nil {
 		_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), modData, 0644)
 	} else {
-		_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module trace_app\n\ngo 1.20\n"), 0644)
+		_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module trace_app\n\ngo 1.22\n"), 0644)
+	}
+	if sumData, err := os.ReadFile(filepath.Join(projectRoot, "go.sum")); err == nil {
+		_ = os.WriteFile(filepath.Join(tempDir, "go.sum"), sumData, 0644)
 	}
 
 	fmt.Println("==================================================================")

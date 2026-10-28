@@ -439,7 +439,7 @@ funcao principal() {
 			para i := 0; i < tamanho(movsValidos); i++ {
 				m := movsValidos[i]
 				se m.Origem.Linha == posOrigem.Linha && m.Origem.Coluna == posOrigem.Coluna &&
-					m.Destino.Linha == posDestino.Linha && m.Destino.Coluna == posDestino.Coluna {
+				m.Destino.Linha == posDestino.Linha && m.Destino.Coluna == posDestino.Coluna {
 					lanceEncontrado = verdadeiro
 					movEscolhido = m
 					interromper

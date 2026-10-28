@@ -90,8 +90,9 @@ funcao NovoAnalisadorSemantico() *AnalisadorSemantico {
 	// Tipos primitivos pré-definidos
 	tiposPrimitivos := []texto{
 		"inteiro", "inteiro8", "inteiro16", "inteiro32", "inteiro64",
-		"uinquenta", "uint8", "uint16", "uint32", "uint64",
-		"decimal32", "decimal64", "texto", "booleano", "byte", "rune", "erro",
+		"uinteiro", "uinteiro8", "uinteiro16", "uinteiro32", "uinteiro64", "uinteiro_ponteiro",
+		"decimal", "decimal32", "decimal64", "texto", "booleano", "byte", "runa", "caractere",
+		"qualquer", "comparavel", "erro",
 	}
 	para _, t := intervalo tiposPrimitivos {
 		global.Definir(NovoSimbolo(t, t, "tipo", 0))

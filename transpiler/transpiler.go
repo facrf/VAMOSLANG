@@ -343,6 +343,13 @@ func (t *Transpiler) Transpile() (string, error) {
 			} else if goType, ok := TypesAndBuiltinsMap[val]; ok {
 				sb.WriteString(goType)
 			} else {
+				if len(val) >= 6 && strings.HasPrefix(val, "Teste") && val[5] >= 'A' && val[5] <= 'Z' {
+					val = "Test" + val[5:]
+				} else if len(val) >= 8 && strings.HasPrefix(val, "Exemplo") && val[7] >= 'A' && val[7] <= 'Z' {
+					val = "Example" + val[7:]
+				} else if len(val) >= 11 && strings.HasPrefix(val, "Referencia") && val[10] >= 'A' && val[10] <= 'Z' {
+					val = "Benchmark" + val[10:]
+				}
 				sb.WriteString(val)
 			}
 			continue

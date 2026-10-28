@@ -95,6 +95,20 @@ type textEdit struct {
 	NewText string   `json:"newText"`
 }
 
+type lspLocation struct {
+	URI   string   `json:"uri"`
+	Range lspRange `json:"range"`
+}
+
+type documentSymbol struct {
+	Name           string           `json:"name"`
+	Detail         string           `json:"detail,omitempty"`
+	Kind           int              `json:"kind"`
+	Range          lspRange         `json:"range"`
+	SelectionRange lspRange         `json:"selectionRange"`
+	Children       []documentSymbol `json:"children,omitempty"`
+}
+
 // Run inicia o loop de processamento do protocolo LSP.
 func (s *Server) Run() error {
 	reader := bufio.NewReader(s.reader)
@@ -176,6 +190,24 @@ func (s *Server) send(v interface{}) {
 	_, _ = s.writer.Write(data)
 }
 
+func (s *Server) setDoc(uri, text string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.docs[uri] = text
+}
+
+func (s *Server) getDoc(uri string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.docs[uri]
+}
+
+func (s *Server) deleteDoc(uri string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.docs, uri)
+}
+
 func (s *Server) handleRequest(req *rpcRequest) {
 	switch req.Method {
 	case "initialize":
@@ -188,6 +220,8 @@ func (s *Server) handleRequest(req *rpcRequest) {
 				},
 				"hoverProvider":              true,
 				"documentFormattingProvider": true,
+				"definitionProvider":          true,
+				"documentSymbolProvider":      true,
 			},
 			"serverInfo": map[string]interface{}{
 				"name":    "vamos-lsp",
@@ -210,7 +244,7 @@ func (s *Server) handleRequest(req *rpcRequest) {
 			} `json:"textDocument"`
 		}
 		if err := json.Unmarshal(req.Params, &params); err == nil {
-			s.docs[params.TextDocument.URI] = params.TextDocument.Text
+			s.setDoc(params.TextDocument.URI, params.TextDocument.Text)
 			s.publishDiagnostics(params.TextDocument.URI, params.TextDocument.Text)
 		}
 
@@ -225,7 +259,7 @@ func (s *Server) handleRequest(req *rpcRequest) {
 		}
 		if err := json.Unmarshal(req.Params, &params); err == nil && len(params.ContentChanges) > 0 {
 			newText := params.ContentChanges[len(params.ContentChanges)-1].Text
-			s.docs[params.TextDocument.URI] = newText
+			s.setDoc(params.TextDocument.URI, newText)
 			s.publishDiagnostics(params.TextDocument.URI, newText)
 		}
 
@@ -236,7 +270,8 @@ func (s *Server) handleRequest(req *rpcRequest) {
 			} `json:"textDocument"`
 		}
 		if err := json.Unmarshal(req.Params, &params); err == nil {
-			if doc, ok := s.docs[params.TextDocument.URI]; ok {
+			doc := s.getDoc(params.TextDocument.URI)
+			if doc != "" {
 				s.publishDiagnostics(params.TextDocument.URI, doc)
 			}
 		}
@@ -248,7 +283,7 @@ func (s *Server) handleRequest(req *rpcRequest) {
 			} `json:"textDocument"`
 		}
 		if err := json.Unmarshal(req.Params, &params); err == nil {
-			delete(s.docs, params.TextDocument.URI)
+			s.deleteDoc(params.TextDocument.URI)
 		}
 
 	case "textDocument/completion":
@@ -259,7 +294,7 @@ func (s *Server) handleRequest(req *rpcRequest) {
 			Position position `json:"position"`
 		}
 		if err := json.Unmarshal(req.Params, &params); err == nil {
-			doc := s.docs[params.TextDocument.URI]
+			doc := s.getDoc(params.TextDocument.URI)
 			items := s.getCompletions(doc, params.Position)
 			s.sendResponse(req.ID, items)
 		} else {
@@ -274,7 +309,7 @@ func (s *Server) handleRequest(req *rpcRequest) {
 			Position position `json:"position"`
 		}
 		if err := json.Unmarshal(req.Params, &params); err == nil {
-			doc := s.docs[params.TextDocument.URI]
+			doc := s.getDoc(params.TextDocument.URI)
 			h := s.getHover(doc, params.Position)
 			s.sendResponse(req.ID, h)
 		} else {
@@ -288,7 +323,7 @@ func (s *Server) handleRequest(req *rpcRequest) {
 			} `json:"textDocument"`
 		}
 		if err := json.Unmarshal(req.Params, &params); err == nil {
-			doc := s.docs[params.TextDocument.URI]
+			doc := s.getDoc(params.TextDocument.URI)
 			formatted, err := transpiler.FormatSource(doc)
 			if err == nil {
 				lines := strings.Split(doc, "\n")
@@ -314,6 +349,35 @@ func (s *Server) handleRequest(req *rpcRequest) {
 			}
 		}
 		s.sendResponse(req.ID, []textEdit{})
+
+	case "textDocument/definition":
+		var params struct {
+			TextDocument struct {
+				URI string `json:"uri"`
+			} `json:"textDocument"`
+			Position position `json:"position"`
+		}
+		if err := json.Unmarshal(req.Params, &params); err == nil {
+			doc := s.getDoc(params.TextDocument.URI)
+			loc := s.getDefinition(params.TextDocument.URI, doc, params.Position)
+			s.sendResponse(req.ID, loc)
+		} else {
+			s.sendResponse(req.ID, nil)
+		}
+
+	case "textDocument/documentSymbol":
+		var params struct {
+			TextDocument struct {
+				URI string `json:"uri"`
+			} `json:"textDocument"`
+		}
+		if err := json.Unmarshal(req.Params, &params); err == nil {
+			doc := s.getDoc(params.TextDocument.URI)
+			syms := s.getDocumentSymbols(doc)
+			s.sendResponse(req.ID, syms)
+		} else {
+			s.sendResponse(req.ID, []documentSymbol{})
+		}
 
 	default:
 		if len(req.ID) > 0 {
@@ -494,6 +558,283 @@ func (s *Server) getHover(doc string, pos position) *hover {
 
 func isWordChar(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
+}
+
+func (s *Server) getDefinition(uri, doc string, pos position) *lspLocation {
+	lines := strings.Split(doc, "\n")
+	if pos.Line >= len(lines) {
+		return nil
+	}
+
+	line := lines[pos.Line]
+	col := pos.Character
+	if col > len(line) {
+		col = len(line)
+	}
+
+	start := col
+	for start > 0 && isWordChar(rune(line[start-1])) {
+		start--
+	}
+	end := col
+	for end < len(line) && isWordChar(rune(line[end])) {
+		end++
+	}
+
+	if start >= end {
+		return nil
+	}
+
+	word := line[start:end]
+
+	// Procura a declaração do símbolo no documento
+	for lineIdx, l := range lines {
+		trimmed := strings.TrimSpace(l)
+		if strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "/*") {
+			continue
+		}
+
+		// 1. Função ou Método: funcao Nome(...) ou funcao (r Tipo) Nome(...)
+		if strings.HasPrefix(trimmed, "funcao ") {
+			afterFn := strings.TrimSpace(strings.TrimPrefix(trimmed, "funcao "))
+			if strings.HasPrefix(afterFn, "(") {
+				if idxClose := strings.Index(afterFn, ")"); idxClose != -1 {
+					afterRec := strings.TrimSpace(afterFn[idxClose+1:])
+					if idxParen := strings.Index(afterRec, "("); idxParen != -1 {
+						fnName := strings.TrimSpace(afterRec[:idxParen])
+						if fnName == word {
+							charCol := strings.Index(l, fnName)
+							return &lspLocation{
+								URI: uri,
+								Range: lspRange{
+									Start: position{Line: lineIdx, Character: charCol},
+									End:   position{Line: lineIdx, Character: charCol + len(fnName)},
+								},
+							}
+						}
+					}
+				}
+			} else {
+				if idxParen := strings.Index(afterFn, "("); idxParen != -1 {
+					fnName := strings.TrimSpace(afterFn[:idxParen])
+					if idxBracket := strings.Index(fnName, "["); idxBracket != -1 {
+						fnName = strings.TrimSpace(fnName[:idxBracket])
+					}
+					if fnName == word {
+						charCol := strings.Index(l, fnName)
+						return &lspLocation{
+							URI: uri,
+							Range: lspRange{
+								Start: position{Line: lineIdx, Character: charCol},
+								End:   position{Line: lineIdx, Character: charCol + len(fnName)},
+							},
+						}
+					}
+				}
+			}
+		}
+
+		// 2. Tipo / Estrutura / Interface
+		if strings.HasPrefix(trimmed, "tipo ") {
+			afterTipo := strings.TrimSpace(strings.TrimPrefix(trimmed, "tipo "))
+			parts := strings.Fields(afterTipo)
+			if len(parts) > 0 {
+				typeName := parts[0]
+				if idxBracket := strings.Index(typeName, "["); idxBracket != -1 {
+					typeName = typeName[:idxBracket]
+				}
+				if typeName == word {
+					charCol := strings.Index(l, typeName)
+					return &lspLocation{
+						URI: uri,
+						Range: lspRange{
+							Start: position{Line: lineIdx, Character: charCol},
+							End:   position{Line: lineIdx, Character: charCol + len(typeName)},
+						},
+					}
+				}
+			}
+		}
+
+		// 3. Constante ou Variável
+		if strings.HasPrefix(trimmed, "constante ") || strings.HasPrefix(trimmed, "variavel ") {
+			fields := strings.Fields(trimmed)
+			if len(fields) >= 2 && fields[1] == word {
+				charCol := strings.Index(l, word)
+				return &lspLocation{
+					URI: uri,
+					Range: lspRange{
+						Start: position{Line: lineIdx, Character: charCol},
+						End:   position{Line: lineIdx, Character: charCol + len(word)},
+					},
+				}
+			}
+		}
+
+		// 4. Declaração rápida: x := ...
+		if strings.Contains(trimmed, ":=") {
+			idxDecl := strings.Index(trimmed, ":=")
+			left := strings.TrimSpace(trimmed[:idxDecl])
+			vars := strings.Split(left, ",")
+			for _, v := range vars {
+				if strings.TrimSpace(v) == word {
+					charCol := strings.Index(l, word)
+					return &lspLocation{
+						URI: uri,
+						Range: lspRange{
+							Start: position{Line: lineIdx, Character: charCol},
+							End:   position{Line: lineIdx, Character: charCol + len(word)},
+						},
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *Server) getDocumentSymbols(doc string) []documentSymbol {
+	var symbols []documentSymbol
+	lines := strings.Split(doc, "\n")
+
+	for lineIdx, l := range lines {
+		trimmed := strings.TrimSpace(l)
+		if strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "/*") {
+			continue
+		}
+
+		// Função ou Método
+		if strings.HasPrefix(trimmed, "funcao ") {
+			afterFn := strings.TrimSpace(strings.TrimPrefix(trimmed, "funcao "))
+			if strings.HasPrefix(afterFn, "(") {
+				// Método com receptor: funcao (r Receptor) Nome(...)
+				if idxClose := strings.Index(afterFn, ")"); idxClose != -1 {
+					recStr := afterFn[1:idxClose]
+					afterRec := strings.TrimSpace(afterFn[idxClose+1:])
+					if idxParen := strings.Index(afterRec, "("); idxParen != -1 {
+						fnName := strings.TrimSpace(afterRec[:idxParen])
+						charCol := strings.Index(l, fnName)
+						symbols = append(symbols, documentSymbol{
+							Name:   fnName,
+							Detail: fmt.Sprintf("(%s)", recStr),
+							Kind:   6, // Method
+							Range: lspRange{
+								Start: position{Line: lineIdx, Character: 0},
+								End:   position{Line: lineIdx, Character: len(l)},
+							},
+							SelectionRange: lspRange{
+								Start: position{Line: lineIdx, Character: charCol},
+								End:   position{Line: lineIdx, Character: charCol + len(fnName)},
+							},
+						})
+					}
+				}
+			} else {
+				// Função global
+				if idxParen := strings.Index(afterFn, "("); idxParen != -1 {
+					fnName := strings.TrimSpace(afterFn[:idxParen])
+					detail := ""
+					if idxBracket := strings.Index(fnName, "["); idxBracket != -1 {
+						detail = fnName[idxBracket:]
+						fnName = strings.TrimSpace(fnName[:idxBracket])
+					}
+					charCol := strings.Index(l, fnName)
+					symbols = append(symbols, documentSymbol{
+						Name:   fnName,
+						Detail: detail,
+						Kind:   12, // Function
+						Range: lspRange{
+							Start: position{Line: lineIdx, Character: 0},
+							End:   position{Line: lineIdx, Character: len(l)},
+						},
+						SelectionRange: lspRange{
+							Start: position{Line: lineIdx, Character: charCol},
+							End:   position{Line: lineIdx, Character: charCol + len(fnName)},
+						},
+					})
+				}
+			}
+			continue
+		}
+
+		// Tipos (Estruturas e Interfaces)
+		if strings.HasPrefix(trimmed, "tipo ") {
+			afterTipo := strings.TrimSpace(strings.TrimPrefix(trimmed, "tipo "))
+			parts := strings.Fields(afterTipo)
+			if len(parts) >= 2 {
+				typeName := parts[0]
+				kindStr := parts[1]
+				kind := 23 // Struct
+				if strings.HasPrefix(kindStr, "interface") {
+					kind = 11 // Interface
+				}
+				charCol := strings.Index(l, typeName)
+				symbols = append(symbols, documentSymbol{
+					Name:   typeName,
+					Detail: kindStr,
+					Kind:   kind,
+					Range: lspRange{
+						Start: position{Line: lineIdx, Character: 0},
+						End:   position{Line: lineIdx, Character: len(l)},
+					},
+					SelectionRange: lspRange{
+						Start: position{Line: lineIdx, Character: charCol},
+						End:   position{Line: lineIdx, Character: charCol + len(typeName)},
+					},
+				})
+			}
+			continue
+		}
+
+		// Constantes Globais
+		if strings.HasPrefix(trimmed, "constante ") {
+			afterConst := strings.TrimSpace(strings.TrimPrefix(trimmed, "constante "))
+			parts := strings.Fields(afterConst)
+			if len(parts) >= 1 {
+				constName := parts[0]
+				charCol := strings.Index(l, constName)
+				symbols = append(symbols, documentSymbol{
+					Name: constName,
+					Kind: 14, // Constant
+					Range: lspRange{
+						Start: position{Line: lineIdx, Character: 0},
+						End:   position{Line: lineIdx, Character: len(l)},
+					},
+					SelectionRange: lspRange{
+						Start: position{Line: lineIdx, Character: charCol},
+						End:   position{Line: lineIdx, Character: charCol + len(constName)},
+					},
+				})
+			}
+			continue
+		}
+
+		// Variáveis Globais
+		if strings.HasPrefix(trimmed, "variavel ") {
+			afterVar := strings.TrimSpace(strings.TrimPrefix(trimmed, "variavel "))
+			parts := strings.Fields(afterVar)
+			if len(parts) >= 1 {
+				varName := parts[0]
+				charCol := strings.Index(l, varName)
+				symbols = append(symbols, documentSymbol{
+					Name: varName,
+					Kind: 13, // Variable
+					Range: lspRange{
+						Start: position{Line: lineIdx, Character: 0},
+						End:   position{Line: lineIdx, Character: len(l)},
+					},
+					SelectionRange: lspRange{
+						Start: position{Line: lineIdx, Character: charCol},
+						End:   position{Line: lineIdx, Character: charCol + len(varName)},
+					},
+				})
+			}
+			continue
+		}
+	}
+
+	return symbols
 }
 
 // ProcessSingleMessage processa uma única mensagem JSON-RPC síncrona (útil para testes unitários).

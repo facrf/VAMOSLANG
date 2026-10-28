@@ -1,6 +1,8 @@
 // ============================================================================
 // JOGO DA COBRINHA (SNAKE GAME) - VAMOS-LANG
 // Um clássico arcade implementado 100% com sintaxe em Português do Brasil.
+// Inclui maçã comum (★), fruta dourada especial bônus (✪), sistema de pontuação,
+// IA inteligente para modo demonstração (--demo) e controle interativo.
 // ============================================================================
 
 pacote principal
@@ -30,20 +32,26 @@ constante (
 
 // JogoCobrinha gerencia o estado completo da partida
 tipo JogoCobrinha estrutura {
-	Largura        inteiro
-	Altura         inteiro
-	Corpo          []Ponto
-	DirecaoAtual   inteiro
-	Comida         Ponto
-	Pontuacao      inteiro
-	FimDeJogo      booleano
-	Vitoria        booleano
-	ModoDemo       booleano
-	PassosTotais   inteiro
+	Largura           inteiro
+	Altura            inteiro
+	Corpo             []Ponto
+	DirecaoAtual      inteiro
+	Comida            Ponto
+	ComidaDourada     Ponto
+	TemComidaDourada  booleano
+	TempoDouradaRest  inteiro
+	ComidasColetadas  inteiro
+	Pontuacao         inteiro
+	Recorde           inteiro
+	FimDeJogo         booleano
+	Vitoria           booleano
+	ModoDemo          booleano
+	PassosTotais      inteiro
+	NivelVelocidade   texto
 }
 
 // NovoJogoCobrinha inicializa a cobrinha centralizada e a primeira maçã
-funcao NovoJogoCobrinha(largura inteiro, altura inteiro, modoDemo booleano) *JogoCobrinha {
+funcao NovoJogoCobrinha(largura inteiro, altura inteiro, modoDemo booleano, nivel texto) *JogoCobrinha {
 	centroX := largura / 2
 	centroY := altura / 2
 
@@ -54,15 +62,20 @@ funcao NovoJogoCobrinha(largura inteiro, altura inteiro, modoDemo booleano) *Jog
 	corpoInicial = adicionar(corpoInicial, Ponto{X: centroX, Y: centroY})
 
 	jogo := &JogoCobrinha{
-		Largura:      largura,
-		Altura:       altura,
-		Corpo:        corpoInicial,
-		DirecaoAtual: DirDireita,
-		Pontuacao:    0,
-		FimDeJogo:    falso,
-		Vitoria:      falso,
-		ModoDemo:     modoDemo,
-		PassosTotais: 0,
+		Largura:          largura,
+		Altura:           altura,
+		Corpo:            corpoInicial,
+		DirecaoAtual:     DirDireita,
+		TemComidaDourada: falso,
+		TempoDouradaRest: 0,
+		ComidasColetadas: 0,
+		Pontuacao:        0,
+		Recorde:          100,
+		FimDeJogo:        falso,
+		Vitoria:          falso,
+		ModoDemo:         modoDemo,
+		PassosTotais:     0,
+		NivelVelocidade:  nivel,
 	}
 
 	jogo.GerarNovaComida()
@@ -79,13 +92,13 @@ funcao (j *JogoCobrinha) PosicaoOcupadaPelaCobra(x inteiro, y inteiro) booleano 
 	retornar falso
 }
 
-// GerarNovaComida posiciona uma fruta aleatória em casa livre
+// GerarNovaComida posiciona uma fruta comum (★) em casa livre
 funcao (j *JogoCobrinha) GerarNovaComida() {
 	tentativas := 0
 	para tentativas < 1000 {
 		cx := aleatorio.InteiroAte(j.Largura)
 		cy := aleatorio.InteiroAte(j.Altura)
-		se !j.PosicaoOcupadaPelaCobra(cx, cy) {
+		se !j.PosicaoOcupadaPelaCobra(cx, cy) && (!j.TemComidaDourada || cx != j.ComidaDourada.X || cy != j.ComidaDourada.Y) {
 			j.Comida = Ponto{X: cx, Y: cy}
 			retornar
 		}
@@ -94,6 +107,22 @@ funcao (j *JogoCobrinha) GerarNovaComida() {
 	// Se todo o tabuleiro estiver ocupado, o jogador venceu
 	j.Vitoria = verdadeiro
 	j.FimDeJogo = verdadeiro
+}
+
+// GerarComidaDourada posiciona uma fruta especial bônus (✪)
+funcao (j *JogoCobrinha) GerarComidaDourada() {
+	tentativas := 0
+	para tentativas < 1000 {
+		cx := aleatorio.InteiroAte(j.Largura)
+		cy := aleatorio.InteiroAte(j.Altura)
+		se !j.PosicaoOcupadaPelaCobra(cx, cy) && (cx != j.Comida.X || cy != j.Comida.Y) {
+			j.ComidaDourada = Ponto{X: cx, Y: cy}
+			j.TemComidaDourada = verdadeiro
+			j.TempoDouradaRest = 15 // dura 15 turnos
+			retornar
+		}
+		tentativas++
+	}
 }
 
 // ObterCabeca retorna a coordenada atual da cabeça da cobrinha
@@ -114,15 +143,37 @@ funcao (j *JogoCobrinha) MudarDirecao(novaDir inteiro) {
 	}
 }
 
+// ContarEspacosLivresAdjacentes avalia se mover para (x, y) deixa espaço para manobra
+funcao (j *JogoCobrinha) ContarEspacosLivresAdjacentes(x inteiro, y inteiro) inteiro {
+	vizinhos := []Ponto{{x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}}
+	livres := 0
+	para i := 0; i < tamanho(vizinhos); i++ {
+		p := vizinhos[i]
+		se p.X >= 0 && p.X < j.Largura && p.Y >= 0 && p.Y < j.Altura {
+			se !j.PosicaoOcupadaPelaCobra(p.X, p.Y) {
+				livres++
+			}
+		}
+	}
+	retornar livres
+}
+
 // DecidirProximoPassoDemo calcula movimento inteligente autônomo da cobra
 funcao (j *JogoCobrinha) DecidirProximoPassoDemo() {
 	cabeca := j.ObterCabeca()
-	dx := j.Comida.X - cabeca.X
-	dy := j.Comida.Y - cabeca.Y
+
+	// Se houver maçã dourada ativa, foca nela
+	alvo := j.Comida
+	se j.TemComidaDourada {
+		alvo = j.ComidaDourada
+	}
+
+	dx := alvo.X - cabeca.X
+	dy := alvo.Y - cabeca.Y
 
 	direcoesCandidatas := criar([]inteiro, 0)
 
-	// Prioriza o eixo com maior distância
+	// 1. Prioriza o eixo com maior distância até a comida
 	se dx > 0 && j.DirecaoAtual != DirEsquerda {
 		direcoesCandidatas = adicionar(direcoesCandidatas, DirDireita)
 	} senao se dx < 0 && j.DirecaoAtual != DirDireita {
@@ -135,13 +186,26 @@ funcao (j *JogoCobrinha) DecidirProximoPassoDemo() {
 		direcoesCandidatas = adicionar(direcoesCandidatas, DirCima)
 	}
 
-	// Adiciona direções restantes como alternativa segura
+	// 2. Adiciona as direções restantes como alternativa de segurança
 	todasDirs := []inteiro{DirDireita, DirBaixo, DirEsquerda, DirCima}
 	para i := 0; i < tamanho(todasDirs); i++ {
-		direcoesCandidatas = adicionar(direcoesCandidatas, todasDirs[i])
+		d := todasDirs[i]
+		jaContem := falso
+		para c := 0; c < tamanho(direcoesCandidatas); c++ {
+			se direcoesCandidatas[c] == d {
+				jaContem = verdadeiro
+				interromper
+			}
+		}
+		se !jaContem {
+			direcoesCandidatas = adicionar(direcoesCandidatas, d)
+		}
 	}
 
-	// Escolhe a primeira direção válida que não resulte em colisão imediata
+	melhorDir := j.DirecaoAtual
+	maiorEspaco := -1
+
+	// Escolhe a direção válida que maximize os espaços livres para não encurralar
 	para i := 0; i < tamanho(direcoesCandidatas); i++ {
 		dir := direcoesCandidatas[i]
 		novoX := cabeca.X
@@ -160,17 +224,36 @@ funcao (j *JogoCobrinha) DecidirProximoPassoDemo() {
 		// Checa se fica dentro dos limites e não colide com o corpo
 		se novoX >= 0 && novoX < j.Largura && novoY >= 0 && novoY < j.Altura {
 			se !j.PosicaoOcupadaPelaCobra(novoX, novoY) {
-				j.MudarDirecao(dir)
-				retornar
+				espaco := j.ContarEspacosLivresAdjacentes(novoX, novoY)
+				// Se move em direção ao alvo, ganha bônus de peso
+				se (dx > 0 && dir == DirDireita) || (dx < 0 && dir == DirEsquerda) ||
+				(dy > 0 && dir == DirBaixo) || (dy < 0 && dir == DirCima) {
+					espaco += 2
+				}
+
+				se espaco > maiorEspaco {
+					maiorEspaco = espaco
+					melhorDir = dir
+				}
 			}
 		}
 	}
+
+	j.MudarDirecao(melhorDir)
 }
 
 // AvancarTurno executa um passo físico na simulação
 funcao (j *JogoCobrinha) AvancarTurno() {
 	se j.FimDeJogo {
 		retornar
+	}
+
+	// Atualiza temporizador de comida dourada
+	se j.TemComidaDourada {
+		j.TempoDouradaRest--
+		se j.TempoDouradaRest <= 0 {
+			j.TemComidaDourada = falso
+		}
 	}
 
 	se j.ModoDemo {
@@ -207,17 +290,39 @@ funcao (j *JogoCobrinha) AvancarTurno() {
 	j.Corpo = adicionar(j.Corpo, novaCabeca)
 	j.PassosTotais++
 
-	// 3. Checa se Comeu a Comida
+	cresceu := falso
+
+	// 3. Checa se Comeu Maçã Comum (★)
 	se novoX == j.Comida.X && novoY == j.Comida.Y {
 		j.Pontuacao += 10
+		j.ComidasColetadas++
+		cresceu = verdadeiro
 		j.GerarNovaComida()
-	} senao {
-		// Remove cauda para manter o mesmo tamanho
+
+		// A cada 4 maçãs comuns, chance de surgir maçã dourada especial
+		se j.ComidasColetadas%4 == 0 && !j.TemComidaDourada {
+			j.GerarComidaDourada()
+		}
+	}
+
+	// 4. Checa se Comeu Fruta Dourada Especial (✪)
+	se j.TemComidaDourada && novoX == j.ComidaDourada.X && novoY == j.ComidaDourada.Y {
+		j.Pontuacao += 50
+		j.TemComidaDourada = falso
+		cresceu = verdadeiro
+	}
+
+	// Se não comeu nenhuma fruta, remove cauda para manter o mesmo tamanho
+	se !cresceu {
 		j.Corpo = j.Corpo[1:]
+	}
+
+	se j.Pontuacao > j.Recorde {
+		j.Recorde = j.Pontuacao
 	}
 }
 
-// Renderizar desenha o estado visual da grade no terminal
+// Renderizar desenha o estado visual da grade no terminal com bordas e ícones
 funcao (j *JogoCobrinha) Renderizar() {
 	// Borda superior
 	formatar.ImprimirLinha("┌" + cordas.Repetir("──", j.Largura) + "┐")
@@ -229,8 +334,10 @@ funcao (j *JogoCobrinha) Renderizar() {
 		para x := 0; x < j.Largura; x++ {
 			se x == cabeca.X && y == cabeca.Y {
 				linha += "◉ " // Cabeça da cobra
+			} senao se j.TemComidaDourada && x == j.ComidaDourada.X && y == j.ComidaDourada.Y {
+				linha += "✪ " // Fruta Dourada Especial
 			} senao se x == j.Comida.X && y == j.Comida.Y {
-				linha += "★ " // Comida / Fruta
+				linha += "★ " // Maçã Comum
 			} senao se j.PosicaoOcupadaPelaCobra(x, y) {
 				linha += "○ " // Corpo da cobra
 			} senao {
@@ -243,22 +350,36 @@ funcao (j *JogoCobrinha) Renderizar() {
 
 	// Borda inferior
 	formatar.ImprimirLinha("└" + cordas.Repetir("──", j.Largura) + "┘")
-	formatar.ImprimirFormatado(" Pontuação: %d pontos | Tamanho: %d | Passos: %d\n", j.Pontuacao, tamanho(j.Corpo), j.PassosTotais)
+
+	statusDourada := ""
+	se j.TemComidaDourada {
+		statusDourada = formatar.Formatar(" | ✪ Bônus Dourado (+50): %d turnos!", j.TempoDouradaRest)
+	}
+
+	formatar.ImprimirFormatado(
+		" Pontuação: %d pts | Recorde: %d | Tamanho: %d | Dificuldade: %s%s\n",
+		j.Pontuacao, j.Recorde, tamanho(j.Corpo), j.NivelVelocidade, statusDourada,
+	)
 }
 
 funcao principal() {
 	aleatorio.Semente(tempo.Agora().Unix())
 
-	largura := 16
+	largura := 18
 	altura := 10
 	modoDemo := falso
 	maxPassosDemo := 30
+	nivel := "Normal"
 
 	// Analisa flags de linha de comando
 	para i := 0; i < tamanho(so.Argumentos); i++ {
 		arg := so.Argumentos[i]
 		se arg == "--demo" || arg == "-d" || arg == "--simular" {
 			modoDemo = verdadeiro
+		} senao se arg == "--rapido" || arg == "-r" {
+			nivel = "Rápido"
+		} senao se arg == "--insano" {
+			nivel = "Insano"
 		}
 	}
 
@@ -267,11 +388,11 @@ funcao principal() {
 	formatar.ImprimirLinha("==================================================")
 
 	se modoDemo {
-		formatar.ImprimirLinha("Modo: Demonstração Autônoma (IA Inteligente)")
-		formatar.ImprimirLinha("A cobrinha busca alimentos automaticamente.")
+		formatar.ImprimirLinha("Modo: Demonstração Autônoma (IA Tática com Heurística)")
+		formatar.ImprimirLinha("Itens: ★ Maçã Normal (+10 pts) | ✪ Fruta Dourada (+50 pts)")
 		formatar.ImprimirLinha("--------------------------------------------------")
 
-		jogo := NovoJogoCobrinha(largura, altura, verdadeiro)
+		jogo := NovoJogoCobrinha(largura, altura, verdadeiro, nivel)
 
 		para passo := 1; passo <= maxPassosDemo; passo++ {
 			jogo.AvancarTurno()
@@ -295,10 +416,11 @@ funcao principal() {
 	// Modo Interativo via Terminal
 	formatar.ImprimirLinha("Comandos: [W] Cima | [S] Baixo | [A] Esquerda | [D] Direita")
 	formatar.ImprimirLinha("Digite [Q] para sair ou pressione Enter para avançar.")
+	formatar.ImprimirLinha("Itens: ★ Maçã Normal (+10 pts) | ✪ Fruta Dourada (+50 pts)")
 	formatar.ImprimirLinha("Dica: Use '--demo' para assistir ao jogo automático!")
 	formatar.ImprimirLinha("--------------------------------------------------")
 
-	jogo := NovoJogoCobrinha(largura, altura, falso)
+	jogo := NovoJogoCobrinha(largura, altura, falso, nivel)
 	scanner := leitor.NovoScanner(so.EntradaPadrao)
 
 	para !jogo.FimDeJogo {
@@ -330,6 +452,6 @@ funcao principal() {
 
 	formatar.ImprimirLinha("\n==================================================")
 	formatar.ImprimirLinha("                  FIM DE JOGO!                    ")
-	formatar.ImprimirFormatado(" Pontuação Final: %d | Tamanho da cobra: %d\n", jogo.Pontuacao, tamanho(jogo.Corpo))
+	formatar.ImprimirFormatado(" Pontuação Final: %d | Recorde: %d | Tamanho: %d\n", jogo.Pontuacao, jogo.Recorde, tamanho(jogo.Corpo))
 	formatar.ImprimirLinha("==================================================")
 }

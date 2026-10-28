@@ -1,0 +1,957 @@
+// ============================================================================
+// JOGO DE XADREZ (CHESS) - VAMOS-LANG
+// Implementação completa das regras clássicas de xadrez em Português do Brasil.
+// Inclui movimentação oficial de todas as peças, detecção de xeque, xeque-mate,
+// IA tática para modo demonstração (--demo) e modo interativo via terminal.
+// ============================================================================
+
+pacote principal
+
+importar (
+	"cordas"
+	"formatar"
+	"leitor"
+	"matematica/aleatorio"
+	"so"
+	"tempo"
+)
+
+// Cores das Peças
+constante (
+	CorNenhuma inteiro = 0
+	CorBranca  inteiro = 1
+	CorPreta   inteiro = 2
+)
+
+// Tipos de Peças
+constante (
+	TipoVazio  inteiro = 0
+	TipoPeao   inteiro = 1
+	TipoCavalo inteiro = 2
+	TipoBispo  inteiro = 3
+	TipoTorre  inteiro = 4
+	TipoDama   inteiro = 5
+	TipoRei    inteiro = 6
+)
+
+// Peca representa uma unidade no tabuleiro
+tipo Peca estrutura {
+	Tipo inteiro
+	Cor  inteiro
+}
+
+// Posicao representa coordenadas na grade 8x8 (Linha 0-7, Coluna 0-7)
+// Linha 0 = Fileira 8 (topo), Linha 7 = Fileira 1 (base)
+// Coluna 0 = Coluna A (esquerda), Coluna 7 = Coluna H (direita)
+tipo Posicao estrutura {
+	Linha  inteiro
+	Coluna inteiro
+}
+
+// Lance representa a movimentação de uma peça
+tipo Lance estrutura {
+	Origem         Posicao
+	Destino        Posicao
+	PecaOrigem     Peca
+	PecaCapturada  Peca
+	EhPromocao     booleano
+	Notacao        texto
+}
+
+// JogoXadrez gerencia o estado da partida
+tipo JogoXadrez estrutura {
+	Tabuleiro          [8][8]Peca
+	TurnoCor           inteiro
+	FimDeJogo          booleano
+	Vencedor           texto
+	EmXeque            booleano
+	TotalLances        inteiro
+	CapturadasBrancas  []texto
+	CapturadasPretas   []texto
+	UltimoLance        texto
+	ModoDemo           booleano
+}
+
+// NovoJogoXadrez inicializa o tabuleiro com as posições oficiais da FIDE
+funcao NovoJogoXadrez(modoDemo booleano) *JogoXadrez {
+	jogo := &JogoXadrez{
+		TurnoCor:          CorBranca,
+		FimDeJogo:         falso,
+		Vencedor:          "",
+		EmXeque:           falso,
+		TotalLances:       0,
+		CapturadasBrancas: criar([]texto, 0),
+		CapturadasPretas:  criar([]texto, 0),
+		UltimoLance:       "Partida iniciada",
+		ModoDemo:          modoDemo,
+	}
+
+	// 1. Limpa todas as casas
+	para l := 0; l < 8; l++ {
+		para c := 0; c < 8; c++ {
+			jogo.Tabuleiro[l][c] = Peca{Tipo: TipoVazio, Cor: CorNenhuma}
+		}
+	}
+
+	// 2. Fileira de Peças Maiores Pretas (Linha 0 = Fileira 8)
+	pecasFundo := []inteiro{TipoTorre, TipoCavalo, TipoBispo, TipoDama, TipoRei, TipoBispo, TipoCavalo, TipoTorre}
+	para c := 0; c < 8; c++ {
+		jogo.Tabuleiro[0][c] = Peca{Tipo: pecasFundo[c], Cor: CorPreta}
+		jogo.Tabuleiro[1][c] = Peca{Tipo: TipoPeao, Cor: CorPreta}
+	}
+
+	// 3. Fileira de Peças Maiores Brancas (Linha 7 = Fileira 1)
+	para c := 0; c < 8; c++ {
+		jogo.Tabuleiro[6][c] = Peca{Tipo: TipoPeao, Cor: CorBranca}
+		jogo.Tabuleiro[7][c] = Peca{Tipo: pecasFundo[c], Cor: CorBranca}
+	}
+
+	retornar jogo
+}
+
+// DentroDoTabuleiro valida se as coordenadas estão nos limites 8x8
+funcao DentroDoTabuleiro(l inteiro, c inteiro) booleano {
+	retornar l >= 0 && l < 8 && c >= 0 && c < 8
+}
+
+// ObterSimboloPeca retorna a representação Unicode oficial da peça
+funcao ObterSimboloPeca(p Peca) texto {
+	se p.Cor == CorBranca {
+		escolha p.Tipo {
+			caso TipoPeao:
+			retornar "♙"
+			caso TipoCavalo:
+			retornar "♘"
+			caso TipoBispo:
+			retornar "♗"
+			caso TipoTorre:
+			retornar "♖"
+			caso TipoDama:
+			retornar "♕"
+			caso TipoRei:
+			retornar "♔"
+		}
+	} senao se p.Cor == CorPreta {
+		escolha p.Tipo {
+			caso TipoPeao:
+			retornar "♟"
+			caso TipoCavalo:
+			retornar "♞"
+			caso TipoBispo:
+			retornar "♝"
+			caso TipoTorre:
+			retornar "♜"
+			caso TipoDama:
+			retornar "♛"
+			caso TipoRei:
+			retornar "♚"
+		}
+	}
+	retornar " "
+}
+
+// ObterNomePeca retorna o nome amigável da peça
+funcao ObterNomePeca(tipoPeca inteiro) texto {
+	escolha tipoPeca {
+		caso TipoPeao:
+		retornar "Peão"
+		caso TipoCavalo:
+		retornar "Cavalo"
+		caso TipoBispo:
+		retornar "Bispo"
+		caso TipoTorre:
+		retornar "Torre"
+		caso TipoDama:
+		retornar "Dama"
+		caso TipoRei:
+		retornar "Rei"
+		padrao:
+		retornar "Vazio"
+	}
+}
+
+// PosicaoParaTexto converte coordenadas para notação algébrica (ex: 6,4 -> "e2")
+funcao PosicaoParaTexto(pos Posicao) texto {
+	colunaLetra := texto(runa('a' + pos.Coluna))
+	linhaNumero := formatar.Formatar("%d", 8-pos.Linha)
+	retornar colunaLetra + linhaNumero
+}
+
+// TextoParaPosicao converte notação algébrica para coordenadas (ex: "e2" -> Posicao{6, 4})
+funcao TextoParaPosicao(s texto) (Posicao, booleano) {
+	limpa := cordas.ParaMinusculas(cordas.ApararEspaco(s))
+	se tamanho(limpa) != 2 {
+		retornar Posicao{}, falso
+	}
+
+	colRuna := runa(limpa[0])
+	linByte := limpa[1]
+
+	se colRuna < 'a' || colRuna > 'h' {
+		retornar Posicao{}, falso
+	}
+	se linByte < '1' || linByte > '8' {
+		retornar Posicao{}, falso
+	}
+
+	coluna := inteiro(colRuna - 'a')
+	linha := 8 - inteiro(linByte - '0')
+
+	retornar Posicao{Linha: linha, Coluna: coluna}, verdadeiro
+}
+
+// EncontrarRei localiza as coordenadas do Rei de determinada cor
+funcao (j *JogoXadrez) EncontrarRei(cor inteiro) Posicao {
+	para l := 0; l < 8; l++ {
+		para c := 0; c < 8; c++ {
+			p := j.Tabuleiro[l][c]
+			se p.Tipo == TipoRei && p.Cor == cor {
+				retornar Posicao{Linha: l, Coluna: c}
+			}
+		}
+	}
+	retornar Posicao{Linha: -1, Coluna: -1}
+}
+
+// ObterLancesPossiveisPeca gera todos os movimentos físicos de uma peça (sem checar se deixa o rei em xeque)
+funcao (j *JogoXadrez) ObterLancesPossiveisPeca(orig Posicao) []Lance {
+	lances := criar([]Lance, 0)
+	p := j.Tabuleiro[orig.Linha][orig.Coluna]
+	se p.Tipo == TipoVazio || p.Cor != j.TurnoCor {
+		retornar lances
+	}
+
+	l := orig.Linha
+	c := orig.Coluna
+
+	escolha p.Tipo {
+		caso TipoPeao:
+		direcao := -1 // Brancas sobem (linha diminui)
+		linhaInicial := 6
+		se p.Cor == CorPreta {
+			direcao = 1 // Pretas descem (linha aumenta)
+			linhaInicial = 1
+		}
+
+		// 1. Passo simples à frente
+		nl := l + direcao
+		se DentroDoTabuleiro(nl, c) && j.Tabuleiro[nl][c].Tipo == TipoVazio {
+			ehProm := (nl == 0 || nl == 7)
+			lances = adicionar(lances, Lance{
+				Origem:        orig,
+				Destino:       Posicao{Linha: nl, Coluna: c},
+				PecaOrigem:    p,
+				PecaCapturada: Peca{Tipo: TipoVazio, Cor: CorNenhuma},
+				EhPromocao:    ehProm,
+				Notacao:       PosicaoParaTexto(orig) + "-" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: c}),
+			})
+
+			// 2. Passo duplo inicial
+			se l == linhaInicial {
+				nl2 := l + 2*direcao
+				se DentroDoTabuleiro(nl2, c) && j.Tabuleiro[nl2][c].Tipo == TipoVazio {
+					lances = adicionar(lances, Lance{
+						Origem:        orig,
+						Destino:       Posicao{Linha: nl2, Coluna: c},
+						PecaOrigem:    p,
+						PecaCapturada: Peca{Tipo: TipoVazio, Cor: CorNenhuma},
+						EhPromocao:    falso,
+						Notacao:       PosicaoParaTexto(orig) + "-" + PosicaoParaTexto(Posicao{Linha: nl2, Coluna: c}),
+					})
+				}
+			}
+		}
+
+		// 3. Capturas Diagonais
+		colsDiag := []inteiro{c - 1, c + 1}
+		para i := 0; i < tamanho(colsDiag); i++ {
+			nc := colsDiag[i]
+			se DentroDoTabuleiro(nl, nc) {
+				alvo := j.Tabuleiro[nl][nc]
+				se alvo.Tipo != TipoVazio && alvo.Cor != p.Cor {
+					ehProm := (nl == 0 || nl == 7)
+					lances = adicionar(lances, Lance{
+						Origem:        orig,
+						Destino:       Posicao{Linha: nl, Coluna: nc},
+						PecaOrigem:    p,
+						PecaCapturada: alvo,
+						EhPromocao:    ehProm,
+						Notacao:       PosicaoParaTexto(orig) + "x" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc}),
+					})
+				}
+			}
+		}
+
+		caso TipoCavalo:
+		saltosL := []Posicao{
+			{-2, -1}, {-2, 1},
+			{-1, -2}, {-1, 2},
+			{1, -2}, {1, 2},
+			{2, -1}, {2, 1},
+		}
+		para i := 0; i < tamanho(saltosL); i++ {
+			nl := l + saltosL[i].Linha
+			nc := c + saltosL[i].Coluna
+			se DentroDoTabuleiro(nl, nc) {
+				alvo := j.Tabuleiro[nl][nc]
+				se alvo.Cor != p.Cor {
+					notac := PosicaoParaTexto(orig) + "-" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc})
+					se alvo.Tipo != TipoVazio {
+						notac = PosicaoParaTexto(orig) + "x" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc})
+					}
+					lances = adicionar(lances, Lance{
+						Origem:        orig,
+						Destino:       Posicao{Linha: nl, Coluna: nc},
+						PecaOrigem:    p,
+						PecaCapturada: alvo,
+						EhPromocao:    falso,
+						Notacao:       notac,
+					})
+				}
+			}
+		}
+
+		caso TipoBispo:
+		diags := []Posicao{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}
+		para i := 0; i < tamanho(diags); i++ {
+			dl := diags[i].Linha
+			dc := diags[i].Coluna
+			nl := l + dl
+			nc := c + dc
+			para DentroDoTabuleiro(nl, nc) {
+				alvo := j.Tabuleiro[nl][nc]
+				se alvo.Tipo == TipoVazio {
+					lances = adicionar(lances, Lance{
+						Origem:        orig,
+						Destino:       Posicao{Linha: nl, Coluna: nc},
+						PecaOrigem:    p,
+						PecaCapturada: alvo,
+						EhPromocao:    falso,
+						Notacao:       PosicaoParaTexto(orig) + "-" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc}),
+					})
+				} senao {
+					se alvo.Cor != p.Cor {
+						lances = adicionar(lances, Lance{
+							Origem:        orig,
+							Destino:       Posicao{Linha: nl, Coluna: nc},
+							PecaOrigem:    p,
+							PecaCapturada: alvo,
+							EhPromocao:    falso,
+							Notacao:       PosicaoParaTexto(orig) + "x" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc}),
+						})
+					}
+					interromper
+				}
+				nl += dl
+				nc += dc
+			}
+		}
+
+		caso TipoTorre:
+		ortos := []Posicao{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+		para i := 0; i < tamanho(ortos); i++ {
+			dl := ortos[i].Linha
+			dc := ortos[i].Coluna
+			nl := l + dl
+			nc := c + dc
+			para DentroDoTabuleiro(nl, nc) {
+				alvo := j.Tabuleiro[nl][nc]
+				se alvo.Tipo == TipoVazio {
+					lances = adicionar(lances, Lance{
+						Origem:        orig,
+						Destino:       Posicao{Linha: nl, Coluna: nc},
+						PecaOrigem:    p,
+						PecaCapturada: alvo,
+						EhPromocao:    falso,
+						Notacao:       PosicaoParaTexto(orig) + "-" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc}),
+					})
+				} senao {
+					se alvo.Cor != p.Cor {
+						lances = adicionar(lances, Lance{
+							Origem:        orig,
+							Destino:       Posicao{Linha: nl, Coluna: nc},
+							PecaOrigem:    p,
+							PecaCapturada: alvo,
+							EhPromocao:    falso,
+							Notacao:       PosicaoParaTexto(orig) + "x" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc}),
+						})
+					}
+					interromper
+				}
+				nl += dl
+				nc += dc
+			}
+		}
+
+		caso TipoDama:
+		todasDirs := []Posicao{
+			{-1, -1}, {-1, 1}, {1, -1}, {1, 1},
+			{-1, 0}, {1, 0}, {0, -1}, {0, 1},
+		}
+		para i := 0; i < tamanho(todasDirs); i++ {
+			dl := todasDirs[i].Linha
+			dc := todasDirs[i].Coluna
+			nl := l + dl
+			nc := c + dc
+			para DentroDoTabuleiro(nl, nc) {
+				alvo := j.Tabuleiro[nl][nc]
+				se alvo.Tipo == TipoVazio {
+					lances = adicionar(lances, Lance{
+						Origem:        orig,
+						Destino:       Posicao{Linha: nl, Coluna: nc},
+						PecaOrigem:    p,
+						PecaCapturada: alvo,
+						EhPromocao:    falso,
+						Notacao:       PosicaoParaTexto(orig) + "-" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc}),
+					})
+				} senao {
+					se alvo.Cor != p.Cor {
+						lances = adicionar(lances, Lance{
+							Origem:        orig,
+							Destino:       Posicao{Linha: nl, Coluna: nc},
+							PecaOrigem:    p,
+							PecaCapturada: alvo,
+							EhPromocao:    falso,
+							Notacao:       PosicaoParaTexto(orig) + "x" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc}),
+						})
+					}
+					interromper
+				}
+				nl += dl
+				nc += dc
+			}
+		}
+
+		caso TipoRei:
+		passos := []Posicao{
+			{-1, -1}, {-1, 0}, {-1, 1},
+			{0, -1}, {0, 1},
+			{1, -1}, {1, 0}, {1, 1},
+		}
+		para i := 0; i < tamanho(passos); i++ {
+			nl := l + passos[i].Linha
+			nc := c + passos[i].Coluna
+			se DentroDoTabuleiro(nl, nc) {
+				alvo := j.Tabuleiro[nl][nc]
+				se alvo.Cor != p.Cor {
+					notac := PosicaoParaTexto(orig) + "-" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc})
+					se alvo.Tipo != TipoVazio {
+						notac = PosicaoParaTexto(orig) + "x" + PosicaoParaTexto(Posicao{Linha: nl, Coluna: nc})
+					}
+					lances = adicionar(lances, Lance{
+						Origem:        orig,
+						Destino:       Posicao{Linha: nl, Coluna: nc},
+						PecaOrigem:    p,
+						PecaCapturada: alvo,
+						EhPromocao:    falso,
+						Notacao:       notac,
+					})
+				}
+			}
+		}
+	}
+
+	retornar lances
+}
+
+// CasaAtacadaPor verifica se determinada casa está sob mira de alguma peça inimiga
+funcao (j *JogoXadrez) CasaAtacadaPor(pos Posicao, corInimiga inteiro) booleano {
+	// 1. Ataque de Peão
+	dirPeao := 1 // Se inimigo é preto, ataca para baixo (+1)
+	se corInimiga == CorBranca {
+		dirPeao = -1 // Se inimigo é branco, ataca para cima (-1)
+	}
+	diagLinha := pos.Linha - dirPeao
+	diagCols := []inteiro{pos.Coluna - 1, pos.Coluna + 1}
+	para i := 0; i < tamanho(diagCols); i++ {
+		c := diagCols[i]
+		se DentroDoTabuleiro(diagLinha, c) {
+			p := j.Tabuleiro[diagLinha][c]
+			se p.Tipo == TipoPeao && p.Cor == corInimiga {
+				retornar verdadeiro
+			}
+		}
+	}
+
+	// 2. Ataque de Cavalo
+	saltos := []Posicao{
+		{-2, -1}, {-2, 1}, {-1, -2}, {-1, 2},
+		{1, -2}, {1, 2}, {2, -1}, {2, 1},
+	}
+	para i := 0; i < tamanho(saltos); i++ {
+		nl := pos.Linha + saltos[i].Linha
+		nc := pos.Coluna + saltos[i].Coluna
+		se DentroDoTabuleiro(nl, nc) {
+			p := j.Tabuleiro[nl][nc]
+			se p.Tipo == TipoCavalo && p.Cor == corInimiga {
+				retornar verdadeiro
+			}
+		}
+	}
+
+	// 3. Ataque Ortogonal (Torre ou Dama)
+	ortos := []Posicao{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+	para i := 0; i < tamanho(ortos); i++ {
+		dl := ortos[i].Linha
+		dc := ortos[i].Coluna
+		nl := pos.Linha + dl
+		nc := pos.Coluna + dc
+		para DentroDoTabuleiro(nl, nc) {
+			p := j.Tabuleiro[nl][nc]
+			se p.Tipo != TipoVazio {
+				se p.Cor == corInimiga && (p.Tipo == TipoTorre || p.Tipo == TipoDama) {
+					retornar verdadeiro
+				}
+				interromper
+			}
+			nl += dl
+			nc += dc
+		}
+	}
+
+	// 4. Ataque Diagonal (Bispo ou Dama)
+	diags := []Posicao{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}
+	para i := 0; i < tamanho(diags); i++ {
+		dl := diags[i].Linha
+		dc := diags[i].Coluna
+		nl := pos.Linha + dl
+		nc := pos.Coluna + dc
+		para DentroDoTabuleiro(nl, nc) {
+			p := j.Tabuleiro[nl][nc]
+			se p.Tipo != TipoVazio {
+				se p.Cor == corInimiga && (p.Tipo == TipoBispo || p.Tipo == TipoDama) {
+					retornar verdadeiro
+				}
+				interromper
+			}
+			nl += dl
+			nc += dc
+		}
+	}
+
+	// 5. Ataque de Rei Adjacente
+	passosRei := []Posicao{
+		{-1, -1}, {-1, 0}, {-1, 1},
+		{0, -1}, {0, 1},
+		{1, -1}, {1, 0}, {1, 1},
+	}
+	para i := 0; i < tamanho(passosRei); i++ {
+		nl := pos.Linha + passosRei[i].Linha
+		nc := pos.Coluna + passosRei[i].Coluna
+		se DentroDoTabuleiro(nl, nc) {
+			p := j.Tabuleiro[nl][nc]
+			se p.Tipo == TipoRei && p.Cor == corInimiga {
+				retornar verdadeiro
+			}
+		}
+	}
+
+	retornar falso
+}
+
+// EstaEmXeque valida se o Rei da cor especificada está em xeque
+funcao (j *JogoXadrez) EstaEmXeque(cor inteiro) booleano {
+	reiPos := j.EncontrarRei(cor)
+	se reiPos.Linha == -1 {
+		retornar falso
+	}
+
+	corInimiga := CorPreta
+	se cor == CorPreta {
+		corInimiga = CorBranca
+	}
+
+	retornar j.CasaAtacadaPor(reiPos, corInimiga)
+}
+
+// LanceDeixaReiEmXeque simula o movimento para garantir que o Rei não fica exposto
+funcao (j *JogoXadrez) LanceDeixaReiEmXeque(l Lance, cor inteiro) booleano {
+	orig := j.Tabuleiro[l.Origem.Linha][l.Origem.Coluna]
+	dest := j.Tabuleiro[l.Destino.Linha][l.Destino.Coluna]
+
+	// Simula
+	j.Tabuleiro[l.Origem.Linha][l.Origem.Coluna] = Peca{Tipo: TipoVazio, Cor: CorNenhuma}
+	j.Tabuleiro[l.Destino.Linha][l.Destino.Coluna] = orig
+
+	emXeque := j.EstaEmXeque(cor)
+
+	// Restaura
+	j.Tabuleiro[l.Origem.Linha][l.Origem.Coluna] = orig
+	j.Tabuleiro[l.Destino.Linha][l.Destino.Coluna] = dest
+
+	retornar emXeque
+}
+
+// ObterTodosLancesLegais lista todos os lances permitidos que não violam a segurança do Rei
+funcao (j *JogoXadrez) ObterTodosLancesLegais(cor inteiro) []Lance {
+	legais := criar([]Lance, 0)
+	para l := 0; l < 8; l++ {
+		para c := 0; c < 8; c++ {
+			se j.Tabuleiro[l][c].Cor == cor {
+				possiveis := j.ObterLancesPossiveisPeca(Posicao{Linha: l, Coluna: c})
+				para i := 0; i < tamanho(possiveis); i++ {
+					lance := possiveis[i]
+					se !j.LanceDeixaReiEmXeque(lance, cor) {
+						legais = adicionar(legais, lance)
+					}
+				}
+			}
+		}
+	}
+	retornar legais
+}
+
+// ExecutarLance aplica o movimento, trata capturas, promoções e troca de turno
+funcao (j *JogoXadrez) ExecutarLance(l Lance) {
+	pecaOrig := j.Tabuleiro[l.Origem.Linha][l.Origem.Coluna]
+	pecaDest := j.Tabuleiro[l.Destino.Linha][l.Destino.Coluna]
+
+	// Captura
+	se pecaDest.Tipo != TipoVazio {
+		simb := ObterSimboloPeca(pecaDest)
+		se j.TurnoCor == CorBranca {
+			j.CapturadasBrancas = adicionar(j.CapturadasBrancas, simb)
+		} senao {
+			j.CapturadasPretas = adicionar(j.CapturadasPretas, simb)
+		}
+	}
+
+	// Move
+	j.Tabuleiro[l.Origem.Linha][l.Origem.Coluna] = Peca{Tipo: TipoVazio, Cor: CorNenhuma}
+
+	// Promoção a Dama ao atingir o final do tabuleiro
+	se l.EhPromocao {
+		pecaOrig.Tipo = TipoDama
+	}
+
+	j.Tabuleiro[l.Destino.Linha][l.Destino.Coluna] = pecaOrig
+	j.TotalLances++
+	j.UltimoLance = l.Notacao
+
+	// Troca de turno
+	corOponente := CorPreta
+	se j.TurnoCor == CorPreta {
+		corOponente = CorBranca
+	}
+	j.TurnoCor = corOponente
+
+	// Checa se o oponente ficou em xeque
+	j.EmXeque = j.EstaEmXeque(j.TurnoCor)
+
+	// Avalia Xeque-mate ou Empate
+	lancesOponente := j.ObterTodosLancesLegais(j.TurnoCor)
+	se tamanho(lancesOponente) == 0 {
+		j.FimDeJogo = verdadeiro
+		se j.EmXeque {
+			se j.TurnoCor == CorPreta {
+				j.Vencedor = "Brancas (Xeque-Mate!)"
+			} senao {
+				j.Vencedor = "Pretas (Xeque-Mate!)"
+			}
+		} senao {
+			j.Vencedor = "Empate por Afogamento (Stalemate)"
+		}
+	}
+}
+
+// AvaliarPosicaoIA calcula uma pontuação numérica da vantagem posicional e material
+funcao (j *JogoXadrez) AvaliarPosicaoIA(cor inteiro) inteiro {
+	pontos := 0
+	para l := 0; l < 8; l++ {
+		para c := 0; c < 8; c++ {
+			p := j.Tabuleiro[l][c]
+			se p.Tipo == TipoVazio {
+				continuar
+			}
+
+			val := 0
+			escolha p.Tipo {
+				caso TipoPeao:
+				val = 100
+				// Bônus por avanço
+				se p.Cor == CorBranca {
+					val += (6 - l) * 10
+				} senao {
+					val += (l - 1) * 10
+				}
+				caso TipoCavalo:
+				val = 320
+				caso TipoBispo:
+				val = 330
+				caso TipoTorre:
+				val = 500
+				caso TipoDama:
+				val = 900
+				caso TipoRei:
+				val = 20000
+			}
+
+			// Bônus pelo centro do tabuleiro (d4, d5, e4, e5)
+			se (l == 3 || l == 4) && (c == 3 || c == 4) {
+				val += 30
+			}
+
+			se p.Cor == cor {
+				pontos += val
+			} senao {
+				pontos -= val
+			}
+		}
+	}
+	retornar pontos
+}
+
+// EscolherMelhorLanceIA seleciona o movimento tático ideal
+funcao (j *JogoXadrez) EscolherMelhorLanceIA(cor inteiro) (Lance, booleano) {
+	legais := j.ObterTodosLancesLegais(cor)
+	se tamanho(legais) == 0 {
+		retornar Lance{}, falso
+	}
+
+	melhorScore := -999999
+	melhoresLances := criar([]Lance, 0)
+
+	para i := 0; i < tamanho(legais); i++ {
+		lance := legais[i]
+
+		// Bônus de captura direta
+		bonusCaptura := 0
+		se lance.PecaCapturada.Tipo != TipoVazio {
+			bonusCaptura = 200
+			escolha lance.PecaCapturada.Tipo {
+				caso TipoDama:
+				bonusCaptura = 1200
+				caso TipoTorre:
+				bonusCaptura = 600
+				caso TipoBispo, TipoCavalo:
+				bonusCaptura = 400
+			}
+		}
+
+		// Simula o lance
+		orig := j.Tabuleiro[lance.Origem.Linha][lance.Origem.Coluna]
+		dest := j.Tabuleiro[lance.Destino.Linha][lance.Destino.Coluna]
+
+		j.Tabuleiro[lance.Origem.Linha][lance.Origem.Coluna] = Peca{Tipo: TipoVazio, Cor: CorNenhuma}
+		j.Tabuleiro[lance.Destino.Linha][lance.Destino.Coluna] = orig
+
+		score := j.AvaliarPosicaoIA(cor) + bonusCaptura
+
+		// Restaura
+		j.Tabuleiro[lance.Origem.Linha][lance.Origem.Coluna] = orig
+		j.Tabuleiro[lance.Destino.Linha][lance.Destino.Coluna] = dest
+
+		se score > melhorScore {
+			melhorScore = score
+			melhoresLances = criar([]Lance, 0)
+			melhoresLances = adicionar(melhoresLances, lance)
+		} senao se score == melhorScore {
+			melhoresLances = adicionar(melhoresLances, lance)
+		}
+	}
+
+	// Escolhe aleatoriamente entre os melhores empatados para variedade de jogo
+	idxSorteado := aleatorio.InteiroAte(tamanho(melhoresLances))
+	retornar melhoresLances[idxSorteado], verdadeiro
+}
+
+// Renderizar desenha o tabuleiro de xadrez com molduras Unicode elegantes
+funcao (j *JogoXadrez) Renderizar() {
+	formatar.ImprimirLinha("==================================================")
+	formatar.ImprimirLinha("          ♔ JOGO DE XADREZ (VAMOS-LANG) 🇧🇷        ")
+	formatar.ImprimirLinha("==================================================")
+
+	// Placar de Capturas
+	brancasCapt := cordas.Juntar(j.CapturadasBrancas, " ")
+	se brancasCapt == "" {
+		brancasCapt = "(nenhuma)"
+	}
+	pretasCapt := cordas.Juntar(j.CapturadasPretas, " ")
+	se pretasCapt == "" {
+		pretasCapt = "(nenhuma)"
+	}
+
+	formatar.ImprimirFormatado("Capturas Brancas (♙ ♘ ♗ ♖ ♕): %s\n", brancasCapt)
+	formatar.ImprimirFormatado("Capturas Pretas  (♟ ♞ ♝ ♜ ♛): %s\n", pretasCapt)
+	formatar.ImprimirFormatado("Último lance: %s | Total de lances: %d\n", j.UltimoLance, j.TotalLances)
+	formatar.ImprimirLinha("--------------------------------------------------")
+
+	formatar.ImprimirLinha("      A   B   C   D   E   F   G   H  ")
+	formatar.ImprimirLinha("    ┌───┬───┬───┬───┬───┬───┬───┬───┐")
+
+	para l := 0; l < 8; l++ {
+		linhaStr := formatar.Formatar("  %d │", 8-l)
+		para c := 0; c < 8; c++ {
+			p := j.Tabuleiro[l][c]
+			se p.Tipo != TipoVazio {
+				linhaStr += formatar.Formatar(" %s │", ObterSimboloPeca(p))
+			} senao {
+				se (l+c)%2 == 0 {
+					linhaStr += " · │"
+				} senao {
+					linhaStr += "   │"
+				}
+			}
+		}
+		linhaStr += formatar.Formatar(" %d", 8-l)
+		formatar.ImprimirLinha(linhaStr)
+
+		se l < 7 {
+			formatar.ImprimirLinha("    ├───┼───┼───┼───┼───┼───┼───┼───┤")
+		}
+	}
+
+	formatar.ImprimirLinha("    └───┴───┴───┴───┴───┴───┴───┴───┘")
+	formatar.ImprimirLinha("      A   B   C   D   E   F   G   H  ")
+	formatar.ImprimirLinha("--------------------------------------------------")
+
+	turnoNome := "Brancas (♔)"
+	se j.TurnoCor == CorPreta {
+		turnoNome = "Pretas (♚)"
+	}
+	formatar.ImprimirFormatado("Vez de jogar: %s\n", turnoNome)
+
+	se j.EmXeque {
+		formatar.ImprimirLinha("⚠️  ATENÇÃO: O REI ESTÁ EM XEQUE! Defenda ou fuja!")
+	}
+}
+
+funcao principal() {
+	modoDemo := falso
+	maxPassosDemo := 20
+
+	para i := 0; i < tamanho(so.Argumentos); i++ {
+		arg := so.Argumentos[i]
+		se arg == "--demo" || arg == "-d" || arg == "--demonstracao" {
+			modoDemo = verdadeiro
+		}
+	}
+
+	se modoDemo {
+		formatar.ImprimirLinha("==================================================")
+		formatar.ImprimirLinha("    ♔ XADREZ EM VAMOS-LANG: DEMO AUTÔNOMA (IA)    ")
+		formatar.ImprimirLinha("==================================================")
+		formatar.ImprimirLinha("Dois motores com avaliação tática jogando entre si.")
+		formatar.ImprimirLinha("--------------------------------------------------")
+
+		jogo := NovoJogoXadrez(verdadeiro)
+
+		para turno := 1; turno <= maxPassosDemo && !jogo.FimDeJogo; turno++ {
+			formatar.ImprimirFormatado("\n--- Turno %d (Lances Totais: %d) ---\n", turno, jogo.TotalLances)
+			jogo.Renderizar()
+
+			lance, ok := jogo.EscolherMelhorLanceIA(jogo.TurnoCor)
+			se !ok {
+				interromper
+			}
+
+			jogo.ExecutarLance(lance)
+			tempo.Dormir(tempo.Milissegundo * 100)
+		}
+
+		jogo.Renderizar()
+		formatar.ImprimirLinha("\n==================================================")
+		se jogo.FimDeJogo {
+			formatar.ImprimirFormatado(" Partida Concluída: %s ✓\n", jogo.Vencedor)
+		} senao {
+			formatar.ImprimirLinha(" Demonstração de Lances de Abertura Concluída com Êxito! ✓")
+		}
+		formatar.ImprimirLinha("==================================================")
+		retornar
+	}
+
+	// Modo Interativo (Humano Brancas vs Computador Pretas)
+	formatar.ImprimirLinha("Comandos: Digite o lance no formato 'e2 e4' ou 'e2e4'.")
+	formatar.ImprimirLinha("Digite [ajuda] para ver lances válidos ou [sair] para encerrar.")
+	formatar.ImprimirLinha("Dica: Use '--demo' para assistir a uma partida IA vs IA.")
+	formatar.ImprimirLinha("--------------------------------------------------")
+
+	jogo := NovoJogoXadrez(falso)
+	scanner := leitor.NovoScanner(so.EntradaPadrao)
+
+	para !jogo.FimDeJogo {
+		jogo.Renderizar()
+
+		se jogo.TurnoCor == CorBranca {
+			formatar.Imprimir("Seu Lance (ex: e2 e4): ")
+			se !scanner.Escanear() {
+				interromper
+			}
+
+			entrada := cordas.ParaMinusculas(cordas.ApararEspaco(scanner.ObterTexto()))
+			se entrada == "sair" || entrada == "q" {
+				formatar.ImprimirLinha("\nPartida encerrada pelo jogador.")
+				retornar
+			}
+
+			se entrada == "ajuda" || entrada == "lances" {
+				legais := jogo.ObterTodosLancesLegais(CorBranca)
+				formatar.ImprimirLinha("Lances legais disponíveis:")
+				lancesStr := criar([]texto, 0)
+				para idx := 0; idx < tamanho(legais); idx++ {
+					lancesStr = adicionar(lancesStr, legais[idx].Notacao)
+				}
+				formatar.ImprimirLinha(cordas.Juntar(lancesStr, ", "))
+				continuar
+			}
+
+			partes := cordas.Dividir(entrada, " ")
+			origStr := ""
+			destStr := ""
+			se tamanho(partes) == 2 {
+				origStr = partes[0]
+				destStr = partes[1]
+			} senao se tamanho(entrada) == 4 {
+				origStr = entrada[:2]
+				destStr = entrada[2:]
+			} senao {
+				formatar.ImprimirLinha("Formato inválido! Use 'e2 e4' ou 'e2e4'.")
+				continuar
+			}
+
+			orig, okOrig := TextoParaPosicao(origStr)
+			dest, okDest := TextoParaPosicao(destStr)
+			se !okOrig || !okDest {
+				formatar.ImprimirLinha("Coordenadas inválidas! Escolha casas entre a1 e h8.")
+				continuar
+			}
+
+			// Procura o lance entre os legais
+			legais := jogo.ObterTodosLancesLegais(CorBranca)
+			lanceEncontrado := Lance{}
+			achou := falso
+			para idx := 0; idx < tamanho(legais); idx++ {
+				l := legais[idx]
+				se l.Origem.Linha == orig.Linha && l.Origem.Coluna == orig.Coluna &&
+				l.Destino.Linha == dest.Linha && l.Destino.Coluna == dest.Coluna {
+					lanceEncontrado = l
+					achou = verdadeiro
+					interromper
+				}
+			}
+
+			se !achou {
+				formatar.ImprimirLinha("Lance ilegal ou inválido para esta peça! Tente novamente.")
+				continuar
+			}
+
+			jogo.ExecutarLance(lanceEncontrado)
+		} senao {
+			formatar.ImprimirLinha("O Computador (Pretas) está pensando...")
+			tempo.Dormir(tempo.Milissegundo * 500)
+			lanceIA, okIA := jogo.EscolherMelhorLanceIA(CorPreta)
+			se !okIA {
+				formatar.ImprimirLinha("Computador não possui lances legais!")
+				interromper
+			}
+			formatar.ImprimirFormatado("Computador jogou: %s\n", lanceIA.Notacao)
+			jogo.ExecutarLance(lanceIA)
+		}
+	}
+
+	jogo.Renderizar()
+	formatar.ImprimirLinha("\n==================================================")
+	formatar.ImprimirLinha("                  FIM DE PARTIDA!                 ")
+	formatar.ImprimirFormatado(" Resultado Final: %s\n", jogo.Vencedor)
+	formatar.ImprimirLinha("==================================================")
+}

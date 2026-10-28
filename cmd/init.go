@@ -56,7 +56,7 @@ func RunInit(args []string) int {
 	fmt.Printf("==> Criando novo projeto VAMOS-LANG: %s [Modelo: %s]\n", modName, template)
 
 	// go.mod
-	goModContent := fmt.Sprintf("module %s\n\ngo 1.20\n", modName)
+	goModContent := fmt.Sprintf("module %s\n\ngo 1.22\n", modName)
 	_ = os.MkdirAll(projectDir, 0755)
 	_ = os.WriteFile(filepath.Join(projectDir, "go.mod"), []byte(goModContent), 0644)
 
@@ -80,7 +80,8 @@ func RunInit(args []string) int {
 	if projectDir != "." {
 		fmt.Printf("  cd %s\n", projectDir)
 	}
-	fmt.Printf("  vamos run cmd/principal.vamos\n\n")
+	fmt.Printf("  vamos run cmd/principal.vamos\n")
+	fmt.Printf("  vamos test\n\n")
 	return 0
 }
 
@@ -116,6 +117,20 @@ funcao Somar(a inteiro, b inteiro) inteiro {
 }
 `
 	_ = os.WriteFile(filepath.Join(projectDir, "pacotes", "calculos", "calculos.vamos"), []byte(calcContent), 0644)
+
+	calcTestContent := `// Teste unitário nativo em VAMOS-LANG
+pacote calculos
+
+importar "teste"
+
+funcao TesteSomar(t *teste.T) {
+	resultado := Somar(2, 3)
+	se resultado != 5 {
+		t.ErroFormatado("esperado 5, obtido %d", resultado)
+	}
+}
+`
+	_ = os.WriteFile(filepath.Join(projectDir, "pacotes", "calculos", "calculos_teste.vamos"), []byte(calcTestContent), 0644)
 }
 
 func criarTemplateAPI(projectDir, modName string) {

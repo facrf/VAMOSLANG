@@ -58,7 +58,7 @@ funcao OtimizarBytecode(prog *ProgramaBytecode) *EstatisticasOtimizacao {
 				// Verifica se as instruções seguintes não são destinos de saltos externos
 				se !alvosSalto[i+1] && !alvosSalto[i+2] {
 					op := prog.Instrucoes[i+2].Opcode
-					se op == OpSomar || op == OpSubtrair || op == OpMultiplicar || op == OpDividir {
+					se op == OpSomar || op == OpSubtrair || op == OpMultiplicar || op == OpDividir || op == OpModulo {
 						arg1 := prog.Instrucoes[i].Argumento
 						arg2 := prog.Instrucoes[i+1].Argumento
 
@@ -82,6 +82,12 @@ funcao OtimizarBytecode(prog *ProgramaBytecode) *EstatisticasOtimizacao {
 								} senao se op == OpDividir {
 									se num2 != 0 {
 										resultado = num1 / num2
+									} senao {
+										podeDobrar = falso
+									}
+								} senao se op == OpModulo {
+									se num2 != 0 {
+										resultado = num1 % num2
 									} senao {
 										podeDobrar = falso
 									}

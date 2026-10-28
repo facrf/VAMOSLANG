@@ -18,8 +18,10 @@ func RunGet(args []string) int {
 	pkg := args[0]
 	fmt.Printf("==> Baixando e instalando pacote externo: %s\n", pkg)
 
+	projectRoot := FindProjectRoot(".")
 	cmdArgs := append([]string{"get"}, args...)
 	cmd := exec.Command("go", cmdArgs...)
+	cmd.Dir = projectRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -29,7 +31,9 @@ func RunGet(args []string) int {
 	}
 
 	// Executa go mod tidy para organizar go.mod e go.sum
-	_ = exec.Command("go", "mod", "tidy").Run()
+	tidyCmd := exec.Command("go", "mod", "tidy")
+	tidyCmd.Dir = projectRoot
+	_ = tidyCmd.Run()
 
 	fmt.Printf("✓ Pacote '%s' instalado e registrado com sucesso!\n", pkg)
 	return 0

@@ -43,6 +43,7 @@ constante (
 	OpObterIndice    inteiro = 27 // Obtém elemento da lista pelo índice (lista[i])
 	OpDefinirIndice  inteiro = 28 // Atualiza elemento da lista pelo índice (lista[i] = val)
 	OpCriarMapa      inteiro = 29 // Cria um mapa ou estrutura com N pares chave/valor
+	OpModulo         inteiro = 30 // Resto da divisão (%)
 )
 
 // ObterNomeOpcode retorna o mnemônico de uma instrução em texto
@@ -66,6 +67,8 @@ funcao ObterNomeOpcode(op inteiro) texto {
 		retornar "MULTIPLICAR"
 	caso OpDividir:
 		retornar "DIVIDIR"
+	caso OpModulo:
+		retornar "MODULO"
 	caso OpIgual:
 		retornar "IGUAL"
 	caso OpDiferente:

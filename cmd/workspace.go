@@ -42,8 +42,34 @@ func FindProjectRoot(srcPath string) string {
 	return dir
 }
 
+// GetDirMainCount retorna a quantidade de pontos de entrada (funcao/func main) em um diretório.
+func GetDirMainCount(dir string) int {
+	count := 0
+	entries, err := os.ReadDir(dir)
+	if err == nil {
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			name := e.Name()
+			fullPath := filepath.Join(dir, name)
+			if strings.HasSuffix(name, ".vamos") {
+				if fileContainsMain(fullPath, true) {
+					count++
+				}
+			} else if strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go") {
+				if fileContainsMain(fullPath, false) {
+					count++
+				}
+			}
+		}
+	}
+	return count
+}
+
 // PrepareWorkspace transcreve e prepara todo o workspace para execução ou compilação com suporte completo a Go modules.
-func PrepareWorkspace(rootDir string) (string, func(), error) {
+// Permite especificar opcionalmente arquivos alvos específicos para evitar colisões de pacotes com múltiplos executáveis (funcao principal).
+func PrepareWorkspace(rootDir string, targetFiles ...string) (string, func(), error) {
 	tempDir, err := os.MkdirTemp("", "vamos_workspace_*")
 	if err != nil {
 		return "", nil, fmt.Errorf("falha ao criar diretório temporário: %w", err)
@@ -51,6 +77,27 @@ func PrepareWorkspace(rootDir string) (string, func(), error) {
 
 	cleanup := func() {
 		_ = os.RemoveAll(tempDir)
+	}
+
+	normalizedTargets := make(map[string]bool)
+	for _, tf := range targetFiles {
+		if abs, err := filepath.Abs(tf); err == nil {
+			normalizedTargets[abs] = true
+		} else {
+			normalizedTargets[tf] = true
+		}
+	}
+
+	// Cache para contagem de arquivos com main() por diretório
+	dirMainCounts := make(map[string]int)
+
+	getDirMainCount := func(dir string) int {
+		if count, ok := dirMainCounts[dir]; ok {
+			return count
+		}
+		count := GetDirMainCount(dir)
+		dirMainCounts[dir] = count
+		return count
 	}
 
 	hasGoMod := false
@@ -81,17 +128,49 @@ func PrepareWorkspace(rootDir string) (string, func(), error) {
 				return fmt.Errorf("erro ao ler '%s': %w", path, err)
 			}
 
-			goCode, err := transpiler.TranspileSource(string(content))
-			if err != nil {
-				return fmt.Errorf("erro ao transpilar '%s': %w", path, err)
+			// Sempre copia o arquivo .vamos original para que ferramentas/testes que esperam arquivos .vamos o encontrem
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+				return err
 			}
-
-			goTargetPath := strings.TrimSuffix(targetPath, ".vamos") + ".go"
-			if err := os.MkdirAll(filepath.Dir(goTargetPath), 0755); err != nil {
+			if err := os.WriteFile(targetPath, content, 0644); err != nil {
 				return err
 			}
 
-			return os.WriteFile(goTargetPath, []byte(goCode), 0644)
+			// Decide se deve transpilar este .vamos para .go
+			dir := filepath.Dir(path)
+			mainCount := getDirMainCount(dir)
+			isTestFile := strings.HasSuffix(path, "_teste.vamos")
+
+			shouldTranspile := true
+			if mainCount > 1 && !isTestFile {
+				// Diretório contém múltiplos programas independentes (ex: exemplos, jogos, ou teste.vamos junto ao main.go)
+				absPath, _ := filepath.Abs(path)
+				if len(normalizedTargets) > 0 {
+					shouldTranspile = normalizedTargets[absPath] || normalizedTargets[path]
+				} else {
+					shouldTranspile = false
+				}
+			}
+
+			if shouldTranspile {
+				goCode, err := transpiler.TranspileSource(string(content))
+				if err != nil {
+					return fmt.Errorf("erro ao transpilar '%s': %w", path, err)
+				}
+
+				goTargetPath := strings.TrimSuffix(targetPath, ".vamos") + ".go"
+				if isTestFile {
+					goTargetPath = strings.TrimSuffix(targetPath, "_teste.vamos") + "_test.go"
+				}
+				if err := os.MkdirAll(filepath.Dir(goTargetPath), 0755); err != nil {
+					return err
+				}
+				if err := os.WriteFile(goTargetPath, []byte(goCode), 0644); err != nil {
+					return err
+				}
+			}
+
+			return nil
 		}
 
 		if d.Name() == "go.mod" {
@@ -111,29 +190,50 @@ func PrepareWorkspace(rootDir string) (string, func(), error) {
 	}
 
 	if !hasGoMod {
-		modContent := "module app\n\ngo 1.20\n"
+		modContent := "module app\n\ngo 1.22\n"
 		_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(modContent), 0644)
 	}
 
 	return tempDir, cleanup, nil
 }
 
-// CopyFile copia um arquivo de origem para o destino.
+// fileContainsMain verifica se um arquivo contém uma declaração de ponto de entrada 'main'
+func fileContainsMain(path string, isVamos bool) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	content := string(data)
+	if isVamos {
+		return strings.Contains(content, "funcao principal(") || strings.Contains(content, "funcao principal ()")
+	}
+	return strings.Contains(content, "func main(") || strings.Contains(content, "func main ()")
+}
+
+// CopyFile copia um arquivo de origem para o destino preservando permissões.
 func CopyFile(src, dst string) error {
+	si, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
 	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
 
-	out, err := os.Create(dst)
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, si.Mode())
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, in)
-	return err
+	if _, err = io.Copy(out, in); err != nil {
+		return err
+	}
+
+	return os.Chmod(dst, si.Mode())
 }
 
 // TranslateCompilerMessages traduz mensagens técnicas do compilador e de execução (panic) do Go para Português amigável.
@@ -163,7 +263,9 @@ func RewriteErrors(output, tempDir, rootDir string) string {
 	res = strings.ReplaceAll(res, tempDir, "")
 	lines := strings.Split(res, "\n")
 	for i, line := range lines {
-		if strings.Contains(line, ".go:") {
+		if strings.Contains(line, "_test.go:") {
+			lines[i] = strings.Replace(line, "_test.go:", "_teste.vamos:", 1)
+		} else if strings.Contains(line, ".go:") {
 			lines[i] = strings.Replace(line, ".go:", ".vamos:", 1)
 		}
 	}
@@ -179,7 +281,9 @@ func RewriteFileErrors(output, tempPath, originalPath string) string {
 	res = strings.ReplaceAll(res, base, filepath.Base(originalPath))
 	lines := strings.Split(res, "\n")
 	for i, line := range lines {
-		if strings.Contains(line, ".go:") {
+		if strings.Contains(line, "_test.go:") {
+			lines[i] = strings.Replace(line, "_test.go:", "_teste.vamos:", 1)
+		} else if strings.Contains(line, ".go:") {
 			lines[i] = strings.Replace(line, ".go:", ".vamos:", 1)
 		}
 	}

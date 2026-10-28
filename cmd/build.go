@@ -81,7 +81,7 @@ func RunBuild(args []string) int {
 
 		// Se tiver módulos locais, compila no workspace
 		if hasOtherVamosFiles {
-			tempDir, cleanup, err := PrepareWorkspace(projectRoot)
+			tempDir, cleanup, err := PrepareWorkspace(projectRoot, absSrcPath)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Erro ao preparar workspace: %v\n", err)
 				return 1
@@ -97,17 +97,20 @@ func RunBuild(args []string) int {
 			buildTarget := goEntryRelPath
 			entryDir := filepath.Dir(goEntryRelPath)
 			if entryDir != "." {
-				matches, _ := filepath.Glob(filepath.Join(tempDir, entryDir, "*.go"))
-				if len(matches) > 1 {
-					mainCount := 0
-					for _, m := range matches {
-						data, err := os.ReadFile(m)
-						if err == nil && strings.Contains(string(data), "func main(") {
-							mainCount++
+				srcEntryDir := filepath.Join(projectRoot, entryDir)
+				if GetDirMainCount(srcEntryDir) <= 1 {
+					matches, _ := filepath.Glob(filepath.Join(tempDir, entryDir, "*.go"))
+					if len(matches) > 1 {
+						mainCount := 0
+						for _, m := range matches {
+							data, err := os.ReadFile(m)
+							if err == nil && strings.Contains(string(data), "func main(") {
+								mainCount++
+							}
 						}
-					}
-					if mainCount <= 1 {
-						buildTarget = "./" + filepath.ToSlash(entryDir)
+						if mainCount <= 1 {
+							buildTarget = "./" + filepath.ToSlash(entryDir)
+						}
 					}
 				}
 			}

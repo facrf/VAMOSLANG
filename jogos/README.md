@@ -16,6 +16,7 @@ Estes jogos servem como demonstração prática e didática do poder, expressivi
 1. [🐍 Jogo da Cobrinha (`cobrinha.vamos`)](#-1-jogo-da-cobrinha-cobrinhavamos)
 2. [👾 Pacman / Come-Come (`pacman.vamos`)](#-2-pacman--come-come-pacmanvamos)
 3. [🏁 Jogo de Damas (`damas.vamos`)](#-3-jogo-de-damas-damasvamos)
+4. [♔ Jogo de Xadrez (`xadrez.vamos`)](#-4-jogo-de-xadrez-xadrezvamos)
 
 ---
 
@@ -42,7 +43,8 @@ O clássico jogo onde o jogador controla uma serpente que cresce a cada alimento
 **Legenda do Tabuleiro:**
 - `◉` Cabeça da cobrinha
 - `○` Segmentos do corpo
-- `★` Alimento / Fruta (+10 pontos)
+- `★` Maçã comum (+10 pontos)
+- `✪` Fruta dourada especial bônus (+50 pontos temporários)
 
 ---
 
@@ -109,6 +111,38 @@ O tradicional jogo de estratégia em tabuleiro oficial 8x8. O jogador comanda as
 
 ---
 
+## ♔ 4. Jogo de Xadrez (`xadrez.vamos`)
+
+Arquivo: [`jogos/xadrez.vamos`](file:///storage/www/projetos/VAMOSLANG/jogos/xadrez.vamos)
+
+O mais clássico jogo de estratégia do mundo, implementado com as regras oficiais da FIDE e notação algébrica.
+
+### 🌟 Destaques de Implementação:
+- **Peças e Movimentação Oficial**:
+  - `♙`/`♟` Peões (passo simples, avanço duplo inicial de 2 casas, captura diagonal e promoção automática à Dama ao atingir a 8ª fileira).
+  - `♘`/`♞` Cavalos (salto em "L" ultrapassando peças intervenientes).
+  - `♗`/`♝` Bispos (diagonais livres).
+  - `♖`/`♜` Torres (linhas e colunas livres).
+  - `♕`/`♛` Damas (mobilidade combinada ortogonal e diagonal).
+  - `♔`/`♚` Reis (passo unitário multidirecional).
+- **Segurança do Rei e Xeque**:
+  - Detecção rigorosa de Xeque (`EstaEmXeque`).
+  - Filtragem de lances ilegais (`LanceDeixaReiEmXeque`) que exporiam o próprio Rei a ataque.
+  - Reconhecimento automático de Xeque-Mate e Empate por Afogamento (*Stalemate*).
+- **Notação Algébrica**: Entrada amigável aceitando formatos como `e2 e4` ou `e2e4`.
+- **Inteligência Artificial Heurística**: Motor com avaliação de valor material, controle estratégico do centro e priorização de capturas.
+
+### 🎮 Como Jogar:
+```bash
+# Modo Interativo (Humano Brancas vs Computador Pretas):
+./vamos run jogos/xadrez.vamos
+
+# Modo Demonstração (Duelo entre duas IAs táticas):
+./vamos run jogos/xadrez.vamos --demo
+```
+
+---
+
 ## 🔨 Compilando os Jogos para Binários Nativos
 
 Você pode compilar qualquer um dos jogos diretamente para um binário executável independente:
@@ -125,6 +159,10 @@ Você pode compilar qualquer um dos jogos diretamente para um binário executáv
 # Compilar Damas
 ./vamos build -o damas jogos/damas.vamos
 ./damas --demo
+
+# Compilar Xadrez
+./vamos build -o xadrez jogos/xadrez.vamos
+./xadrez --demo
 ```
 
 ---

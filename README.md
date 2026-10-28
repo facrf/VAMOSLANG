@@ -19,7 +19,7 @@ O ecossistema VAMOS-LANG inclui:
 - **Extensão Oficial para VS Code**: Realce de sintaxe oficial e snippets inteligentes.
 - **Formatador Oficial de Código (`vamos fmt`)**: Padronização automática de código `.vamos`.
 - **Linter Estático & Validador de Sintaxe (`vamos lint --strict`)**: Validação de convenções e diagnóstico sintático baseado no Go AST.
-- **Language Server Protocol Nativo (`vamos lsp`)**: Suporte a autocompletar inteligente, hover com documentação, formatação e diagnósticos em tempo real no VS Code/Cursor.
+- **Language Server Protocol Nativo (`vamos lsp`)**: Suporte a autocompletar inteligente, hover com documentação, formatação, Go to Definition (`textDocument/definition`), Outline View de símbolos do documento (`textDocument/documentSymbol`) e diagnósticos em tempo real no VS Code/Cursor.
 - **Gerenciador de Dependências Externas (`vamos get`)**: Instalação e resolução de pacotes de terceiros.
 - **Conversor Bidirecional (`vamos go2vamos`)**: Converte código Go nativo para VAMOS-LANG.
 - **REPL Interativo (`vamos repl`)**: Shell de linha de comando para testar expressões instantaneamente.
@@ -185,10 +185,44 @@ Acesse em: `http://localhost:8080`
 | `texto_util.Dividir(...)` | *Pacote Nativo* | `partes := texto_util.Dividir("A,B,C", ",")` |
 | `texto_util.Juntar(...)` | *Pacote Nativo* | `txt := texto_util.Juntar(partes, " - ")` |
 | `texto_util.Inverter(...)` | *Pacote Nativo* | `rev := texto_util.Inverter("VAMOS")` |
+| `teste` (Suíte Nativa de Testes) | `testing` | `importar "teste"; funcao TesteSoma(t *teste.T) { t.ErroFormatado("falhou") }` |
 
 ---
 
-### 4. Tipos Genéricos (Generics) em VAMOS-LANG
+### 4. Testes Unitários Nativos (`vamos test`)
+
+O VAMOS-LANG permite escrever testes unitários em código 100% nativo em arquivos com o sufixo `_teste.vamos`:
+
+```vamos
+// calculadora_teste.vamos
+pacote calculadora
+
+importar (
+	"teste"
+)
+
+funcao TesteSoma(t *teste.T) {
+	resultado := Somar(2, 3)
+	se resultado != 5 {
+		t.ErroFormatado("esperado 5, obtido %d", resultado)
+	}
+	se falso {
+		t.Falhar()
+	}
+	t.Registrar("Teste de soma concluído com sucesso")
+}
+```
+
+Para rodar todos os testes do projeto recursivamente:
+```bash
+./vamos test
+# ou com saída detalhada:
+./vamos test -v
+```
+
+---
+
+### 5. Tipos Genéricos (Generics) em VAMOS-LANG
 
 O VAMOS-LANG suporta parametrização de tipos completa com `qualquer` (`any`), `comparavel` (`comparable`) e uniões de tipos com aproximação (`~`):
 

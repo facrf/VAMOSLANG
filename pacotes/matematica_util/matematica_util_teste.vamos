@@ -1,0 +1,45 @@
+// Teste unitário nativo em VAMOS-LANG para o pacote matematica_util
+pacote matematica_util
+
+importar (
+	"teste"
+)
+
+// TesteMatematicaUtilNative valida as operações matemáticas usando a suíte nativa VAMOS
+funcao TesteMatematicaUtilNative(t *teste.T) {
+	se Absoluto(-100) != 100 || Absoluto(100) != 100 {
+		t.ErroFormatado("Absoluto falhou")
+	}
+
+	se Maximo(50, 80) != 80 || Minimo(50, 80) != 50 {
+		t.ErroFormatado("Maximo/Minimo falhou")
+	}
+
+	se Potencia(3, 4) != 81 {
+		t.ErroFormatado("Potencia(3, 4) esperada 81, obteve %d", Potencia(3, 4))
+	}
+
+	se Fatorial(6) != 720 {
+		t.ErroFormatado("Fatorial(6) esperado 720, obteve %d", Fatorial(6))
+	}
+
+	se Fibonacci(7) != 13 {
+		t.ErroFormatado("Fibonacci(7) esperado 13, obteve %d", Fibonacci(7))
+	}
+
+	se MDC(60, 24) != 12 {
+		t.ErroFormatado("MDC(60, 24) esperado 12, obteve %d", MDC(60, 24))
+	}
+
+	se MMC(5, 7) != 35 {
+		t.ErroFormatado("MMC(5, 7) esperado 35, obteve %d", MMC(5, 7))
+	}
+
+	se !EhPrimo(29) || EhPrimo(30) {
+		t.ErroFormatado("EhPrimo falhou para 29 ou 30")
+	}
+
+	se Clampar(200, 0, 100) != 100 || Clampar(-5, 0, 100) != 0 {
+		t.ErroFormatado("Clampar falhou")
+	}
+}

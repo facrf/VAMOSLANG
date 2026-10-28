@@ -20,11 +20,17 @@ func RunWeb(args []string) int {
 
 	playgroundDir := "playground"
 	if _, err := os.Stat(playgroundDir); os.IsNotExist(err) {
-		exePath, err := os.Executable()
-		if err == nil {
-			candidate := filepath.Join(filepath.Dir(exePath), "playground")
-			if _, err := os.Stat(candidate); err == nil {
-				playgroundDir = candidate
+		root := FindProjectRoot(".")
+		candidate := filepath.Join(root, "playground")
+		if _, err := os.Stat(candidate); err == nil {
+			playgroundDir = candidate
+		} else {
+			exePath, err := os.Executable()
+			if err == nil {
+				candidate := filepath.Join(filepath.Dir(exePath), "playground")
+				if _, err := os.Stat(candidate); err == nil {
+					playgroundDir = candidate
+				}
 			}
 		}
 	}

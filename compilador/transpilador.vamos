@@ -142,6 +142,12 @@ funcao mapearMetodoPacote(pacoteIdent texto, metodoIdent texto) (texto, texto, b
 			retornar "os", "Mkdir", verdadeiro
 		caso "CriarTodosDiretorios":
 			retornar "os", "MkdirAll", verdadeiro
+		caso "Obterpid", "ObterPID":
+			retornar "os", "Getpid", verdadeiro
+		caso "DiretorioTemporario":
+			retornar "os", "TempDir", verdadeiro
+		caso "DiretorioUsuario":
+			retornar "os", "UserHomeDir", verdadeiro
 		}
 	}
 
@@ -218,6 +224,33 @@ funcao mapearMetodoPacote(pacoteIdent texto, metodoIdent texto) (texto, texto, b
 		}
 	}
 
+	se pacoteIdent == "teste" || pacoteIdent == "testing" {
+		escolha metodoIdent {
+		caso "Erro":
+			retornar "testing", "Error", verdadeiro
+		caso "ErroFormatado":
+			retornar "testing", "Errorf", verdadeiro
+		caso "Falhar":
+			retornar "testing", "Fail", verdadeiro
+		caso "FalharAgora":
+			retornar "testing", "FailNow", verdadeiro
+		caso "Falhou":
+			retornar "testing", "Failed", verdadeiro
+		caso "Fatal":
+			retornar "testing", "Fatal", verdadeiro
+		caso "FatalFormatado":
+			retornar "testing", "Fatalf", verdadeiro
+		caso "Registrar":
+			retornar "testing", "Log", verdadeiro
+		caso "RegistrarFormatado":
+			retornar "testing", "Logf", verdadeiro
+		caso "Pular":
+			retornar "testing", "Skip", verdadeiro
+		caso "Executar":
+			retornar "testing", "Run", verdadeiro
+		}
+	}
+
 	retornar pacoteIdent, metodoIdent, falso
 }
 
@@ -244,6 +277,8 @@ funcao traduzirIdentificadorPacote(pkg texto) (texto, booleano) {
 		retornar "atomic", verdadeiro
 	caso "conversao", "strconv":
 		retornar "strconv", verdadeiro
+	caso "teste", "testing":
+		retornar "testing", verdadeiro
 	caso "url":
 		retornar "url", verdadeiro
 	padrao:
@@ -280,6 +315,34 @@ funcao traduzirMetodoObjeto(metodo texto) (texto, booleano) {
 		retornar "String", verdadeiro
 	caso "Erro":
 		retornar "Error", verdadeiro
+	caso "ErroFormatado":
+		retornar "Errorf", verdadeiro
+	caso "Falhar":
+		retornar "Fail", verdadeiro
+	caso "FalharAgora":
+		retornar "FailNow", verdadeiro
+	caso "Falhou":
+		retornar "Failed", verdadeiro
+	caso "Fatal":
+		retornar "Fatal", verdadeiro
+	caso "FatalFormatado":
+		retornar "Fatalf", verdadeiro
+	caso "Registrar":
+		retornar "Log", verdadeiro
+	caso "RegistrarFormatado":
+		retornar "Logf", verdadeiro
+	caso "Pular":
+		retornar "Skip", verdadeiro
+	caso "PularFormatado":
+		retornar "Skipf", verdadeiro
+	caso "PularAgora":
+		retornar "SkipNow", verdadeiro
+	caso "Pulou":
+		retornar "Skipped", verdadeiro
+	caso "Auxiliar", "Ajudante":
+		retornar "Helper", verdadeiro
+	caso "Paralelo":
+		retornar "Parallel", verdadeiro
 	caso "Adicionar":
 		retornar "Add", verdadeiro
 	caso "Prazo":
@@ -420,7 +483,24 @@ funcao (t *Transpilador) Transpilar() texto {
 				t.proximo()
 				sb = anexar(sb, tipoGo)
 			} senao {
-				sb = anexar(sb, t.proximo().Valor)
+				val := t.proximo().Valor
+				se tamanho(val) >= 6 && cordas.TemPrefixo(val, "Teste") {
+					sexto := val[5:6]
+					se sexto >= "A" && sexto <= "Z" {
+						val = "Test" + val[5:]
+					}
+				} senao se tamanho(val) >= 8 && cordas.TemPrefixo(val, "Exemplo") {
+					oitavo := val[7:8]
+					se oitavo >= "A" && oitavo <= "Z" {
+						val = "Example" + val[7:]
+					}
+				} senao se tamanho(val) >= 11 && cordas.TemPrefixo(val, "Referencia") {
+					decimoPrimeiro := val[10:11]
+					se decimoPrimeiro >= "A" && decimoPrimeiro <= "Z" {
+						val = "Benchmark" + val[10:]
+					}
+				}
+				sb = anexar(sb, val)
 			}
 			continuar
 		}

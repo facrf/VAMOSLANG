@@ -1,0 +1,88 @@
+// Testes unitários nativos em VAMOS-LANG para estruturas de dados genéricas
+pacote colecoes
+
+importar (
+	"teste"
+)
+
+// TestePilhaNative valida a Pilha genérica usando VAMOS-LANG nativo
+funcao TestePilhaNative(t *teste.T) {
+	p := NovaPilha[texto]()
+	se !p.Vazia() || p.Tamanho() != 0 {
+		t.ErroFormatado("Pilha recém-criada deveria estar vazia")
+	}
+
+	p.Empilhar("VAMOS")
+	p.Empilhar("LANG")
+
+	se p.Tamanho() != 2 {
+		t.ErroFormatado("Tamanho esperado 2, obteve %d", p.Tamanho())
+	}
+
+	topo, ok := p.Topo()
+	se !ok || topo != "LANG" {
+		t.ErroFormatado("Topo esperado 'LANG', obteve '%s'", topo)
+	}
+
+	item1, ok1 := p.Desempilhar()
+	se !ok1 || item1 != "LANG" {
+		t.ErroFormatado("Desempilhar esperado 'LANG', obteve '%s'", item1)
+	}
+
+	item2, ok2 := p.Desempilhar()
+	se !ok2 || item2 != "VAMOS" {
+		t.ErroFormatado("Desempilhar esperado 'VAMOS', obteve '%s'", item2)
+	}
+
+	se !p.Vazia() {
+		t.ErroFormatado("Pilha deveria estar vazia após desempilhar tudo")
+	}
+}
+
+// TesteFilaNative valida a Fila genérica usando VAMOS-LANG nativo
+funcao TesteFilaNative(t *teste.T) {
+	f := NovaFila[inteiro]()
+	se !f.Vazia() {
+		t.ErroFormatado("Fila recém-criada deveria estar vazia")
+	}
+
+	f.Enfileirar(10)
+	f.Enfileirar(20)
+	f.Enfileirar(30)
+
+	se f.Tamanho() != 3 {
+		t.ErroFormatado("Tamanho esperado 3, obteve %d", f.Tamanho())
+	}
+
+	frente, ok := f.Frente()
+	se !ok || frente != 10 {
+		t.ErroFormatado("Frente esperada 10, obteve %d", frente)
+	}
+
+	it1, _ := f.Desenfileirar()
+	it2, _ := f.Desenfileirar()
+	se it1 != 10 || it2 != 20 {
+		t.ErroFormatado("Desenfileirar falhou: obteve %d e %d", it1, it2)
+	}
+}
+
+// TesteConjuntoNative valida o Conjunto genérico usando VAMOS-LANG nativo
+funcao TesteConjuntoNative(t *teste.T) {
+	c := NovoConjunto[texto]()
+	c.Adicionar("alfa")
+	c.Adicionar("beta")
+	c.Adicionar("alfa") // duplicado
+
+	se c.Tamanho() != 2 {
+		t.ErroFormatado("Tamanho esperado 2, obteve %d", c.Tamanho())
+	}
+
+	se !c.Contem("alfa") || !c.Contem("beta") {
+		t.ErroFormatado("Esperava conter alfa e beta")
+	}
+
+	c.Remover("alfa")
+	se c.Contem("alfa") {
+		t.ErroFormatado("Não deveria conter alfa após remoção")
+	}
+}

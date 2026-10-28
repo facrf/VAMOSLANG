@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // RunTest executa o comando 'vamos test [flags...]' preparando o workspace e rodando go test
@@ -22,8 +23,16 @@ func RunTest(args []string) int {
 	}
 	defer cleanup()
 
+	hasPkg := false
+	for _, a := range args {
+		if !strings.HasPrefix(a, "-") {
+			hasPkg = true
+			break
+		}
+	}
+
 	testArgs := append([]string{"test"}, args...)
-	if len(args) == 0 {
+	if !hasPkg {
 		testArgs = append(testArgs, "./...")
 	}
 

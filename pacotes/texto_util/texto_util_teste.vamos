@@ -1,0 +1,56 @@
+// Testes unitários em VAMOS-LANG nativo para texto_util
+pacote texto_util
+
+importar (
+	"teste"
+)
+
+// TesteTextoUtilNative valida operações de texto na suíte nativa VAMOS
+funcao TesteTextoUtilNative(t *teste.T) {
+	orig := "vamos,lang,brasil"
+	partes := Dividir(orig, ",")
+	se tamanho(partes) != 3 {
+		t.ErroFormatado("esperava 3 partes, obteve %d", tamanho(partes))
+	}
+
+	junto := Juntar(partes, " - ")
+	se junto != "vamos - lang - brasil" {
+		t.ErroFormatado("Juntar falhou: %s", junto)
+	}
+
+	se !Contem(orig, "lang") {
+		t.ErroFormatado("esperava encontrar 'lang' em %s", orig)
+	}
+
+	se !ComecaCom(orig, "vamos") {
+		t.ErroFormatado("esperava comecar com 'vamos'")
+	}
+
+	se !TerminaCom(orig, "brasil") {
+		t.ErroFormatado("esperava terminar com 'brasil'")
+	}
+
+	se ParaMaiusculas("teste") != "TESTE" {
+		t.ErroFormatado("ParaMaiusculas falhou")
+	}
+
+	se ParaMinusculas("TESTE") != "teste" {
+		t.ErroFormatado("ParaMinusculas falhou")
+	}
+
+	se Aparar("   vamos   ") != "vamos" {
+		t.ErroFormatado("Aparar falhou")
+	}
+
+	se Substituir("gato preto", "preto", "branco") != "gato branco" {
+		t.ErroFormatado("Substituir falhou")
+	}
+
+	se Repetir("ab", 3) != "ababab" {
+		t.ErroFormatado("Repetir falhou")
+	}
+
+	se Inverter("radar") != "radar" || Inverter("vamos") != "somav" {
+		t.ErroFormatado("Inverter falhou")
+	}
+}

@@ -10,7 +10,7 @@ build:
 
 test:
 	@echo "==> Executando testes unitários..."
-	go test -v ./...
+	./$(BINARY_NAME) test -v
 
 run-examples: build
 	@echo "==> Testando exemplo 'ola_mundo.vamos':"
@@ -58,6 +58,9 @@ run-examples: build
 	@echo "==> Testando exemplo 'otimizacao.vamos' (Otimizador de Bytecode & Constant Folding):"
 	./$(BINARY_NAME) otimizar exemplos/otimizacao.vamos
 	./$(BINARY_NAME) run exemplos/otimizacao.vamos
+	@echo ""
+	@echo "==> Testando aplicação 'blocodenotasBR/testes.vamos' (Suíte do Bloco de Notas):"
+	./$(BINARY_NAME) run blocodenotasBR/testes.vamos
 
 check: build
 	@echo "==> 1. Verificando formatação de código..."
@@ -65,7 +68,7 @@ check: build
 	@echo "==> 2. Executando linter estático e validação sintática..."
 	./$(BINARY_NAME) lint --strict .
 	@echo "==> 3. Rodando suíte completa de testes..."
-	go test -v ./...
+	./$(BINARY_NAME) test -v
 	@echo "==> 4. Gerando documentação oficial em HTML..."
 	./$(BINARY_NAME) doc --html docs.html
 	@echo "✓ Verificação completa de qualidade aprovada com êxito!"
@@ -87,6 +90,9 @@ run-games: build
 	@echo ""
 	@echo "==> Executando demonstração do Jogo de Damas:"
 	./$(BINARY_NAME) run jogos/damas.vamos --demo
+	@echo ""
+	@echo "==> Executando demonstração do Jogo de Xadrez:"
+	./$(BINARY_NAME) run jogos/xadrez.vamos --demo
 
 bootstrap: build
 	@echo "==> 1. Compilando G1 'compilador/vamosc' via G0 (vamos)..."

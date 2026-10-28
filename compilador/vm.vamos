@@ -266,33 +266,86 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 			se errA == nulo && errB == nulo {
 				vm.empilhar(conversao.InteiroParaTexto(intA + intB))
 			} senao {
-				// Concatenação de texto
-				vm.empilhar(a + b)
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					vm.empilhar(formatar.Formatar("%g", decA + decB))
+				} senao {
+					// Concatenação de texto
+					vm.empilhar(a + b)
+				}
 			}
 
 		caso OpSubtrair:
 			b := vm.desempilhar()
 			a := vm.desempilhar()
-			intA, _ := conversao.ParaInteiro(a)
-			intB, _ := conversao.ParaInteiro(b)
-			vm.empilhar(conversao.InteiroParaTexto(intA - intB))
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				vm.empilhar(conversao.InteiroParaTexto(intA - intB))
+			} senao {
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					vm.empilhar(formatar.Formatar("%g", decA - decB))
+				} senao {
+					vm.empilhar("0")
+				}
+			}
 
 		caso OpMultiplicar:
 			b := vm.desempilhar()
 			a := vm.desempilhar()
-			intA, _ := conversao.ParaInteiro(a)
-			intB, _ := conversao.ParaInteiro(b)
-			vm.empilhar(conversao.InteiroParaTexto(intA * intB))
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				vm.empilhar(conversao.InteiroParaTexto(intA * intB))
+			} senao {
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					vm.empilhar(formatar.Formatar("%g", decA * decB))
+				} senao {
+					vm.empilhar("0")
+				}
+			}
 
 		caso OpDividir:
 			b := vm.desempilhar()
 			a := vm.desempilhar()
-			intA, _ := conversao.ParaInteiro(a)
-			intB, _ := conversao.ParaInteiro(b)
-			se intB == 0 {
-				retornar erros.Novo("erro na VM: divisão por zero")
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				se intB == 0 {
+					retornar erros.Novo("erro na VM: divisão por zero")
+				}
+				vm.empilhar(conversao.InteiroParaTexto(intA / intB))
+			} senao {
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					se decB == 0 {
+						retornar erros.Novo("erro na VM: divisão por zero")
+					}
+					vm.empilhar(formatar.Formatar("%g", decA / decB))
+				} senao {
+					vm.empilhar("0")
+				}
 			}
-			vm.empilhar(conversao.InteiroParaTexto(intA / intB))
+
+		caso OpModulo:
+			b := vm.desempilhar()
+			a := vm.desempilhar()
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				se intB == 0 {
+					retornar erros.Novo("erro na VM: divisão por zero (módulo)")
+				}
+				vm.empilhar(conversao.InteiroParaTexto(intA % intB))
+			} senao {
+				vm.empilhar("0")
+			}
 
 		caso OpIgual:
 			b := vm.desempilhar()
@@ -315,45 +368,117 @@ funcao (vm *MaquinaVirtual) Interpretar(prog *ProgramaBytecode) erro {
 		caso OpMaior:
 			b := vm.desempilhar()
 			a := vm.desempilhar()
-			intA, _ := conversao.ParaInteiro(a)
-			intB, _ := conversao.ParaInteiro(b)
-			se intA > intB {
-				vm.empilhar("verdadeiro")
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				se intA > intB {
+					vm.empilhar("verdadeiro")
+				} senao {
+					vm.empilhar("falso")
+				}
 			} senao {
-				vm.empilhar("falso")
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					se decA > decB {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				} senao {
+					se a > b {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				}
 			}
 
 		caso OpMenor:
 			b := vm.desempilhar()
 			a := vm.desempilhar()
-			intA, _ := conversao.ParaInteiro(a)
-			intB, _ := conversao.ParaInteiro(b)
-			se intA < intB {
-				vm.empilhar("verdadeiro")
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				se intA < intB {
+					vm.empilhar("verdadeiro")
+				} senao {
+					vm.empilhar("falso")
+				}
 			} senao {
-				vm.empilhar("falso")
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					se decA < decB {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				} senao {
+					se a < b {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				}
 			}
 
 		caso OpMaiorIgual:
 			b := vm.desempilhar()
 			a := vm.desempilhar()
-			intA, _ := conversao.ParaInteiro(a)
-			intB, _ := conversao.ParaInteiro(b)
-			se intA >= intB {
-				vm.empilhar("verdadeiro")
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				se intA >= intB {
+					vm.empilhar("verdadeiro")
+				} senao {
+					vm.empilhar("falso")
+				}
 			} senao {
-				vm.empilhar("falso")
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					se decA >= decB {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				} senao {
+					se a >= b {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				}
 			}
 
 		caso OpMenorIgual:
 			b := vm.desempilhar()
 			a := vm.desempilhar()
-			intA, _ := conversao.ParaInteiro(a)
-			intB, _ := conversao.ParaInteiro(b)
-			se intA <= intB {
-				vm.empilhar("verdadeiro")
+			intA, errA := conversao.ParaInteiro(a)
+			intB, errB := conversao.ParaInteiro(b)
+			se errA == nulo && errB == nulo {
+				se intA <= intB {
+					vm.empilhar("verdadeiro")
+				} senao {
+					vm.empilhar("falso")
+				}
 			} senao {
-				vm.empilhar("falso")
+				decA, errDecA := conversao.AnalisarDecimal(a, 64)
+				decB, errDecB := conversao.AnalisarDecimal(b, 64)
+				se errDecA == nulo && errDecB == nulo {
+					se decA <= decB {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				} senao {
+					se a <= b {
+						vm.empilhar("verdadeiro")
+					} senao {
+						vm.empilhar("falso")
+					}
+				}
 			}
 
 		caso OpSalto:

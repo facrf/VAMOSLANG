@@ -1,0 +1,25 @@
+# Binários executáveis compilados
+vamos
+compilador/vamosc
+compilador/vamosc-g*
+compilador/c_app
+compilador/modulo.wasm
+compilador/mv.vamosb
+blocodenotasBR/blocodenotas
+blocodenotasBR/notas_db.json
+bin/
+*.exe
+*.out
+*.vamosb
+*.wasm
+
+# Arquivos de objetos e bibliotecas nativas
+*.o
+*.a
+*.so
+
+# Arquivos temporários de teste e workspace
+vamos_workspace_*
+vamos_trace_*
+vamos_repl_*
+vamos_build_*
